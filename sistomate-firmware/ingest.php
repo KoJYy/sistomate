@@ -1,5 +1,5 @@
 <?php
-// ingest.php — terima data SISTOMATE dari ESP32 (HTTP POST JSON)
+// ingest.php - terima data SISTOMATE dari ESP32 (HTTP POST JSON)
 // Env: /etc/sistomate-ingest.env (API_KEY, DB_*)
 header('Content-Type: application/json');
 
