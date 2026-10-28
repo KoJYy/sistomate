@@ -1,5 +1,5 @@
 <?php
-// live.php — data terbaru SISTOMATE buat dashboard realtime (read-only, GET)
+// live.php - data terbaru SISTOMATE buat dashboard realtime (read-only, GET)
 // Env: /etc/sistomate-ingest.env (sama dengan ingest.php)
 header('Content-Type: application/json');
 header('Cache-Control: no-store');

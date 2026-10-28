@@ -3,604 +3,209 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SISTOMATE — Monitor Greenhouse</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,600;1,9..144,700&display=swap" rel="stylesheet">
+<title>SISTOMATE - Solusi Presisi Pertanian Tomat</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-  :root {
-    --bg: #EFF3EC;
-    --surface: #FFFFFF;
-    --line: #D7E0D4;
-    --line-soft: #E6ECE3;
-    --ink: #16241B;
-    --muted: #66786C;
-    --sehat: #1B9E5A;
-    --layu: #D08700;
-    --sakit: #D64545;
-    --kering: #9A6A3C;
-    --on: #0B7285;
-    --soilc: #2563EB;
-    --suhuc: #EA580C;
-    --sans: "Archivo", system-ui, -apple-system, sans-serif;
-    --serif: "Fraunces", Georgia, serif;
+  :root { --green-900:#14532d; --green-700:#15803d; --green-500:#22c55e; --cream:#fffdf5; }
+  body { background: var(--cream); }
+  .hero {
+    background: radial-gradient(1200px 500px at 80% -10%, #bbf7d0 0%, transparent 60%),
+                linear-gradient(135deg, var(--green-900), var(--green-700));
+    color: #fff; border-radius: 0 0 2rem 2rem;
   }
-  * { box-sizing: border-box; margin: 0; }
-  html { background: var(--bg); }
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 0 24px 56px;
-  }
-  :focus-visible { outline: 2px solid var(--sehat); outline-offset: 2px; }
-
-  /* — header — */
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 0 14px;
-    font-size: 13.5px;
-  }
-  .brand { font-weight: 700; letter-spacing: .02em; font-size: 15px; }
-  .brand span { color: var(--muted); font-weight: 500; margin-left: 10px; font-size: 13px; }
-  .live { display: flex; align-items: center; gap: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .live b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 12.5px; }
-  .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--sehat);
-    animation: pulse 1.6s ease-in-out infinite;
-  }
-  .dot.stale { background: var(--sakit); animation: none; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
-
-  /* — hero: kartu status bertint + 3 kartu metrik — */
-  .hero { display: grid; gap: 14px; padding: 14px 0 8px; }
-  .status-card {
-    background: rgba(27, 158, 90, .1);
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 26px 30px 28px;
-    transition: background .5s;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px;
-  }
-  .status-why { text-align: right; max-width: 270px; margin-bottom: 10px; }
-  .status-why span { font-size: 13px; color: var(--muted); }
-  .status-why p { font-size: 14.5px; line-height: 1.45; margin-top: 4px; }
-  .status-kicker { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-  .status-word {
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: clamp(3.4rem, 9vw, 6rem);
-    line-height: 1;
-    letter-spacing: -.03em;
-    color: var(--sehat);
-    transition: color .5s;
-  }
-
-  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .metric {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 16px 20px 20px;
-    box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
-  }
-  .metric .top {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 10px;
-  }
-  .metric .label { font-size: 13px; color: var(--muted); }
-  .metric .value {
-    font-size: clamp(1.8rem, 3.2vw, 2.4rem);
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -.02em;
-    line-height: 1;
-  }
-  .metric .value small { font-size: .48em; font-weight: 600; color: var(--muted); margin-left: 2px; }
-
-  /* gauge ambang histeresis */
-  .track { position: relative; height: 7px; background: var(--line-soft); border-radius: 4px; overflow: visible; }
-  .zone { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
-  .needle {
-    position: absolute; top: -4px; bottom: -4px; width: 3px;
-    background: var(--ink);
-    border-radius: 2px;
-    transition: left .8s cubic-bezier(.2, .7, .3, 1);
-  }
-  .tick { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .55; }
-
-  /* — dua kolom: aktuator + riwayat — */
-  .pair {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 14px;
-    padding: 14px 0;
-  }
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 18px 22px 20px;
-    box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
-  }
-  /* panel dalam .pair ikut tinggi baris grid — isi meregang, gak ada lubang bawah */
-  .pair .panel { display: flex; flex-direction: column; }
-  .pair .panel .tiles { flex: 1; }
-  h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
-
-  /* tile aktuator */
-  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .tile {
-    background: var(--bg);
-    border: 1px solid var(--line-soft);
-    border-radius: 14px;
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: column;
-  }
-  .tile .act-name { font-size: 13.5px; font-weight: 600; }
-  .tile .big {
-    font-size: 1.9rem;
-    font-weight: 700;
-    letter-spacing: -.02em;
-    line-height: 1.15;
-    color: var(--muted);
-    transition: color .25s;
-  }
-  .tile .big.on { color: var(--on); }
-  .tile .act-last { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: auto; padding-top: 8px; }
-  .chip {
-    display: inline-block;
-    align-self: flex-start; /* tile flex-column stretch jangan lebarkan pill */
-    font-size: 11.5px; font-weight: 700; letter-spacing: .05em;
-    padding: 3px 11px;
-    border-radius: 999px;
-    background: var(--line-soft);
-    color: var(--muted);
-    margin-top: 6px;
-    transition: background .25s, color .25s;
-  }
-  .chip.on { background: var(--on); color: #fff; }
-
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  td { padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
-  tr:last-child td { border-bottom: 0; }
-  td.t { color: var(--muted); font-variant-numeric: tabular-nums; width: 92px; }
-  td.st { text-align: right; width: 64px; font-weight: 700; font-size: 12.5px; }
-  .st-on { color: var(--on); }
-  .st-off { color: var(--muted); }
-
-  /* — tren: area chart — */
-  .trend { padding: 4px 0; }
-  .sparks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .spark-head {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 8px;
-  }
-  .spark-head .name { font-size: 13px; color: var(--muted); }
-  .spark-head .now {
-    font-size: clamp(1.25rem, 2.2vw, 1.6rem); font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-  .spark-head .now small { font-size: .55em; color: var(--muted); font-weight: 600; }
-  svg.spark { display: block; width: 100%; height: 84px; background: var(--bg); border: 1px solid var(--line-soft); border-radius: 10px; }
-  .axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
-  /* sumbu: label Y HTML di kiri (SVG stretched, teks di dlm viewBox bakal melar) */
-  .chart { display: flex; gap: 8px; }
-  .yax {
-    display: flex; flex-direction: column; justify-content: space-between;
-    align-items: flex-end; flex: none;
-    width: 46px; height: 84px; padding: 3px 0 9px;
-    font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums;
-  }
-  .plot { flex: 1; min-width: 0; }
-
-  /* — rgb — */
-  .rgb { padding: 4px 0; }
-  .rgb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
-  .rgb-card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 14px 16px 16px;
-    box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
-  }
-  .rgb .label { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); margin-bottom: 9px; }
-  .rgb .label b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.15rem; }
-  .bar { height: 12px; background: var(--line-soft); border-radius: 6px; overflow: hidden; }
-  .bar div { height: 100%; border-radius: 6px; transition: width .8s cubic-bezier(.2, .7, .3, 1); }
-  .verdict {
-    display: inline-block;
-    font-size: 13.5px; font-weight: 600;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 8px 18px;
-    box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
-  }
-
-  footer {
-    margin-top: 18px;
-    padding-top: 16px;
-    border-top: 1px solid var(--line);
-    font-size: 12.5px; color: var(--muted);
-    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-  }
-
-  /* angka yang barusan berubah */
-  .flash { animation: flashbg .7s ease-out; }
-  @keyframes flashbg {
-    0% { background: rgba(27, 158, 90, .18); }
-    100% { background: transparent; }
-  }
-
-  @media (max-width: 760px) {
-    .brand span { display: none; }
-    .metrics, .sparks, .rgb-grid, .tiles { grid-template-columns: 1fr; }
-    .pair { grid-template-columns: 1fr; gap: 14px; }
-    .status-card { padding: 22px 22px 24px; flex-direction: column; align-items: flex-start; gap: 14px; }
-    .status-why { text-align: left; margin-bottom: 0; max-width: none; }
-    .status-word { font-size: clamp(3.2rem, 16vw, 4.6rem); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .dot { animation: none; }
-    .flash { animation: none; }
-    .needle, .bar div, .status-word, .chip, .tile .big, .status-card { transition: none; }
-  }
+  .hero .badge-soft { background: rgba(255,255,255,.15); color:#fff; }
+  .card-solusi { border: none; border-radius: 1rem; box-shadow: 0 6px 18px rgba(20,83,45,.08);
+                 transition: transform .15s ease; height: 100%; }
+  .card-solusi:hover { transform: translateY(-4px); }
+  .num-circle { width: 2.2rem; height: 2.2rem; border-radius: 50%; display: grid; place-items: center;
+                background: var(--green-500); color: #fff; font-weight: 700; flex: 0 0 auto; }
+  .layer { border-left: 4px solid var(--green-500); background: #fff; border-radius: .75rem;
+           box-shadow: 0 4px 12px rgba(0,0,0,.05); }
+  .profil-card { border: none; border-radius: 1rem; background: #fff; box-shadow: 0 6px 18px rgba(20,83,45,.08); }
+  footer { background: var(--green-900); }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand">SISTOMATE <span>greenhouse tomat</span></div>
-  <div class="live">
-    <span class="dot" id="dot"></span>
-    <b id="livetxt">LIVE</b>
-    <span id="clock">--:--:--</span>
+<!-- NAV -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background:var(--green-900)">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="index.html">🌱 SISTOMATE</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navLanding">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navLanding">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#masalah">Masalah</a></li>
+        <li class="nav-item"><a class="nav-link" href="#spesifikasi">Spesifikasi</a></li>
+        <li class="nav-item"><a class="nav-link" href="#arsitektur">Arsitektur</a></li>
+        <li class="nav-item"><a class="nav-link" href="#tim">Tim</a></li>
+        <li class="nav-item ms-lg-2"><a class="btn btn-success btn-sm" href="login.php">Buka Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero py-5">
+  <div class="container py-4">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <span class="badge badge-soft rounded-pill mb-3 px-3 py-2">Internet of Things · Basis Data Relasional</span>
+        <h1 class="display-5 fw-bold mb-3">SISTOMATE - Solusi Presisi Pertanian Tomat</h1>
+        <p class="lead mb-4 opacity-90">
+          Sistem otomasi penyiraman dan monitoring kesehatan tanaman tomat berbasis Internet of Things
+          dengan integrasi basis data relasional. Greenhouse mini 100&times;80&times;60 cm, sensor RGB daun,
+          histeresis, dan dashboard real-time dalam satu kesatuan.
+        </p>
+        <a href="login.php" class="btn btn-light btn-lg fw-semibold shadow">🚀 Buka Dashboard</a>
+        <a href="#masalah" class="btn btn-outline-light btn-lg ms-2">Pelajari Lebih Lanjut</a>
+      </div>
+      <div class="col-lg-5 text-center">
+        <div style="font-size:9rem" class="mb-2">🍅🌿</div>
+      </div>
+    </div>
   </div>
 </header>
 
-<section class="hero">
-  <div class="status-card" id="statusCard">
-    <div class="status-main">
-      <div class="status-kicker">status tanaman</div>
-      <div class="status-word" id="status">—</div>
-    </div>
-    <div class="status-why">
-      <span>alasan</span>
-      <p id="why">—</p>
-    </div>
-  </div>
-  <div class="metrics">
-    <div class="metric">
-      <div class="top">
-        <span class="label">suhu udara</span>
-        <span class="value" id="suhu">—<small>°C</small></span>
-      </div>
-      <div class="track">
-        <div class="zone" style="left:0;width:60%;background:rgba(27,158,90,.28)"></div>
-        <div class="zone" style="left:60%;width:40%;background:rgba(208,135,0,.32)"></div>
-        <div class="tick" style="left:60%"></div>
-        <div class="needle" id="ndl-suhu" style="left:50%"></div>
-      </div>
-    </div>
-    <div class="metric">
-      <div class="top">
-        <span class="label">kelembapan udara</span>
-        <span class="value" id="rh">—<small>%</small></span>
-      </div>
-    </div>
-    <div class="metric">
-      <div class="top">
-        <span class="label">kelembapan tanah</span>
-        <span class="value" id="soil">—<small>%</small></span>
-      </div>
-      <div class="track">
-        <div class="zone" style="left:0;width:40%;background:rgba(154,106,60,.35)"></div>
-        <div class="tick" style="left:40%"></div>
-        <div class="tick" style="left:55%"></div>
-        <div class="needle" id="ndl-soil" style="left:50%"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="pair">
-  <div class="panel">
-    <h2>aktuator</h2>
-    <div class="tiles">
-      <div class="tile">
-        <div class="act-name">Pompa Air</div>
-        <div class="big" id="pompa-big">—</div>
-        <span class="chip" id="pompa-state">—</span>
-        <div class="act-last" id="pompa-last">—</div>
-      </div>
-      <div class="tile">
-        <div class="act-name">Kipas Exhaust</div>
-        <div class="big" id="kipas-big">—</div>
-        <span class="chip" id="kipas-state">—</span>
-        <div class="act-last" id="kipas-last">—</div>
-      </div>
-    </div>
-  </div>
-  <div class="panel">
-    <h2>riwayat aktuator</h2>
-    <table><tbody id="history-act"></tbody></table>
-  </div>
-</div>
-
-<section class="trend">
-  <div class="sparks">
-    <div class="panel">
-      <div class="spark-head">
-        <span class="name">kelembapan tanah</span>
-        <span class="now" id="now-soil">—<small>%</small></span>
-      </div>
-      <div class="chart">
-        <div class="yax" aria-hidden="true">
-          <span id="y-top-soil">—</span><span id="y-mid-soil">—</span><span id="y-bot-soil">—</span>
-        </div>
-        <div class="plot">
-          <svg class="spark" id="sp-soil" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
-            <g stroke="#D7E0D4" stroke-width="1" vector-effect="non-scaling-stroke">
-              <line x1="0" y1="8" x2="600" y2="8"/><line x1="0" y1="38" x2="600" y2="38"/><line x1="0" y1="68" x2="600" y2="68"/>
-            </g>
-            <polygon id="fill-soil" fill="#2563EB" fill-opacity=".14" points=""/>
-            <polyline id="line-soil" fill="none" stroke="#2563EB" stroke-width="2.5" vector-effect="non-scaling-stroke" points=""/>
-          </svg>
-          <div class="axis"><span id="x0-soil">—</span><span id="x1-soil">—</span><span>sekarang</span></div>
+<!-- 4 MASALAH vs SOLUSI -->
+<section id="masalah" class="py-5">
+  <div class="container py-3">
+    <h2 class="fw-bold text-center mb-2">4 Masalah Petani, 4 Solusi SISTOMATE</h2>
+    <p class="text-center text-muted mb-4">Dari keluhan lapangan menuju jawaban teknis yang terukur.</p>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-3">
+        <div class="card card-solusi p-4">
+          <div class="d-flex align-items-center gap-2 mb-2"><span class="num-circle">1</span>
+            <h3 class="h6 fw-bold mb-0">Penilaian Subjektif</h3></div>
+          <p class="small text-muted mb-2">Mata manusia mudah tertipu pencahayaan - dua pekebun bisa beda
+            penilaian pada daun yang sama.</p>
+          <p class="small mb-0"><b>Solusi:</b> sensor warna RGB TCS34725 membaca spektral daun menjadi
+            angka rasio hijau/merah yang objektif.</p>
         </div>
       </div>
-    </div>
-    <div class="panel">
-      <div class="spark-head">
-        <span class="name">suhu udara</span>
-        <span class="now" id="now-suhu">—<small>°C</small></span>
-      </div>
-      <div class="chart">
-        <div class="yax" aria-hidden="true">
-          <span id="y-top-suhu">—</span><span id="y-mid-suhu">—</span><span id="y-bot-suhu">—</span>
+      <div class="col-md-6 col-lg-3">
+        <div class="card card-solusi p-4">
+          <div class="d-flex align-items-center gap-2 mb-2"><span class="num-circle">2</span>
+            <h3 class="h6 fw-bold mb-0">Keterlambatan Penanganan</h3></div>
+          <p class="small text-muted mb-2">Gejala baru sadar ketika daun sudah kuning pucat - tanaman
+            terlanjur sakit parah.</p>
+          <p class="small mb-0"><b>Solusi:</b> DHT11 + sensor kelembapan tanah kapasitif dibaca terus
+            menerus, pompa &amp; kipas langsung menindak.</p>
         </div>
-        <div class="plot">
-          <svg class="spark" id="sp-suhu" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
-            <g stroke="#D7E0D4" stroke-width="1" vector-effect="non-scaling-stroke">
-              <line x1="0" y1="8" x2="600" y2="8"/><line x1="0" y1="38" x2="600" y2="38"/><line x1="0" y1="68" x2="600" y2="68"/>
-            </g>
-            <polygon id="fill-suhu" fill="#EA580C" fill-opacity=".14" points=""/>
-            <polyline id="line-suhu" fill="none" stroke="#EA580C" stroke-width="2.5" vector-effect="non-scaling-stroke" points=""/>
-          </svg>
-          <div class="axis"><span id="x0-suhu">—</span><span id="x1-suhu">—</span><span>sekarang</span></div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card card-solusi p-4">
+          <div class="d-flex align-items-center gap-2 mb-2"><span class="num-circle">3</span>
+            <h3 class="h6 fw-bold mb-0">Keterbatasan Fisik</h3></div>
+          <p class="small text-muted mb-2">Memeriksa ribuan tanaman satu per satu setiap hari melelahkan
+            dan rawan terlewat.</p>
+          <p class="small mb-0"><b>Solusi:</b> dashboard web real-time - satu layar, seluruh kondisi
+            greenhouse terpantau.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card card-solusi p-4">
+          <div class="d-flex align-items-center gap-2 mb-2"><span class="num-circle">4</span>
+            <h3 class="h6 fw-bold mb-0">Tanpa Catatan Historis</h3></div>
+          <p class="small text-muted mb-2">Riwayat hanya di ingatan pekebun - evaluasi pupuk &amp;
+            jadwal siram tidak pernah pasti.</p>
+          <p class="small mb-0"><b>Solusi:</b> MySQL lima tabel menyimpan seluruh sensor &amp; aktuator
+            sebagai riwayat yang dapat ditelusuri + ekspor CSV.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="rgb">
-  <h2 style="margin-top:14px">warna daun (TCS34725)</h2>
-  <div class="rgb-grid">
-    <div class="rgb-card">
-      <div class="label">merah <b id="v-r">0</b></div>
-      <div class="bar"><div id="b-r" style="background:#EF4444;width:0%"></div></div>
-    </div>
-    <div class="rgb-card">
-      <div class="label">hijau <b id="v-g">0</b></div>
-      <div class="bar"><div id="b-g" style="background:#1B9E5A;width:0%"></div></div>
-    </div>
-    <div class="rgb-card">
-      <div class="label">biru <b id="v-b">0</b></div>
-      <div class="bar"><div id="b-b" style="background:#2563EB;width:0%"></div></div>
+<!-- SPESIKASI HARDWARE -->
+<section id="spesifikasi" class="py-5" style="background:#f0fdf4">
+  <div class="container py-3">
+    <h2 class="fw-bold text-center mb-4">Spesifikasi Hardware</h2>
+    <div class="row g-3 justify-content-center">
+      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
+        <div style="font-size:2rem">🧠</div><b class="small">ESP32</b>
+        <span class="small text-muted">Mikrokontroler Wi-Fi</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
+        <div style="font-size:2rem">🌈</div><b class="small">TCS34725</b>
+        <span class="small text-muted">Sensor warna RGB daun (I2C)</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
+        <div style="font-size:2rem">🌡️</div><b class="small">DHT11</b>
+        <span class="small text-muted">Suhu &amp; kelembapan udara</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
+        <div style="font-size:2rem">💧</div><b class="small">Soil Kapasitif</b>
+        <span class="small text-muted">Kelembapan tanah (GPIO34)</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
+        <div style="font-size:2rem">⚡</div><b class="small">Relay 4 Kanal</b>
+        <span class="small text-muted">Pompa air, pompa pupuk, kipas, cadangan</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
+        <div style="font-size:2rem">🏠</div><b class="small">Greenhouse Mini</b>
+        <span class="small text-muted">Rangka 100&times;80&times;60 cm</span></div></div>
     </div>
   </div>
-  <div class="verdict" id="verdict">—</div>
 </section>
 
-<footer>
-  <span id="dev">—</span>
-  <span id="today">—</span>
-  <span>update tiap 2 detik</span>
+<!-- ARSITEKTUR 4 LAYER -->
+<section id="arsitektur" class="py-5">
+  <div class="container py-3">
+    <h2 class="fw-bold text-center mb-4">Arsitektur Sistem 4 Lapis</h2>
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="layer p-3 mb-3"><b>1 · ESP32 Edge</b>
+          <p class="small text-muted mb-0">Akuisisi 3 sensor, logika histeresis &amp; fertigasi terjadwal,
+            kirim JSON + X-API-Key via HTTP POST.</p></div>
+        <div class="layer p-3"><b>2 · Backend Ingest (PHP)</b>
+          <p class="small text-muted mb-0">Validasi API key dengan perbandingan konstan waktu,
+            prepared statement PDO ke MySQL.</p></div>
+      </div>
+      <div class="col-lg-6">
+        <div class="layer p-3 mb-3"><b>3 · Basis Data MySQL</b>
+          <p class="small text-muted mb-0">Lima tabel relasional (users, devices, sensor_logs,
+            actuator_logs, gallery) + configs, dikelola via DBeaver.</p></div>
+        <div class="layer p-3"><b>4 · Dashboard Web</b>
+          <p class="small text-muted mb-0">Gauge meter, grafik tren Chart.js, riwayat + ekspor CSV,
+            pengaturan ambang histeresis.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROFIL TIM -->
+<section id="tim" class="py-5" style="background:#f0fdf4">
+  <div class="container py-3">
+    <h2 class="fw-bold text-center mb-2">Profil Tim</h2>
+    <p class="text-center text-muted mb-4">Kelompok 3 (Golongan B) - Program Studi Teknologi Rekayasa
+      Komputer, Politeknik Negeri Jember.</p>
+    <div class="row g-3 justify-content-center">
+      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
+        <div style="font-size:2rem">🗄️</div><b class="small d-block">Yuda Maredya A. P.</b>
+        <span class="small text-muted">Database</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
+        <div style="font-size:2rem">🔧</div><b class="small d-block">Abiyu Ammar Hady</b>
+        <span class="small text-muted">Hardware</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
+        <div style="font-size:2rem">💾</div><b class="small d-block">Ibror Yusron S.</b>
+        <span class="small text-muted">Firmware</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
+        <div style="font-size:2rem">🧊</div><b class="small d-block">Moch Calvin A.</b>
+        <span class="small text-muted">3D CAD</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
+        <div style="font-size:2rem">🎨</div><b class="small d-block">Nabil Laudza N.</b>
+        <span class="small text-muted">Frontend</span></div></div>
+      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
+        <div style="font-size:2rem">📝</div><b class="small d-block">Tio Dwi H.</b>
+        <span class="small text-muted">Dokumentasi</span></div></div>
+    </div>
+    <div class="text-center mt-4">
+      <a href="login.php" class="btn btn-success btn-lg fw-semibold shadow">🚀 Buka Dashboard</a>
+    </div>
+  </div>
+</section>
+
+<footer class="text-center text-white py-3">
+  <small>SISTOMATE &copy; 2026 · Kelompok 3 Golongan B · Workshop Basis Data &amp; Workshop Sistem Tertanam</small>
 </footer>
 
-<script>
-  const $ = id => document.getElementById(id);
-  const STATUS_COLOR = {
-    sehat: '#1B9E5A', layu: '#D08700',
-    sakit: '#D64545', kering: '#9A6A3C'
-  };
-  let lastPollOk = Date.now();
-
-  function flash(el) {
-    el.classList.remove('flash');
-    void el.offsetWidth;          // restart animasi
-    el.classList.add('flash');
-  }
-
-  function setText(id, txt) {
-    const el = $(id);
-    if (el.textContent !== txt) { el.textContent = txt; flash(el); }
-  }
-
-  // angka + satuan: flash HANYA kalau nilai berubah (bandingin dataset, bukan innerHTML)
-  function setVal(id, txt, unit) {
-    const el = $(id);
-    if (el.dataset.v !== txt) {
-      el.dataset.v = txt;
-      el.innerHTML = txt + '<small>' + unit + '</small>';
-      flash(el);
-    }
-  }
-
-  function gauge(id, pct) {
-    const el = $(id);
-    const v = Math.max(0, Math.min(100, pct));
-    el.style.left = v + '%';
-  }
-
-  // area chart: polyline + polygon ditutup ke baseline (fill di bawah garis)
-  function spark(lineId, fillId, arr) {
-    const line = $(lineId), fill = $(fillId);
-    if (!arr.length) { line.setAttribute('points', ''); fill.setAttribute('points', ''); return; }
-    const min = Math.min(...arr), max = Math.max(...arr);
-    const span = (max - min) || 1;
-    const pts = arr.map((v, i) => {
-      const x = (i / Math.max(1, arr.length - 1)) * 600;
-      const y = 68 - ((v - min) / span) * 60;   // padding 4px atas-bawah
-      return x.toFixed(1) + ',' + y.toFixed(1);
-    });
-    line.setAttribute('points', pts.join(' '));
-    fill.setAttribute('points', pts.join(' ') + ' 600,74 0,74');
-  }
-
-  function timeOnly(s) {
-    if (!s) return '—';
-    return s.slice(11, 19);       // "HH:MM:SS" dari datetime MySQL
-  }
-
-  // label sumbu: Y dari min/mid/max data, X dari jam terlama + jam tengah history
-  function axes(prefix, arr, times, fmt) {
-    const set = (id, txt) => { $(id).textContent = txt; };
-    if (!arr.length) {
-      ['y-top-', 'y-mid-', 'y-bot-'].forEach(p => set(p + prefix, '—'));
-      set('x0-' + prefix, '—'); set('x1-' + prefix, '—');
-      return;
-    }
-    const min = Math.min(...arr), max = Math.max(...arr);
-    const span = (max - min) || 1;
-    set('y-top-' + prefix, fmt(max));
-    set('y-mid-' + prefix, fmt(min + span / 2));
-    set('y-bot-' + prefix, fmt(min));
-    const n = arr.length;
-    set('x0-' + prefix, timeOnly(times[0]).slice(0, 5));      // HH:MM
-    set('x1-' + prefix, timeOnly(times[n >> 1]).slice(0, 5));
-  }
-
-  function render(d) {
-    const L = d.latest;
-    if (!L) return;
-
-    // status hero: warna kata + tint latar kartu (hex 8-digit, alpha 10%)
-    const sw = $('status');
-    if (sw.textContent !== L.plant_status) {
-      const c = STATUS_COLOR[L.plant_status] || '#16241B';
-      sw.textContent = L.plant_status;
-      sw.style.color = c;
-      $('statusCard').style.background = c + '1A';
-    }
-    // alasan status — diturunkan dari data yang sama dengan heuristik firmware
-    const soilR = Math.round(L.soil_moisture), tempR = L.air_temperature.toFixed(1);
-    const why = L.plant_status === 'kering' ? 'kelembapan tanah ' + soilR + '% — di bawah 40%'
-      : L.plant_status === 'layu' ? 'suhu ' + tempR + '°C — di atas 32°C'
-      : L.plant_status === 'sakit' ? 'spektrum daun tidak lagi hijau dominan'
-      : 'tanah ' + soilR + '% dan suhu ' + tempR + '°C — semuanya dalam batas';
-    if ($('why').textContent !== why) $('why').textContent = why;
-
-    // metrik + gauge (skala suhu 20–40°C)
-    setVal('suhu', L.air_temperature.toFixed(1), '°C');
-    setVal('rh', String(Math.round(L.air_humidity)), '%');
-    setVal('soil', String(Math.round(L.soil_moisture)), '%');
-    gauge('ndl-soil', L.soil_moisture);
-    gauge('ndl-suhu', (L.air_temperature - 20) / 20 * 100);
-
-    // aktuator: state terakhir per nama
-    const byName = {};
-    (d.actuators || []).forEach(a => { if (!byName[a.actuator_name]) byName[a.actuator_name] = a; });
-    [['Pompa Air', 'pompa'], ['Kipas Exhaust', 'kipas']].forEach(([name, key]) => {
-      const a = byName[name];
-      const st = a ? a.status : '—';
-      const big = $(key + '-big');
-      const chip = $(key + '-state');
-      if (big.textContent !== st) flash(big);
-      big.textContent = st;
-      big.className = 'big' + (st === 'ON' ? ' on' : '');
-      if (chip.textContent !== st) flash(chip);
-      chip.textContent = st;
-      chip.className = 'chip' + (st === 'ON' ? ' on' : '');
-      setText(key + '-last', a ? 'terakhir ' + timeOnly(a.executed_at) : 'belum ada event');
-    });
-
-    // riwayat tabel
-    const rows = (d.actuators || []).map(a =>
-      '<tr><td class="t">' + timeOnly(a.executed_at) + '</td>' +
-      '<td>' + a.actuator_name + '</td>' +
-      '<td class="st ' + (a.status === 'ON' ? 'st-on' : 'st-off') + '">' + a.status + '</td></tr>'
-    ).join('');
-    $('history-act').innerHTML = rows || '<tr><td class="t">—</td><td>belum ada event</td><td class="st"></td></tr>';
-
-    // sparkline (area)
-    const hist = d.history || [];
-    const soilArr = hist.map(h => +h.soil_moisture);
-    const suhuArr = hist.map(h => +h.air_temperature);
-    spark('line-soil', 'fill-soil', soilArr);
-    spark('line-suhu', 'fill-suhu', suhuArr);
-    axes('soil', soilArr, hist.map(h => h.recorded_at), v => Math.round(v) + '%');
-    axes('suhu', suhuArr, hist.map(h => h.recorded_at), v => v.toFixed(1) + '°C');
-    $('now-soil').innerHTML = Math.round(L.soil_moisture) + '<small>%</small>';
-    $('now-suhu').innerHTML = L.air_temperature.toFixed(1) + '<small>°C</small>';
-
-    // rgb
-    const r = +L.rgb_red, g = +L.rgb_green, b = +L.rgb_blue;
-    const mx = Math.max(r, g, b, 1);
-    setText('v-r', String(r)); setText('v-g', String(g)); setText('v-b', String(b));
-    $('b-r').style.width = (r / mx * 100) + '%';
-    $('b-g').style.width = (g / mx * 100) + '%';
-    $('b-b').style.width = (b / mx * 100) + '%';
-    const verdict = $('verdict');
-    // ambang sama dengan firmware: sakit = G/R < 0.75 (heuristik 21 Okt)
-    const redDom = g * 4 < r * 3 && r > 100;
-    const redThin = !redDom && r > g && r > 100;
-    const vtxt = r <= 100
-      ? 'sinyal terlalu lemah — dekatkan daun ke sensor'
-      : redDom
-        ? 'merah dominan — indikasi daun kuning/stres'
-        : redThin
-          ? 'merah tipis unggul — masih dalam ambang daun sehat'
-          : 'hijau dominan — spektrum daun sehat';
-    if (verdict.dataset.t !== vtxt) {
-      verdict.dataset.t = vtxt;
-      verdict.innerHTML = '<b style="color:' +
-        (r <= 100 ? 'var(--muted)' : redDom ? 'var(--sakit)' : 'var(--sehat)') +
-        '">' + vtxt + '</b>';
-    }
-
-    // footer
-    if (d.device) $('dev').textContent = d.device.device_name + ', ' + d.device.location;
-    if (d.today) $('today').textContent =
-      Number(d.today.sensor_rows).toLocaleString('id-ID') + ' bacaan, ' +
-      Number(d.today.actuator_events).toLocaleString('id-ID') + ' event hari ini';
-
-    lastPollOk = Date.now();
-  }
-
-  async function poll() {
-    try {
-      const res = await fetch('api/live.php', { cache: 'no-store' });
-      if (!res.ok) throw new Error(res.status);
-      const d = await res.json();
-      if (d.ok) render(d);
-    } catch (e) { /* biarkan; dot stale di bawah */ }
-    finally { setTimeout(poll, 5000); }
-  }
-
-  // jam + indikator koneksi
-  setInterval(() => {
-    $('clock').textContent = new Date().toLocaleTimeString('id-ID', { hour12: false });
-    const stale = Date.now() - lastPollOk > 12000;
-    $('dot').classList.toggle('stale', stale);
-    $('livetxt').textContent = stale ? 'TERPUTUS' : 'LIVE';
-  }, 1000);
-
-  poll();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
