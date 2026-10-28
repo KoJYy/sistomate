@@ -1,0 +1,41 @@
+%% SISTOMATE — Arsitektur sistem (4 layer alur data WBD)
+%% ESP32 Edge -> Ingest PHP (X-API-Key) -> MySQL (sensor_logs/actuator_logs) -> Dashboard
+%% Render: npx -y @mermaid-js/mermaid-cli -i arsitektur-sistem.mmd -o ../arsitektur-sistem.svg -b white
+flowchart LR
+    subgraph EDGE["1 · ESP32 Edge (SISTOMATE.ino)"]
+        direction TB
+        SENSOR["Sensor<br/>Soil GPIO34 · DHT11 GPIO13<br/>TCS34725 I2C 21/22"]
+        LOGIC["Logika<br/>histeresis + fertigasi<br/>+ status tanaman"]
+        HTTPC["HTTP Client<br/>POST JSON + X-API-Key"]
+        SENSOR --> LOGIC --> HTTPC
+    end
+
+    subgraph BE["2 · Ingest Backend (ingest.php · PHP 8)"]
+        direction TB
+        AUTH{"X-API-Key<br/>hash_equals?"}
+        ROUTE{"type ?"}
+        INS1[("INSERT sensor_logs")]
+        INS2[("INSERT actuator_logs")]
+        AUTH -->|valid| ROUTE
+        ROUTE -->|sensor| INS1
+        ROUTE -->|actuator| INS2
+    end
+
+    subgraph DB["3 · Database MySQL (sistomate)"]
+        direction TB
+        T1[("sensor_logs<br/>recorded_at, suhu, RH, soil,<br/>RGB, plant_status, id_device")]
+        T2[("actuator_logs<br/>actuator_name, status,<br/>executed_at, id_device")]
+    end
+
+    subgraph DASH["4 · Web Dashboard (nginx :80)"]
+        direction TB
+        LP["live.php<br/>SELECT terbaru"]
+        UI["index.html<br/>poll 5 dtk · Chart.js · realtime"]
+        LP --> UI
+    end
+
+    HTTPC -->|"HTTP POST :80"| AUTH
+    INS1 --> T1
+    INS2 --> T2
+    T1 --> LP
+    T2 --> LP

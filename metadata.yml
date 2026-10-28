@@ -1,0 +1,40 @@
+title: |
+  PERANCANGAN BASIS DATA RELASIONAL
+  SISTOMATE (SISTEM OTOMASI PENYIRAMAN
+  DAN MONITORING KESEHATAN TANAMAN TOMAT)
+subtitle: |
+  WORKSHOP BASIS DATA (TRK 130805)
+  LAPORAN MINGGU KE-4
+author:
+  - name: "Abiyu Ammar Hady"
+    nim: "E43252782"
+    group: "B"
+  - name: "Ibror Yusron S"
+    nim: "E43252690"
+    group: "B"
+  - name: "Moch Calvin Aprilian"
+    nim: "E43252720"
+    group: "B"
+  - name: "Nabil Laudza Nur"
+    nim: "E43252939"
+    group: "B"
+  - name: "Tio Dwi Harianto"
+    nim: "E43252983"
+    group: "B"
+  - name: "Yuda Maredya Ari Pratama"
+    nim: "E43252953"
+    group: "B"
+lecturer: "Zilvanhisna Emka Fitri, S.T., M.T. & Nanik Anita Mukhlisoh, S.ST., M.T."
+lecturer_label: "Dosen Pengajar: "
+group_name: "Kelompok 3"
+group: "B"
+course: "Workshop Basis Data"
+institution: "Politeknik Negeri Jember"
+faculty: |
+  Jurusan Teknologi Informasi
+  Program Studi Teknologi Rekayasa Komputer
+year: "2026"
+date: "September 2026"
+preset: "standard"
+font_family: "Liberation Serif"
+...

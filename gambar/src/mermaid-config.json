@@ -1,0 +1,6 @@
+{
+  "securityLevel": "loose",
+  "htmlLabels": false,
+  "flowchart": { "htmlLabels": false, "useMaxWidth": true },
+  "theme": "default"
+}

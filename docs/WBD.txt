@@ -1,0 +1,128 @@
+SISTOMATE - Sistem Otomasi Penyiraman dan Monitoring Kesehatan tanaman Tomat Berbasis Internet of Things.
+
+1. Sangat Subjektif (Biasa (Bias)): Mata manusia mudah tertipu pencahayaan. Pekerja A mungkin melihat daun tomat "masih hijau sehat", sementara Pekerja B melihatnya "mulai kekuningan". Tidak ada standar ukur pasti.
+
+2. Keterlambatan Penanganan: Mata manusia biasanya baru menyadari tanaman kekurangan nutrisi saat warna daun sudah berubah drastis (kuning pucat atau coklat). Saat itu terjadi, tanaman sudah terlanjur sakit parah.
+
+3. Keterbatasan Fisik: Pekebun harus berjalan keliling greenhouse setiap hari untuk mengecek ribuan tanaman satu per satu.
+
+4. Tidak Ada Catatan Historis: Pekebun tidak punya data riwayat kesehatan tanaman minggu lalu karena semuanya hanya diandalkan pada ingatan, sehingga sulit mengevaluasi efektivitas pupuk.
+
+pakek mysql terus gui nya dbbeaver - server mending jalan di laptop aja, minggu 3 erd,
+
+TCS34725 - sensor rgb, dht11, soil moisturizer
+
+
+Ringkasan command buat lain waktu:
+
+# Hidupkan phpMyAdmin (lengkap)
+sudo systemctl enable --now mysqld httpd
+
+# Cek sehat
+systemctl is-active mysqld httpd
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost/phpMyAdmin/
+
+# Buka
+xdg-open http://localhost/phpMyAdmin/
+
+# Kalau nginx nyangkut (konflik port :80)
+sudo systemctl disable --now nginx   # optional, biar gak gagal tiap boot
+
+sudo systemctl start mysqld nginx php-fpm; systemctl is-active mysqld nginx php-fpm; curl -s -o /dev/null -w "%{http_code}\n" http://localhost/phpMyAdmin/
+
+Bagian A — Reset ke skema m5 (sekali jalan, semua statement jadi satu paste):
+
+DROP TABLE IF EXISTS trans_pembelian;
+DROP TABLE IF EXISTS Master_barang;
+DROP TABLE IF EXISTS Pembeli;
+DROP TABLE IF EXISTS Distributor;
+
+CREATE TABLE Distributor (
+  idDistributor INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  Nama_distributor VARCHAR(45) NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE Pembeli (
+  idPembeli INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  Nama VARCHAR(45) NULL,
+  Alamat VARCHAR(45) NULL,
+  No_telp VARCHAR(45) NULL,
+  Tgl_lahir DATE NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE Master_barang (
+  id_barang INT(3) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  Nama_barang VARCHAR(25) NULL,
+  Harga_satuan INT(3) NULL,
+  Pajak INT(3) NULL,
+  Diskon INT(3) NULL,
+  Distributor_idDistributor INT NOT NULL,
+  CONSTRAINT fk_barang_distributor FOREIGN KEY (Distributor_idDistributor)
+    REFERENCES Distributor (idDistributor) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE trans_pembelian (
+  Pembeli_idPembeli INT NOT NULL,
+  Master_barang_id_barang INT(3) NOT NULL,
+  tgl_pembelian DATE NULL,
+  jumlah_beli INT(3) NULL,
+  PRIMARY KEY (Pembeli_idPembeli, Master_barang_id_barang),
+  CONSTRAINT fk_trans_pembeli FOREIGN KEY (Pembeli_idPembeli)
+    REFERENCES Pembeli (idPembeli) ON DELETE CASCADE,
+  CONSTRAINT fk_trans_barang FOREIGN KEY (Master_barang_id_barang)
+    REFERENCES Master_barang (id_barang) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+Bagian B — ACARA 21 (7 statement):
+
+-- 1-3: kasih AI PRIMARY KEY ke kolom kunci tiap tabel
+ALTER TABLE Master_barang CHANGE id_barang id_barang INT(10) AUTO_INCREMENT PRIMARY KEY;
+ALTER TABLE Distributor CHANGE idDistributor idDistributor INT(5) AUTO_INCREMENT PRIMARY KEY;
+ALTER TABLE Pembeli CHANGE idPembeli idPembeli INT(5) AUTO_INCREMENT PRIMARY KEY;
+
+-- 4a: index pendukung dulu (wajib sebelum PK komposit dilepas)
+ALTER TABLE trans_pembelian
+  ADD INDEX idx_pembeli (Pembeli_idPembeli),
+  ADD INDEX idx_barang (Master_barang_id_barang);
+
+-- 4b: lepas PK komposit + tambah id_trans_beli
+ALTER TABLE trans_pembelian
+  DROP PRIMARY KEY,
+  ADD id_trans_beli INT(5) AUTO_INCREMENT PRIMARY KEY;
+
+-- 5: rename kolom + index pencarian
+ALTER TABLE Master_barang CHANGE Harga_satuan harga_jual INT(4);
+ALTER TABLE Master_barang ADD INDEX idx_nama_barang (Nama_barang);
+
+-- 6: hapus kolom Tgl_lahir
+ALTER TABLE Pembeli DROP COLUMN Tgl_lahir;
+
+Bagian C — ACARA 22 (6 statement, 3 drop dulu baru 3 add):
+
+-- lepas constraint lama (RESTRICT dari acara 17)
+ALTER TABLE Master_barang DROP FOREIGN KEY fk_barang_distributor;
+ALTER TABLE trans_pembelian DROP FOREIGN KEY fk_trans_pembeli;
+ALTER TABLE trans_pembelian DROP FOREIGN KEY fk_trans_barang;
+
+-- bikin ulang dengan CASCADE
+ALTER TABLE Master_barang ADD CONSTRAINT id_distributor
+  FOREIGN KEY (Distributor_idDistributor) REFERENCES Distributor (idDistributor)
+  ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE trans_pembelian ADD CONSTRAINT idPembeli
+  FOREIGN KEY (Pembeli_idPembeli) REFERENCES Pembeli (idPembeli)
+  ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE trans_pembelian ADD CONSTRAINT id_barang
+  FOREIGN KEY (Master_barang_id_barang) REFERENCES Master_barang (id_barang)
+  ON DELETE CASCADE ON UPDATE CASCADE;
+
+Bagian D — Verifikasi (ini yang screenshot-nya kamu tempel):
+
+SELECT VERSION() AS versi_mysql;
+SHOW TABLES;
+SHOW CREATE TABLE Distributor;
+SHOW CREATE TABLE Pembeli;
+SHOW CREATE TABLE Master_barang;
+SHOW CREATE TABLE trans_pembelian;
+SHOW INDEX FROM trans_pembelian;

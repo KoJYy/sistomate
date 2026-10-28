@@ -1,0 +1,48 @@
+%% SISTOMATE — Flowchart logika (layout PARALEL supaya muat 1 halaman A4)
+%% Tiap siklus: baca sensor -> 4 aturan dievaluasi -> POST. Digambar paralel karena
+%% aturannya independen; di firmware code berurutan. Status = baca data siklus yg sama.
+%% Fertigasi pake jadwal MINGGUAN ideal (tm_wday) — bukti: ruling Bab 3.
+%% Render: npx -y @mermaid-js/mermaid-cli -i flowchart-logika.mmd -o ../flowchart-logika.png -b white -s 3
+flowchart TD
+    START([Mulai / Init:<br/>relay OFF, WiFi + NTP GMT+7]) --> READ["Baca sensor tiap 2 dtk<br/>soil % · suhu °C · RH · RGB daun"]
+
+    READ --> P{"Pompa air<br/>(histeresis soil)"}
+    READ --> K{"Kipas exhaust<br/>(histeresis suhu)"}
+    READ --> F{"Fertigasi<br/>Senin 07:00 · tm_wday"}
+    READ --> S{"Status tanaman"}
+
+    %% pompa
+    P -->|"< 40%"| P_ON["Pompa ON"]
+    P -->|"≥ 55%"| P_OFF["Pompa OFF"]
+    P -->|"40–55% · tahan"| P_H["Tahan status"]
+    P_ON --> POST
+    P_OFF --> POST
+    P_H --> POST
+
+    %% kipas
+    K -->|"> 32°C"| K_ON["Kipas ON"]
+    K -->|"≤ 31°C"| K_OFF["Kipas OFF"]
+    K -->|"31–32°C · tahan"| K_H["Tahan status"]
+    K_ON --> POST
+    K_OFF --> POST
+    K_H --> POST
+
+    %% fertigasi (interlock)
+    F -->|"Ya · soil ≥ 40%<br/>· belum dosis"| F_DOSE["Pompa pupuk ON 7 dtk<br/>interlock: batal bila soil < 40%<br/>anti-dobel 'fertkey'"]
+    F -->|"Tidak / kering<br/>/ sudah dosis"| F_SKIP["Lewati"]
+    F_DOSE --> POST
+    F_SKIP --> POST
+
+    %% status tanaman
+    S -->|"soil < 40%"| S_K["kering"]
+    S -->|"kipas ON (panas)"| S_L["layu"]
+    S -->|"G/R < 0.75 & R > 100"| S_S["sakit"]
+    S -->|"selainnya"| S_O["sehat"]
+    S_K --> POST
+    S_L --> POST
+    S_S --> POST
+    S_O --> POST
+
+    %% kirim + loop
+    POST["POST ke server<br/>sensor_logs tiap 2 dtk<br/>actuator_logs saat transisi relay"] --> W{"WiFi tersambung?"}
+    W -->|"Ya / retry"| READ

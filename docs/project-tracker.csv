@@ -1,0 +1,29 @@
+Task,Owner,Status,DEADLINE,CONTOH,HASIL,CATATAN
+Desain ERD & Skema Relasi Database,Yuda,SELESAI,2026-10-15,,chapters/bab3-hasil-pembahasan.md,5 tabel master & transaksi terpusat pada devices (MySQL)
+Implementasi Database MySQL & DDL Script,Yuda,SELESAI,2026-10-18,,sql/,Engine InnoDB FK CASCADE index (id_device recorded_at)
+Backend Ingestion API (ingest.php),Yuda,SELESAI,2026-10-21,,sistomate-firmware/ingest.php,Auth X-API-Key PDO prepared statement validasi JSON
+Pemrograman Firmware ESP32 (SISTOMATE.ino),Ibror,SELESAI,2026-10-22,,sistomate-firmware/SISTOMATE/,Histeresis soil (<40% ON / >=55% OFF) suhu (>32C ON / <=31C OFF) POST 2 dtk
+Sinkronisasi Fertigasi Pompa Pupuk,Ibror,SELESAI,2026-10-26,,Commit a780a23,Dosis 7 dtk jadwal Senin 07:00 NTP interlock soil >= 40% (Sari 2024)
+Pengujian Unit Hardware & Kalibrasi Sensor,Abiyu,SELESAI,2026-10-22,,sistomate-firmware/SKRIPT-DEMO.md,Demo gladi sukses; kalibrasi soil air=1500 kering=4095 TCS G/R=0.75
+Perancangan Skematik Wiring & Power Rails,Abiyu,SELESAI,2026-10-26,,gambar/skematik-alat.png,Catu daya terpisah: 5V adaptor beban + Common Ground rail (anti restart)
+Pembuatan Flowchart Logika Sistem,Tio,SELESAI,2026-10-26,,gambar/flowchart-logika.png,Format paralel muat 1 halaman A4; histeresis + fertigasi + 4 status tanaman
+Pembuatan Diagram Arsitektur Sistem 4-Layer,Yuda,SELESAI,2026-10-26,,gambar/arsitektur-sistem.png,ESP32 Edge -> Ingest PHP -> MySQL DB -> Web Dashboard
+Desain Prototipe Fisik Miniatur Greenhouse,Calvin,SELESAI,2026-10-26,,docs/prototype-plan.md,Tunnel busur 100x80x60 cm rangka hibrida kayu + pipa fleksibel PVC
+Pemodelan Parametrik 3D CAD (FreeCAD),Calvin,SELESAI,2026-10-27,,docs/cad/greenhouse.FCStd,Export master .step .stl dan snapshot render-isometric.png
+Panduan Perakitan Fisik (BOM & Cutting List),Calvin,SELESAI,2026-10-27,,docs/assembly-guide.md,Rincian 11 item belanja (~Rp 414.000) & SOP potong bahan pipa/kayu
+Belanja Bahan Perakitan Fisik,Semua Anggota,PROSESSSSS,2026-11-03,,docs/assembly-guide.md,Pipa PVC 1/2 inch kayu reng plastik PE bening relay 2-ch unit 2 kipas 80mm
+Perakitan Fisik Greenhouse & Instalasi Komponen,"Abiyu, Calvin, Ibror",PROSESSSSS,2026-11-08,,,Merakit rangka kotak kayu memasang busur pipa cover mika/plastik mounting sensor
+Dashboard Web Realtime Monitoring,Nabil,SELESAI,2026-10-22,,dashboard/index.html,Realtime Chart.js polling 5 dtk ringkasan harian log aktuator
+Desain Banner / Pamflet / Poster Proyek,Tio,PROSESSSSS,2026-11-10,,,Media promosi & pameran produk SISTOMATE
+Pengumpulan Jurnal Ilmiah Referensi,Semua Anggota,PROSESSSSS,2026-11-10,,references.bib,Masing-masing anak minimal 2 jurnal kredibel 8 tahun terbaru
+Penyusunan Laporan Akhir (Bab 1–4),Semua Anggota,PROSESSSSS,2026-11-15,,chapters/,Integrasi Bab 3 (DB + 3 Diagram) sudah masuk sisa kesimpulan & lampiran
+Pembuatan Slide Presentasi (PPT) Final,"Nabil, Tio",PROSESSSSS,2026-11-16,,,Canva / PowerPoint untuk demo presentasi dosen penguji
+Pengujian Integrasi End-to-End (UAT),Semua Anggota,PROSESSSSS,2026-11-18,,,Uji coba alat fisik di greenhouse mini terhubung ke live dashboard
+Gladi Bersih & Latihan Presentasi,Semua Anggota,OPSIONAL,2026-11-19,,,Simulasi demo di hadapan tim sebelum jadwal sidang/penilaian
+,,,,,,
+Yuda Maredya Ari Pratama,E43252953,,,,,
+Abiyu Ammar Hady,E43252782,,,,,
+Ibror Yusron S,E43252690,,,,,
+Moch Calvin Aprilian,E43252720,,,,,
+Nabil Laudza Nur,E43252939,,,,,
+Tio Dwi Harianto,E43252983,,,,,

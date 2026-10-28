@@ -1,0 +1,36 @@
+---
+title: |
+  SISTOMATE: SISTEM OTOMASI PENYIRAMAN DAN MONITORING
+  KESEHATAN TANAMAN TOMAT BERBASIS INTERNET OF THINGS
+subtitle: "Laporan Proyek Bersama: Workshop Basis Data & Workshop Sistem Tertanam"
+author:
+  - name: "Yuda Maredya Ari Pratama"
+    nim: "E43252953"
+    group: "B"
+  - name: "Abiyu Ammar Hady"
+    nim: "E43252782"
+    group: "B"
+  - name: "Ibror Yusron S"
+    nim: "E43252690"
+    group: "B"
+  - name: "Moch Calvin Aprilian"
+    nim: "E43252720"
+    group: "B"
+  - name: "Nabil Laudza Nur"
+    nim: "E43252939"
+    group: "B"
+  - name: "Tio Dwi Harianto"
+    nim: "E43252983"
+    group: "B"
+lecturer: "Zilvanhisna Emka Fitri, S.T., M.T., Nanik Anita Mukhlisoh, S.ST., M.T., & Yogiswara, S.T., M.T."
+lecturer_label: "Dosen Pengajar:"
+group_name: "Kelompok 3"
+group: "B"
+course: "Workshop Basis Data & Workshop Sistem Tertanam"
+institution: "Politeknik Negeri Jember"
+faculty: "Program Studi Teknologi Rekayasa Komputer"
+department: "Jurusan Teknologi Informasi"
+year: "2026/2027"
+date: "Oktober 2026"
+preset: "pedoman-jember"
+...

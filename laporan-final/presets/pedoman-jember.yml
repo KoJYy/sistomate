@@ -1,0 +1,27 @@
+# Preset: Politeknik Negeri Jember
+# Dihasilkan secara otomatis oleh scan-preset.py
+preset_id: "pedoman-jember"
+name: "Politeknik Negeri Jember"
+description: "Format otomatis hasil pemindaian pedoman akademik Politeknik Negeri Jember."
+
+# 1. Geometri & Margin Halaman
+margin_top: 4cm
+margin_bottom: 3cm
+margin_left: 4cm
+margin_right: 3cm
+
+# 2. Tipografi & Spasi
+font_family: "Libertinus Serif"
+font_size: 10pt
+line_spacing: 1.0em
+first_line_indent: 1.25cm
+
+# 3. Penomoran Heading
+heading_chapter_prefix: "BAB "
+heading_chapter_num_format: "arabic"
+heading_sub_dot: false
+heading_subsub_dot: false
+
+# 4. Pengaturan Halaman Sampul
+cover_show_lecturer: true
+cover_logo_width: 4cm
