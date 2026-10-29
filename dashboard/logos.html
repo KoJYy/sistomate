@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Showcase Logo - SISTOMATE</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  main { max-width: 1100px; margin: 40px auto 64px; padding: 0 24px; }
+  .lg-head { margin-bottom: 28px; }
+  .lg-head h1 { font-family: var(--serif); font-weight: 600; font-size: 2rem; letter-spacing: -.01em; }
+  .lg-head p { color: var(--muted); font-size: 17px; margin-top: 8px; text-wrap: pretty; max-width: 72ch; }
+
+  .lg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .lg-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; box-shadow: 0 1px 2px rgba(22, 36, 27, .05); display: flex; flex-direction: column; gap: 16px; }
+  .lg-card h2 { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; }
+  .lg-card .desc { color: var(--muted); font-size: 15.5px; text-wrap: pretty; }
+
+  .lg-stage { display: grid; place-items: center; padding: 24px 0; background: var(--bg); border: 1px solid var(--line-soft); border-radius: 12px; }
+  .lg-stage img { width: 96px; height: 96px; }
+
+  /* deretan skala: 16, 24, 48, 96 px */
+  .lg-scale { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  .lg-step { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .lg-step img { display: block; }
+  .lg-step .px { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .s16 img { width: 16px; height: 16px; }
+  .s24 img { width: 24px; height: 24px; }
+  .s48 img { width: 48px; height: 48px; }
+  .s96 img { width: 96px; height: 96px; }
+
+  .lg-file { font-size: 14.5px; color: var(--muted); font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+  .lg-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; }
+  .lg-actions .btn { font-size: 15px; padding: 10px 18px; }
+  .lg-note { margin-top: 28px; font-size: 15.5px; color: var(--muted); text-wrap: pretty; max-width: 72ch; }
+  .lg-note code { background: var(--line-soft); border-radius: 6px; padding: 1px 6px; font-size: 14.5px; }
+
+  @media (max-width: 860px) {
+    .lg-grid { grid-template-columns: 1fr; }
+    .lg-scale { justify-content: center; gap: 24px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="lg-head">
+    <h1>Logo SISTOMATE</h1>
+    <p>Tiga opsi logo berbobot untuk identitas SISTOMATE: siluet solid mass dengan
+      negative space, bukan garis lidi. Semua berkas SVG mandiri, terbaca dari 16px
+      sampai 96px di latar terang maupun gelap, warna sage #167D47. Pilih opsi lalu
+      pakai tombol Salin SVG untuk menempelkannya di mana pun.</p>
+  </header>
+
+  <section class="lg-grid">
+    <article class="lg-card">
+      <h2>Opsi A &middot; The Botanical Crest</h2>
+      <p class="desc">Siluet buah tomat berbobot penuh dengan kilau lembut sisi kiri,
+        mahkota kaliks lima daun mekar berbobot, dan nodus sensor IoT di pusat kaliks.
+        Default aktif di seluruh halaman.</p>
+      <div class="lg-stage"><img src="logo-a.svg" alt="Logo Opsi A - Star Calyx"></div>
+      <div class="lg-scale">
+        <div class="lg-step s16"><img src="logo-a.svg" alt="Opsi A 16px"><span class="px">16px</span></div>
+        <div class="lg-step s24"><img src="logo-a.svg" alt="Opsi A 24px"><span class="px">24px</span></div>
+        <div class="lg-step s48"><img src="logo-a.svg" alt="Opsi A 48px"><span class="px">48px</span></div>
+        <div class="lg-step s96"><img src="logo-a.svg" alt="Opsi A 96px"><span class="px">96px</span></div>
+      </div>
+      <div class="lg-file">dashboard/logo-a.svg</div>
+      <div class="lg-actions">
+        <button type="button" class="btn" data-src="logo-a.svg">Salin SVG</button>
+        <a class="btn ghost" href="logo-a.svg" download>Unduh</a>
+      </div>
+    </article>
+
+    <article class="lg-card">
+      <h2>Opsi B &middot; Monogram S-Flora</h2>
+      <p class="desc">Huruf S tebal mengalir: kurva atas mekar menjadi daun tomat dengan
+        aksen kilau, kurva bawah melengkung menjadi buah tomat padat, nodus sensor
+        bertitik kilau di pusat kurva.</p>
+      <div class="lg-stage"><img src="logo-b.svg" alt="Logo Opsi B - Precision Core"></div>
+      <div class="lg-scale">
+        <div class="lg-step s16"><img src="logo-b.svg" alt="Opsi B 16px"><span class="px">16px</span></div>
+        <div class="lg-step s24"><img src="logo-b.svg" alt="Opsi B 24px"><span class="px">24px</span></div>
+        <div class="lg-step s48"><img src="logo-b.svg" alt="Opsi B 48px"><span class="px">48px</span></div>
+        <div class="lg-step s96"><img src="logo-b.svg" alt="Opsi B 96px"><span class="px">96px</span></div>
+      </div>
+      <div class="lg-file">dashboard/logo-b.svg</div>
+      <div class="lg-actions">
+        <button type="button" class="btn" data-src="logo-b.svg">Salin SVG</button>
+        <a class="btn ghost" href="logo-b.svg" download>Unduh</a>
+      </div>
+    </article>
+
+    <article class="lg-card">
+      <h2>Opsi C &middot; The Agritech Shield</h2>
+      <p class="desc">Perisai kontur tomat padat berisi irisan daging buah negative space,
+        empat nodus sensor telemetri sebagai biji lokul, dan mahkota tiga kelopak
+        bintang di puncak perisai.</p>
+      <div class="lg-stage"><img src="logo-c.svg" alt="Logo Opsi C - Tri-Calyx Axis"></div>
+      <div class="lg-scale">
+        <div class="lg-step s16"><img src="logo-c.svg" alt="Opsi C 16px"><span class="px">16px</span></div>
+        <div class="lg-step s24"><img src="logo-c.svg" alt="Opsi C 24px"><span class="px">24px</span></div>
+        <div class="lg-step s48"><img src="logo-c.svg" alt="Opsi C 48px"><span class="px">48px</span></div>
+        <div class="lg-step s96"><img src="logo-c.svg" alt="Opsi C 96px"><span class="px">96px</span></div>
+      </div>
+      <div class="lg-file">dashboard/logo-c.svg</div>
+      <div class="lg-actions">
+        <button type="button" class="btn" data-src="logo-c.svg">Salin SVG</button>
+        <a class="btn ghost" href="logo-c.svg" download>Unduh</a>
+      </div>
+    </article>
+  </section>
+
+  <p class="lg-note">Berkas aktif saat ini: <code>logo.svg</code> (salinan Opsi A) dipakai sebagai
+    default, <code>favicon.svg</code> untuk tab browser. Untuk ganti opsi, salin isi SVG opsi
+    pilihan ke berkas tersebut.</p>
+</main>
+<script>
+document.querySelectorAll('button[data-src]').forEach(function (b) {
+  b.addEventListener('click', async function () {
+    var original = 'Salin SVG';
+    try {
+      var r = await fetch(b.dataset.src);
+      var t = await r.text();
+      await navigator.clipboard.writeText(t);
+      b.textContent = 'Tersalin!';
+    } catch (e) {
+      b.textContent = 'Gagal, coba Unduh';
+    }
+    setTimeout(function () { b.textContent = original; }, 1600);
+  });
+});
+</script>
+</body>
+</html>

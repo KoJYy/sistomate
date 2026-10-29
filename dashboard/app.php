@@ -31,6 +31,7 @@ $cfgJs = [
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SISTOMATE - Monitor Tanaman Tomat</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,600;1,9..144,700&display=swap" rel="stylesheet">
@@ -82,8 +83,9 @@ $cfgJs = [
   .brand-group { display: flex; align-items: center; gap: 24px; }
   /* sisi kanan: [live] + nama user + logout */
   .header-right { display: flex; align-items: center; gap: 16px; }
-  .brand { font-weight: 700; letter-spacing: .02em; font-size: 20px; }
-  .brand span { color: var(--muted); font-weight: 500; margin-left: 10px; font-size: 15px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; font-size: 20px; }
+  .brand span { color: var(--muted); font-weight: 500; font-size: 15px; }
+  .brand-logo { width: 24px; height: 24px; flex-shrink: 0; color: var(--sehat); }
   .live { display: flex; align-items: center; gap: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .live b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 14.5px; }
   .dot {

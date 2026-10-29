@@ -26,3 +26,4 @@ history-*.md
 *.tmp
 dist/
 tools/
+!dashboard/*.html
