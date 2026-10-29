@@ -186,7 +186,7 @@ $cfgJs = [
   h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
 
   /* tile aktuator */
-  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .tile {
     background: var(--bg);
     border: 1px solid var(--line-soft);
@@ -384,6 +384,12 @@ $cfgJs = [
         <div class="act-last" id="pompa-last">-</div>
       </div>
       <div class="tile">
+        <div class="act-name">Pompa Pupuk</div>
+        <div class="big" id="pupuk-big">-</div>
+        <span class="chip" id="pupuk-state">-</span>
+        <div class="act-last" id="pupuk-last">-</div>
+      </div>
+      <div class="tile">
         <div class="act-name">Kipas Exhaust</div>
         <div class="big" id="kipas-big">-</div>
         <span class="chip" id="kipas-state">-</span>
@@ -578,7 +584,7 @@ $cfgJs = [
       const k = norm(a.actuator_name);
       if (!byName[k]) byName[k] = a;
     });
-    [['Pompa Air', 'pompa'], ['Kipas Exhaust', 'kipas']].forEach(([name, key]) => {
+    [['Pompa Air', 'pompa'], ['Pompa Pupuk', 'pupuk'], ['Kipas Exhaust', 'kipas']].forEach(([name, key]) => {
       const a = byName[norm(name)];
       const st = a ? a.status : '-';
       const big = $(key + '-big');

@@ -10,28 +10,30 @@
 <link rel="stylesheet" href="theme.css">
 <style>
   /* landing khusus: mengikuti pola app.php (.status-card/.panel/.pill/.btn) */
+  body { max-width: 1240px; } /* override theme.css (1080px) khusus landing */
   .lp-hero {
     background: rgba(27, 158, 90, .1);
     border: 1px solid var(--line);
     border-radius: 20px;
-    padding: 56px 40px;
+    padding: 64px 48px;
     margin: 14px 0;
     text-align: center;
   }
-  .lp-kicker { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .lp-kicker { font-size: 14px; color: var(--muted); margin-bottom: 12px; letter-spacing: .04em; }
   .lp-hero h1 {
     font-family: var(--serif);
     font-weight: 700;
-    font-size: clamp(2.6rem, 7vw, 4.4rem);
-    line-height: 1.05;
+    font-size: clamp(3rem, 8vw, 5.2rem);
+    line-height: 1.02;
     letter-spacing: -.02em;
     color: var(--sehat);
-    margin-bottom: 14px;
+    margin-bottom: 18px;
   }
   .lp-hero p.lead {
-    max-width: 640px;
-    margin: 0 auto 24px;
-    font-size: 16px;
+    max-width: 760px;
+    margin: 0 auto 28px;
+    font-size: 17px;
+    line-height: 1.6;
     color: var(--ink);
   }
   .lp-cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
@@ -40,19 +42,30 @@
     background: transparent;
     border: 1px solid var(--line);
   }
-  .lp-emoji { font-size: 3.4rem; line-height: 1; margin-bottom: 12px; }
+  /* ikon garis SVG (pengganti emoji) */
+  .lp-heroicon {
+    width: 88px; height: 88px;
+    margin-bottom: 16px;
+    stroke: var(--sehat); fill: none;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .ico {
+    width: 30px; height: 30px;
+    stroke: var(--sehat); fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  }
 
-  section.lp { padding: 44px 0 8px; }
+  section.lp { padding: 48px 0 8px; }
   section.lp > h2 {
     font-family: var(--serif);
     font-weight: 600;
-    font-size: 1.8rem;
+    font-size: 2rem;
     letter-spacing: -.01em;
     color: var(--ink);
     text-align: center;
     margin-bottom: 6px;
   }
-  section.lp > p.sub { text-align: center; color: var(--muted); font-size: 13.5px; margin-bottom: 24px; }
+  section.lp > p.sub { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 26px; }
 
   .lp-grid { display: grid; gap: 14px; }
   .lp-grid.g4 { grid-template-columns: repeat(4, 1fr); }
@@ -73,8 +86,8 @@
   .card-solusi p.solusi { font-size: 13px; margin: 0; }
   .card-solusi p.solusi b { color: var(--sehat); }
 
-  .hw-card { text-align: center; padding: 18px 14px; }
-  .hw-card .ico { font-size: 1.9rem; line-height: 1; margin-bottom: 8px; }
+  .hw-card { text-align: center; padding: 20px 14px; }
+  .hw-card .ico { display: block; margin: 0 auto 10px; }
   .hw-card b { display: block; font-size: 13.5px; }
   .hw-card span { font-size: 12px; color: var(--muted); }
 
@@ -83,9 +96,15 @@
   .layer p { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
 
   .team-card { text-align: center; padding: 18px 12px; }
-  .team-card .ico { font-size: 1.9rem; line-height: 1; margin-bottom: 8px; }
-  .team-card b { display: block; font-size: 13px; }
-  .team-card .role { font-size: 12px; color: var(--muted); }
+  .team-card b { display: block; font-size: 13.5px; line-height: 1.35; }
+  .team-card .nim {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .04em;
+  }
 
   .lp-footer {
     margin-top: 40px;
@@ -98,7 +117,7 @@
 
   @media (max-width: 760px) {
     .lp-grid.g4, .lp-grid.g6, .lp-grid.g2 { grid-template-columns: 1fr 1fr; }
-    .lp-hero { padding: 40px 22px; }
+    .lp-hero { padding: 44px 22px; }
   }
   @media (max-width: 480px) {
     .lp-grid.g4, .lp-grid.g6 { grid-template-columns: 1fr; }
@@ -121,7 +140,13 @@
 
 <!-- HERO -->
 <section class="lp-hero">
-  <div class="lp-emoji">&#127813;&#127807;</div>
+  <svg class="lp-heroicon" viewBox="0 0 64 64" aria-hidden="true">
+    <path d="M12 56V28L32 8l20 20v28"/>
+    <path d="M8 56h48"/>
+    <path d="M32 56V36"/>
+    <path d="M32 36c-7 0-11-4.5-11-11 7 0 11 4.5 11 11z"/>
+    <path d="M32 36c7 0 11-4.5 11-11-7 0-11 4.5-11 11z"/>
+  </svg>
   <div class="lp-kicker">Internet of Things &middot; Basis Data Relasional</div>
   <h1>SISTOMATE</h1>
   <p class="lead">
@@ -131,7 +156,7 @@
     dan dashboard real-time dalam satu kesatuan.
   </p>
   <div class="lp-cta">
-    <a href="login.php" class="btn">&#128640; Buka Dashboard</a>
+    <a href="login.php" class="btn">Buka Dashboard</a>
     <a href="#masalah" class="btn ghost">Pelajari Lebih Lanjut</a>
   </div>
 </section>
@@ -182,27 +207,46 @@
   <p class="sub">Greenhouse mini 100&times;80&times;60 cm dengan enam komponen inti.</p>
   <div class="lp-grid g6">
     <div class="panel hw-card">
-      <div class="ico">&#129504;</div><b>ESP32</b>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="7" y="7" width="10" height="10" rx="1.5"/>
+        <path d="M9.5 3v4M14.5 3v4M9.5 17v4M14.5 17v4M3 9.5h4M3 14.5h4M17 9.5h4M17 14.5h4"/>
+      </svg><b>ESP32</b>
       <span>Mikrokontroler Wi-Fi</span>
     </div>
     <div class="panel hw-card">
-      <div class="ico">&#127752;</div><b>TCS34725</b>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
+        <circle cx="12" cy="12" r="2.5"/>
+      </svg><b>TCS34725</b>
       <span>Sensor warna RGB daun (I2C)</span>
     </div>
     <div class="panel hw-card">
-      <div class="ico">&#127777;&#65039;</div><b>DHT11</b>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0z"/>
+        <path d="M12 9.5v5"/>
+      </svg><b>DHT11</b>
       <span>Suhu &amp; kelembapan udara</span>
     </div>
     <div class="panel hw-card">
-      <div class="ico">&#128167;</div><b>Soil Kapasitif</b>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3s6 6.5 6 11a6 6 0 1 1-12 0c0-4.5 6-11 6-11z"/>
+        <path d="M9 14.5a3 3 0 0 0 3 3"/>
+      </svg><b>Soil Kapasitif</b>
       <span>Kelembapan tanah (GPIO34)</span>
     </div>
     <div class="panel hw-card">
-      <div class="ico">&#9889;</div><b>Relay 4 Kanal</b>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>
+      </svg><b>Relay 4 Kanal</b>
       <span>Pompa air, pompa pupuk, kipas, cadangan</span>
     </div>
     <div class="panel hw-card">
-      <div class="ico">&#127968;</div><b>Greenhouse Mini</b>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 21V10L12 3l8 7v11"/>
+        <path d="M2.5 21h19"/>
+        <path d="M12 21v-6"/>
+        <path d="M12 15c-2.5 0-4-1.6-4-4 2.5 0 4 1.6 4 4z"/>
+      </svg><b>Greenhouse Mini</b>
       <span>Rangka 100&times;80&times;60 cm</span>
     </div>
   </div>
@@ -243,32 +287,32 @@
     Politeknik Negeri Jember.</p>
   <div class="lp-grid g6">
     <div class="panel team-card">
-      <div class="ico">&#128451;&#65039;</div><b>Yuda Maredya A. P.</b>
-      <span class="role">Database</span>
+      <b>Yuda Maredya A. P.</b>
+      <span class="nim">E43252953</span>
     </div>
     <div class="panel team-card">
-      <div class="ico">&#128295;</div><b>Abiyu Ammar Hady</b>
-      <span class="role">Hardware</span>
+      <b>Abiyu Ammar Hady</b>
+      <span class="nim">E43252782</span>
     </div>
     <div class="panel team-card">
-      <div class="ico">&#128187;</div><b>Ibror Yusron S.</b>
-      <span class="role">Firmware</span>
+      <b>Ibror Yusron S.</b>
+      <span class="nim">E43252690</span>
     </div>
     <div class="panel team-card">
-      <div class="ico">&#129482;</div><b>Moch Calvin A.</b>
-      <span class="role">3D CAD</span>
+      <b>Moch Calvin Aprilian</b>
+      <span class="nim">E43252720</span>
     </div>
     <div class="panel team-card">
-      <div class="ico">&#127912;</div><b>Nabil Laudza N.</b>
-      <span class="role">Frontend</span>
+      <b>Nabil Laudza Nur</b>
+      <span class="nim">E43252939</span>
     </div>
     <div class="panel team-card">
-      <div class="ico">&#128221;</div><b>Tio Dwi H.</b>
-      <span class="role">Dokumentasi</span>
+      <b>Tio Dwi Harianto</b>
+      <span class="nim">E43252983</span>
     </div>
   </div>
   <div class="lp-cta" style="margin-top:24px">
-    <a href="login.php" class="btn">&#128640; Buka Dashboard</a>
+    <a href="login.php" class="btn">Buka Dashboard</a>
   </div>
 </section>
 
