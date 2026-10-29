@@ -59,12 +59,12 @@ $cfgJs = [
     background: var(--bg);
     color: var(--ink);
     font-family: var(--sans);
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    max-width: 1320px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 24px 56px;
+    padding: 0 32px 64px;
   }
   :focus-visible { outline: 2px solid var(--sehat); outline-offset: 2px; }
 
@@ -74,14 +74,18 @@ $cfgJs = [
     justify-content: space-between;
     align-items: center;
     padding: 18px 0 14px;
-    font-size: 14.5px;
+    font-size: 15px;
     gap: 14px;
     flex-wrap: wrap;
   }
-  .brand { font-weight: 700; letter-spacing: .02em; font-size: 16px; }
-  .brand span { color: var(--muted); font-weight: 500; margin-left: 10px; font-size: 14px; }
+  /* sisi kiri: brand + nav pil terkunci berdampingan (posisi nav tak melompat) */
+  .brand-group { display: flex; align-items: center; gap: 24px; }
+  /* sisi kanan: [live] + nama user + logout */
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .brand { font-weight: 700; letter-spacing: .02em; font-size: 20px; }
+  .brand span { color: var(--muted); font-weight: 500; margin-left: 10px; font-size: 15px; }
   .live { display: flex; align-items: center; gap: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .live b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 13.5px; }
+  .live b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 14.5px; }
   .dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--sehat);
@@ -91,11 +95,11 @@ $cfgJs = [
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 
   /* navigasi utama */
-  .navbar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .navbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .navbar a {
     color: var(--muted);
     text-decoration: none;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     padding: 6px 13px;
     border-radius: 999px;
@@ -103,7 +107,17 @@ $cfgJs = [
   }
   .navbar a:hover { background: var(--line-soft); color: var(--ink); }
   .navbar a.on { background: var(--ink); color: var(--bg); font-weight: 600; }
-  .navbar .uname { color: var(--muted); font-size: 14px; padding: 0 8px; }
+  .uname { color: var(--muted); font-size: 15.5px; padding: 0 8px; }
+  .logout {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 6px 13px;
+    border-radius: 999px;
+    transition: background .15s, color .15s;
+  }
+  .logout:hover { background: var(--line-soft); color: var(--ink); }
 
   /* hero: kartu status bertint + 3 kartu metrik */
   .hero { display: grid; gap: 14px; padding: 14px 0 8px; }
@@ -119,13 +133,13 @@ $cfgJs = [
     gap: 24px;
   }
   .status-why { text-align: right; max-width: 270px; margin-bottom: 10px; }
-  .status-why span { font-size: 14px; color: var(--muted); }
-  .status-why p { font-size: 15.5px; line-height: 1.45; margin-top: 4px; }
-  .status-kicker { font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+  .status-why span { font-size: 15px; color: var(--muted); }
+  .status-why p { font-size: 17px; line-height: 1.45; margin-top: 4px; }
+  .status-kicker { font-size: 16px; color: var(--muted); margin-bottom: 6px; }
   .status-word {
     font-family: var(--sans);
     font-weight: 700;
-    font-size: clamp(3.4rem, 9vw, 6rem);
+    font-size: clamp(5rem, 12vw, 8rem);
     line-height: 1;
     letter-spacing: -.03em;
     color: var(--sehat);
@@ -144,9 +158,9 @@ $cfgJs = [
     display: flex; justify-content: space-between; align-items: baseline;
     margin-bottom: 10px;
   }
-  .metric .label { font-size: 14px; color: var(--muted); }
+  .metric .label { font-size: 15px; color: var(--muted); }
   .metric .value {
-    font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+    font-size: clamp(3rem, 4vw, 3.5rem);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     letter-spacing: -.02em;
@@ -155,16 +169,16 @@ $cfgJs = [
   .metric .value small { font-size: .48em; font-weight: 600; color: var(--muted); margin-left: 2px; }
 
   /* gauge ambang histeresis */
-  .track { position: relative; height: 7px; background: var(--line-soft); border-radius: 4px; overflow: visible; }
+  .track { position: relative; height: 12px; background: var(--line-soft); border-radius: 4px; overflow: visible; }
   .zone { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
   .needle {
-    position: absolute; top: -4px; bottom: -4px; width: 3px;
+    position: absolute; top: -4px; bottom: -4px; width: 4px;
     background: var(--ink);
     border-radius: 2px;
     transition: left .8s cubic-bezier(.2, .7, .3, 1);
   }
   .tick { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .55; }
-  .amb { font-size: 12.5px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .amb { font-size: 15px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
 
   /* dua kolom: aktuator + riwayat */
   .pair {
@@ -183,7 +197,7 @@ $cfgJs = [
   /* panel dalam .pair ikut tinggi baris grid */
   .pair .panel { display: flex; flex-direction: column; }
   .pair .panel .tiles { flex: 1; }
-  h2 { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
+  h2 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
 
   /* tile aktuator */
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -195,9 +209,9 @@ $cfgJs = [
     display: flex;
     flex-direction: column;
   }
-  .tile .act-name { font-size: 14.5px; font-weight: 600; }
+  .tile .act-name { font-size: 16px; font-weight: 600; }
   .tile .big {
-    font-size: 1.9rem;
+    font-size: 2.4rem;
     font-weight: 700;
     letter-spacing: -.02em;
     line-height: 1.15;
@@ -205,11 +219,11 @@ $cfgJs = [
     transition: color .25s;
   }
   .tile .big.on { color: var(--on); }
-  .tile .act-last { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: auto; padding-top: 8px; }
+  .tile .act-last { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: auto; padding-top: 8px; }
   .chip {
     display: inline-block;
     align-self: flex-start;
-    font-size: 12.5px; font-weight: 700; letter-spacing: .05em;
+    font-size: 14px; font-weight: 700; letter-spacing: .05em;
     padding: 3px 11px;
     border-radius: 999px;
     background: var(--line-soft);
@@ -219,11 +233,11 @@ $cfgJs = [
   }
   .chip.on { background: var(--on); color: #fff; }
 
-  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
   td { padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
   tr:last-child td { border-bottom: 0; }
   td.t { color: var(--muted); font-variant-numeric: tabular-nums; width: 92px; }
-  td.st { text-align: right; width: 64px; font-weight: 700; font-size: 13.5px; }
+  td.st { text-align: right; width: 64px; font-weight: 700; font-size: 14.5px; }
   .st-on { color: var(--on); }
   .st-off { color: var(--muted); }
 
@@ -234,21 +248,21 @@ $cfgJs = [
     display: flex; justify-content: space-between; align-items: baseline;
     margin-bottom: 8px;
   }
-  .spark-head .name { font-size: 14px; color: var(--muted); }
+  .spark-head .name { font-size: 15px; color: var(--muted); }
   .spark-head .now {
     font-size: clamp(1.25rem, 2.2vw, 1.6rem); font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
   .spark-head .now small { font-size: .55em; color: var(--muted); font-weight: 600; }
-  svg.spark { display: block; width: 100%; height: 84px; background: var(--bg); border: 1px solid var(--line-soft); border-radius: 10px; }
-  .axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  svg.spark { display: block; width: 100%; height: 130px; background: var(--bg); border: 1px solid var(--line-soft); border-radius: 10px; }
+  .axis { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
   /* sumbu: label Y HTML di kiri (SVG stretched, teks di dlm viewBox bakal melar) */
   .chart { display: flex; gap: 8px; }
   .yax {
     display: flex; flex-direction: column; justify-content: space-between;
     align-items: flex-end; flex: none;
-    width: 46px; height: 84px; padding: 3px 0 9px;
-    font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums;
+    width: 46px; height: 130px; padding: 3px 0 9px;
+    font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums;
   }
   .plot { flex: 1; min-width: 0; }
 
@@ -262,17 +276,17 @@ $cfgJs = [
     padding: 14px 16px 16px;
     box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
   }
-  .rgb .label { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--muted); margin-bottom: 9px; }
-  .rgb .label b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.15rem; }
-  .bar { height: 12px; background: var(--line-soft); border-radius: 6px; overflow: hidden; }
+  .rgb .label { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; color: var(--muted); margin-bottom: 9px; }
+  .rgb .label b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.5rem; }
+  .bar { height: 16px; background: var(--line-soft); border-radius: 6px; overflow: hidden; }
   .bar div { height: 100%; border-radius: 6px; transition: width .8s cubic-bezier(.2, .7, .3, 1); }
   .verdict {
     display: inline-block;
-    font-size: 14.5px; font-weight: 600;
+    font-size: 16px; font-weight: 600;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 999px;
-    padding: 8px 18px;
+    padding: 10px 24px;
     box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
   }
 
@@ -280,7 +294,7 @@ $cfgJs = [
     margin-top: 18px;
     padding-top: 16px;
     border-top: 1px solid var(--line);
-    font-size: 13.5px; color: var(--muted);
+    font-size: 14.5px; color: var(--muted);
     display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
   }
 
@@ -293,12 +307,13 @@ $cfgJs = [
 
   @media (max-width: 760px) {
     .brand span { display: none; }
-    .navbar { order: 3; width: 100%; overflow-x: auto; }
+    .brand-group { flex-wrap: wrap; width: 100%; }
+    .navbar { width: 100%; overflow-x: auto; }
     .metrics, .sparks, .rgb-grid, .tiles { grid-template-columns: 1fr; }
     .pair { grid-template-columns: 1fr; gap: 14px; }
     .status-card { padding: 22px 22px 24px; flex-direction: column; align-items: flex-start; gap: 14px; }
     .status-why { text-align: left; margin-bottom: 0; max-width: none; }
-    .status-word { font-size: clamp(3.2rem, 16vw, 4.6rem); }
+    .status-word { font-size: clamp(4rem, 14vw, 6rem); }
   }
   @media (prefers-reduced-motion: reduce) {
     .dot { animation: none; }
@@ -309,21 +324,7 @@ $cfgJs = [
 </head>
 <body>
 
-<header>
-  <div class="brand">SISTOMATE <span>greenhouse tomat</span></div>
-  <nav class="navbar">
-    <a href="app.php" class="on">Dashboard</a>
-    <a href="history.php">Riwayat</a>
-    <a href="settings.php">Pengaturan</a>
-    <span class="uname">👤 <?= e($user['name']) ?></span>
-    <a href="logout.php">Logout</a>
-  </nav>
-  <div class="live">
-    <span class="dot" id="dot"></span>
-    <b id="livetxt">LIVE</b>
-    <span id="clock">--:--:--</span>
-  </div>
-</header>
+<?= navbar('app', $user['name'], true) ?>
 
 <section class="hero">
   <div class="status-card" id="statusCard">

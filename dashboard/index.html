@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="theme.css">
 <style>
   /* landing khusus: mengikuti pola app.php (.status-card/.panel/.pill/.btn) */
-  body { max-width: 1240px; } /* override theme.css (1080px) khusus landing */
+  body { max-width: 1400px; } /* override theme.css khusus landing */
   .lp-hero {
     background: rgba(27, 158, 90, .1);
     border: 1px solid var(--line);
@@ -23,20 +23,21 @@
   .lp-hero h1 {
     font-family: var(--serif);
     font-weight: 700;
-    font-size: clamp(3rem, 8vw, 5.2rem);
+    font-size: clamp(4rem, 9vw, 7rem);
     line-height: 1.02;
     letter-spacing: -.02em;
     color: var(--sehat);
     margin-bottom: 18px;
   }
   .lp-hero p.lead {
-    max-width: 760px;
+    max-width: 840px;
     margin: 0 auto 28px;
-    font-size: 17px;
+    font-size: 18px;
     line-height: 1.6;
     color: var(--ink);
   }
   .lp-cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .lp-cta .btn { font-size: 17px; padding: 16px 32px; }
   .lp-cta .btn.ghost {
     color: var(--ink);
     background: transparent;
@@ -59,48 +60,48 @@
   section.lp > h2 {
     font-family: var(--serif);
     font-weight: 600;
-    font-size: 2rem;
+    font-size: 2.4rem;
     letter-spacing: -.01em;
     color: var(--ink);
     text-align: center;
     margin-bottom: 6px;
   }
-  section.lp > p.sub { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 26px; }
+  section.lp > p.sub { text-align: center; color: var(--muted); font-size: 17px; margin-bottom: 26px; }
 
   .lp-grid { display: grid; gap: 14px; }
   .lp-grid.g4 { grid-template-columns: repeat(4, 1fr); }
   .lp-grid.g6 { grid-template-columns: repeat(6, 1fr); }
   .lp-grid.g2 { grid-template-columns: repeat(2, 1fr); }
 
-  .card-solusi { display: flex; flex-direction: column; gap: 8px; }
+  .card-solusi { display: flex; flex-direction: column; gap: 8px; padding: 28px; }
   .card-head { display: flex; align-items: center; gap: 10px; }
   .num-pill {
     display: inline-grid; place-items: center;
     width: 26px; height: 26px; flex: none;
     border-radius: 999px;
     background: var(--sehat); color: #fff;
-    font-size: 12.5px; font-weight: 700;
+    font-size: 14px; font-weight: 700;
   }
-  .card-head h3 { font-size: 14px; font-weight: 700; color: var(--ink); }
-  .card-solusi p.desc { font-size: 13px; color: var(--muted); }
-  .card-solusi p.solusi { font-size: 13px; margin: 0; }
+  .card-head h3 { font-size: 20px; font-weight: 700; color: var(--ink); }
+  .card-solusi p.desc { font-size: 17px; color: var(--muted); }
+  .card-solusi p.solusi { font-size: 17px; margin: 0; }
   .card-solusi p.solusi b { color: var(--sehat); }
 
-  .hw-card { text-align: center; padding: 20px 14px; }
+  .hw-card { text-align: center; padding: 24px 16px; }
   .hw-card .ico { display: block; margin: 0 auto 10px; }
-  .hw-card b { display: block; font-size: 13.5px; }
-  .hw-card span { font-size: 12px; color: var(--muted); }
+  .hw-card b { display: block; font-size: 14.5px; }
+  .hw-card span { font-size: 14px; color: var(--muted); }
 
   .layer { border-left: 3px solid var(--sehat); }
-  .layer b.lyr { font-size: 13.5px; color: var(--ink); }
-  .layer p { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+  .layer b.lyr { font-size: 18px; color: var(--ink); }
+  .layer p { font-size: 16px; color: var(--muted); margin: 6px 0 0; }
 
-  .team-card { text-align: center; padding: 18px 12px; }
-  .team-card b { display: block; font-size: 13.5px; line-height: 1.35; }
+  .team-card { text-align: center; padding: 22px 16px; }
+  .team-card b { display: block; font-size: 18px; line-height: 1.35; }
   .team-card .nim {
     display: block;
     margin-top: 6px;
-    font-size: 13px;
+    font-size: 15.5px;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
     letter-spacing: .04em;
@@ -111,7 +112,7 @@
     padding-top: 16px;
     border-top: 1px solid var(--line);
     text-align: center;
-    font-size: 12.5px;
+    font-size: 14px;
     color: var(--muted);
   }
 

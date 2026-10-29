@@ -53,22 +53,39 @@ function current_user(): array
 }
 
 // Bagian navbar bersama (aktif = halaman berjalan). Tema Archivo/sage.
-function navbar(string $active, string $userName): string
+// Single source of truth utk SEMUA halaman (app/history/settings) -> posisi nav
+// TERKUNCI sama (tak melompat). Struktur flex 2 sisi:
+//   kiri  .brand-group = brand + nav pil BERDAMPINGAN (gap 24px)
+//   kanan .header-right = [slot live bila $live] + nama user + Logout
+// $live=true hanya di app.php: render elemen dgn id clock/dot/livetxt persis
+// agar JS app.php (setInterval jam + indikator koneksi) tetap menemukannya.
+function navbar(string $active, string $userName, bool $live = false): string
 {
     $items = [
         'app'      => ['app.php',      'Dashboard'],
         'history'  => ['history.php',  'Riwayat'],
         'settings' => ['settings.php', 'Pengaturan'],
     ];
-    $html = '';
+    $nav = '';
     foreach ($items as $key => [$href, $label]) {
         $cls = $key === $active ? ' class="on"' : '';
-        $html .= '<a href="' . $href . '"' . $cls . '>' . e($label) . '</a>';
+        $nav .= '<a href="' . $href . '"' . $cls . '>' . e($label) . '</a>';
     }
-    $html .= '<span class="uname">&#128100; ' . e($userName) . '</span>';
-    $html .= '<a href="logout.php">Logout</a>';
+    $right = '';
+    if ($live) {
+        $right .= '<div class="live">'
+            . '<span class="dot" id="dot"></span>'
+            . '<b id="livetxt">LIVE</b>'
+            . '<span id="clock">--:--:--</span>'
+            . '</div>';
+    }
+    $right .= '<span class="uname">&#128100; ' . e($userName) . '</span>';
+    $right .= '<a class="logout" href="logout.php">Logout</a>';
     return '<header>'
-        . '<div class="brand">SISTOMATE <span>greenhouse tomat</span></div>'
-        . '<nav class="navbar">' . $html . '</nav>'
+        . '<div class="brand-group">'
+        .   '<div class="brand">SISTOMATE <span>greenhouse tomat</span></div>'
+        .   '<nav class="navbar">' . $nav . '</nav>'
+        . '</div>'
+        . '<div class="header-right">' . $right . '</div>'
         . '</header>';
 }
