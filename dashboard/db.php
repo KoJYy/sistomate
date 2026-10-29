@@ -52,26 +52,23 @@ function current_user(): array
     return $row ?: ['id_user' => (int) $_SESSION['user_id'], 'name' => 'Pengguna', 'email' => ''];
 }
 
-// Bagian navbar bersama (aktif = halaman berjalan).
+// Bagian navbar bersama (aktif = halaman berjalan). Tema Archivo/sage.
 function navbar(string $active, string $userName): string
 {
     $items = [
-        'app'     => ['app.php',     'Dashboard'],
-        'history' => ['history.php', 'Riwayat'],
-        'settings'=> ['settings.php','Pengaturan'],
+        'app'      => ['app.php',      'Dashboard'],
+        'history'  => ['history.php',  'Riwayat'],
+        'settings' => ['settings.php', 'Pengaturan'],
     ];
     $html = '';
     foreach ($items as $key => [$href, $label]) {
-        $cls = $key === $active ? 'nav-link active' : 'nav-link';
-        $html .= '<li class="nav-item"><a class="' . $cls . '" href="' . $href . '">' . e($label) . '</a></li>';
+        $cls = $key === $active ? ' class="on"' : '';
+        $html .= '<a href="' . $href . '"' . $cls . '>' . e($label) . '</a>';
     }
-    $html .= '<li class="nav-item"><span class="navbar-text me-2">👤 ' . e($userName) . '</span></li>';
-    $html .= '<li class="nav-item"><a class="btn btn-outline-danger btn-sm" href="logout.php">Logout</a></li>';
-    return '<nav class="navbar navbar-expand-lg navbar-dark bg-success mb-4">'
-        . '<div class="container">'
-        . '<a class="navbar-brand fw-bold" href="app.php">🌱 SISTOMATE</a>'
-        . '<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">'
-        . '<span class="navbar-toggler-icon"></span></button>'
-        . '<div class="collapse navbar-collapse" id="nav"><ul class="navbar-nav ms-auto align-items-lg-center">'
-        . $html . '</ul></div></div></nav>';
+    $html .= '<span class="uname">&#128100; ' . e($userName) . '</span>';
+    $html .= '<a href="logout.php">Logout</a>';
+    return '<header>'
+        . '<div class="brand">SISTOMATE <span>greenhouse tomat</span></div>'
+        . '<nav class="navbar">' . $html . '</nav>'
+        . '</header>';
 }

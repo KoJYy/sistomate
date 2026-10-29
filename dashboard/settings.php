@@ -55,61 +55,59 @@ $saved = isset($_GET['saved']);
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pengaturan - SISTOMATE</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-  body { background: #f4f7f4; }
-  .card-m { border: none; border-radius: 1rem; box-shadow: 0 6px 16px rgba(0,0,0,.06); }
-  input[type=range] { accent-color: #198754; }
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
 <?= navbar('settings', $user['name']) ?>
 
-<main class="container pb-5" style="max-width:720px">
-  <h1 class="h4 fw-bold mb-1">Pengaturan Ambang Histeresis</h1>
-  <p class="text-muted small mb-3">Nilai disimpan ke tabel <code>configs</code> dan menjadi acuan
+<main style="max-width:720px">
+  <h1 class="page-title">Pengaturan Ambang Histeresis</h1>
+  <p class="lead-muted">Nilai disimpan ke tabel <code>configs</code> dan menjadi acuan
     logika kendali firmware (pompa air &amp; kipas exhaust).</p>
 
   <?php if ($saved): ?>
-    <div class="alert alert-success py-2" role="alert">✅ Konfigurasi tersimpan.</div>
+    <div class="alert ok" role="alert">&#9989; Konfigurasi tersimpan.</div>
   <?php endif; ?>
   <?php if ($error !== ''): ?>
-    <div class="alert alert-danger py-2" role="alert"><?= e($error) ?></div>
+    <div class="alert err" role="alert"><?= e($error) ?></div>
   <?php endif; ?>
 
-  <form method="post" action="settings.php" class="card card-m p-4">
-    <h2 class="h6 fw-bold">💧 Kelembapan Tanah - Pompa Air</h2>
-    <label class="form-label">Pompa ON di bawah: <b><span id="lSoilOn"><?= e((string)$cfg['soil_on']) ?></span> %</b></label>
-    <input type="range" class="form-range" min="5" max="95" step="1"
+  <form method="post" action="settings.php" class="panel">
+    <h2>&#128167; Kelembapan Tanah - Pompa Air</h2>
+    <label class="f">Pompa ON di bawah: <b><span id="lSoilOn"><?= e((string)$cfg['soil_on']) ?></span> %</b></label>
+    <input type="range" min="5" max="95" step="1"
            id="soil_on" name="soil_on" value="<?= e((string)$cfg['soil_on']) ?>"
            oninput="lSoilOn.textContent=this.value">
-    <label class="form-label mt-2">Pompa OFF di atas: <b><span id="lSoilOff"><?= e((string)$cfg['soil_off']) ?></span> %</b></label>
-    <input type="range" class="form-range" min="5" max="95" step="1"
+    <label class="f mt-block">Pompa OFF di atas: <b><span id="lSoilOff"><?= e((string)$cfg['soil_off']) ?></span> %</b></label>
+    <input type="range" min="5" max="95" step="1"
            id="soil_off" name="soil_off" value="<?= e((string)$cfg['soil_off']) ?>"
            oninput="lSoilOff.textContent=this.value">
 
-    <hr>
-    <h2 class="h6 fw-bold">🌡️ Suhu Udara - Kipas Exhaust</h2>
-    <label class="form-label">Kipas ON di atas: <b><span id="lTempOn"><?= e((string)$cfg['temp_on']) ?></span> °C</b></label>
-    <input type="range" class="form-range" min="15" max="45" step="1"
+    <h2 class="mt-block">&#127777;&#65039; Suhu Udara - Kipas Exhaust</h2>
+    <label class="f">Kipas ON di atas: <b><span id="lTempOn"><?= e((string)$cfg['temp_on']) ?></span> &deg;C</b></label>
+    <input type="range" min="15" max="45" step="1"
            id="temp_on" name="temp_on" value="<?= e((string)$cfg['temp_on']) ?>"
            oninput="lTempOn.textContent=this.value">
-    <label class="form-label mt-2">Kipas OFF di bawah: <b><span id="lTempOff"><?= e((string)$cfg['temp_off']) ?></span> °C</b></label>
-    <input type="range" class="form-range" min="15" max="45" step="1"
+    <label class="f mt-block">Kipas OFF di bawah: <b><span id="lTempOff"><?= e((string)$cfg['temp_off']) ?></span> &deg;C</b></label>
+    <input type="range" min="15" max="45" step="1"
            id="temp_off" name="temp_off" value="<?= e((string)$cfg['temp_off']) ?>"
            oninput="lTempOff.textContent=this.value">
 
-    <hr>
-    <h2 class="h6 fw-bold">🧪 Fertigasi Terjadwal</h2>
-    <label class="form-label">Durasi dosis: <b><span id="lFert"><?= e((string)$cfg['fert_duration_s']) ?></span> detik</b></label>
-    <input type="range" class="form-range" min="1" max="60" step="1"
+    <h2 class="mt-block">&#129514; Fertigasi Terjadwal</h2>
+    <label class="f">Durasi dosis: <b><span id="lFert"><?= e((string)$cfg['fert_duration_s']) ?></span> detik</b></label>
+    <input type="range" min="1" max="60" step="1"
            id="fert_duration_s" name="fert_duration_s" value="<?= e((string)$cfg['fert_duration_s']) ?>"
            oninput="lFert.textContent=this.value">
 
-    <button type="submit" class="btn btn-success w-100 mt-4">💾 Simpan Konfigurasi</button>
+    <div class="mt-block">
+      <button type="submit" class="btn block">&#128190; Simpan Konfigurasi</button>
+    </div>
   </form>
 
-  <p class="small text-muted mt-3 text-center">Perubahan berlaku untuk tampilan dashboard;
+  <p class="small muted center mt-block">Perubahan berlaku untuk tampilan dashboard;
     firmware membaca nilai yang sama saat integrasi configs selesai.</p>
 </main>
 </body>

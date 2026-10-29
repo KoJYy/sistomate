@@ -133,3 +133,13 @@ S2 melaporkan 1 FAIL `W2 proteksi session/redirect` sebagai **bug script audit**
 2. `app.php` merakit badge via `innerHTML` dari data `actuator_logs` - risiko XSS teoretis minimal karena data diisi firmware via `ingest.php` yang di-API-key; untuk hardening lanjutan bisa diganti `textContent`.
 
 **Putusan S1:** W1-W5 terpenuhi seluruhnya, keamanan dasar lolos audit manual. **WEB SISTOMATE GREEN & CLOSED** (audit independen; harness S2 `test-web.sh` 49/49 dicatat sebagai klaim pendukung).
+
+---
+
+## Ruling Refactor-UI (29 Okt 2026) - 🟢 GREEN
+
+Owner menolak tema Bootstrap ("kaku"); app.php di-restorasi ke **desain asli commit `58c26fa`**: font Archivo + Fraunces, palet sage (`--bg #EFF3EC`, `--ink #16241B`, `--line #D7E0D4`), hero kartu status bertint, gauge ambang histeresis horizontal (posisi zona/tick dihitung dari `configs`, bukan hardcoded), SVG sparkline area (soil `#2563EB`, suhu `#EA580C`), panel spektrum TCS34725, layout dua kolom aktuator + riwayat. File baru `dashboard/theme.css` menyamakan tema login/history/settings (navbar pil identik via `navbar()` di db.php).
+
+**Ruling S1 pada gate `audit-web.py` (spec evolution, transparan):** pola W3 "grafik realtime" kini menerima Chart.js **ATAU** `<polyline>` SVG; pola navigasi kini menerima `navbar` **ATAU** `<nav>` **ATAU** `<header>`. Alasan: gate menguji FITUR (grafik hidup, navigasi ada), bukan kekakuan teknologi; desain asli Owner memakai polyline & `<header>`. Gate dibuktikan kompatibel mundur (35/35 terhadap kedua versi kode); keyword substantif (gauge, RGB/TCS, aktuator, session, configs, password_verify) TIDAK dilonggarkan.
+
+**Audit S1 refactor:** 35/35 PASS exit 0 · php -l 8/8 · em-dash 0 (40 em-dash referensi 58c26fa diganti strip/`&deg;` entity, nol literal) · guard session utuh (`session_start` + `require_login` + `current_user`) · escaping `e()` di semua output server · polling `live.php` 5 dtk utuh · form name/id login & settings tak berubah · `navbar()` db.php tetap escaping.

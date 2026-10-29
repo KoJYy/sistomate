@@ -37,7 +37,7 @@ $actuator = db()->prepare(
 $actuator->execute([$fromTs, $toTs]);
 $rowsActuator = $actuator->fetchAll();
 
-$statusColors = ['sehat' => 'success', 'kering' => 'warning', 'layu' => 'info', 'sakit' => 'danger'];
+$statusPill = ['sehat' => 'sehat', 'kering' => 'kering', 'layu' => 'layu', 'sakit' => 'sakit'];
 ?>
 <!doctype html>
 <html lang="id">
@@ -45,93 +45,91 @@ $statusColors = ['sehat' => 'success', 'kering' => 'warning', 'layu' => 'info', 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Riwayat - SISTOMATE</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>body{background:#f4f7f4}.card-m{border:none;border-radius:1rem;box-shadow:0 6px 16px rgba(0,0,0,.06)}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
 <?= navbar('history', $user['name']) ?>
 
-<main class="container pb-5">
-  <h1 class="h4 fw-bold mb-3">Riwayat Data</h1>
+<main>
+  <h1 class="page-title">Riwayat Data</h1>
 
   <!-- Filter tanggal + export -->
-  <div class="card card-m p-3 mb-4">
-    <form method="get" action="history.php" class="row g-2 align-items-end">
-      <div class="col-6 col-md-3">
-        <label class="form-label small mb-1" for="date_from">Dari tanggal</label>
-        <input type="date" class="form-control" id="date_from" name="date_from"
+  <div class="panel">
+    <form method="get" action="history.php" class="row-inline">
+      <div>
+        <label class="f" for="date_from">Dari tanggal</label>
+        <input type="date" id="date_from" name="date_from"
                value="<?= e($dateFrom) ?>">
       </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label small mb-1" for="date_to">Sampai tanggal</label>
-        <input type="date" class="form-control" id="date_to" name="date_to"
+      <div>
+        <label class="f" for="date_to">Sampai tanggal</label>
+        <input type="date" id="date_to" name="date_to"
                value="<?= e($dateTo) ?>">
       </div>
-      <div class="col-md-3"><button class="btn btn-success w-100">Terapkan Filter</button></div>
+      <div><button class="btn">Terapkan Filter</button></div>
     </form>
-    <div class="mt-2 small">
-      <a class="text-decoration-none" href="export-csv.php?jenis=sensor&date_from=<?= e($dateFrom) ?>&date_to=<?= e($dateTo) ?>">⬇️ Export sensor (.csv)</a>
-      &nbsp;·&nbsp;
-      <a class="text-decoration-none" href="export-csv.php?jenis=actuator&date_from=<?= e($dateFrom) ?>&date_to=<?= e($dateTo) ?>">⬇️ Export aktuator (.csv)</a>
+    <div class="mt-block small">
+      <a class="link" href="export-csv.php?jenis=sensor&date_from=<?= e($dateFrom) ?>&date_to=<?= e($dateTo) ?>">&#11015;&#65039; Export sensor (.csv)</a>
+      &nbsp;&middot;&nbsp;
+      <a class="link" href="export-csv.php?jenis=actuator&date_from=<?= e($dateFrom) ?>&date_to=<?= e($dateTo) ?>">&#11015;&#65039; Export aktuator (.csv)</a>
     </div>
   </div>
 
   <!-- Tabel sensor -->
-  <div class="card card-m p-3 mb-4">
-    <h2 class="h6 fw-bold">🌡️ Data Sensor (maks 200 baris terbaru)</h2>
-    <div class="table-responsive">
-      <table class="table table-sm table-striped align-middle mb-0">
-        <thead class="table-light"><tr>
-          <th>Waktu</th><th>Perangkat</th><th>Suhu (°C)</th><th>Kelemb. Udara (%)</th>
-          <th>Kelemb. Tanah (%)</th><th>RGB</th><th>Status</th>
-        </tr></thead>
-        <tbody>
-        <?php if (!$rowsSensor): ?>
-          <tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data pada rentang ini.</td></tr>
-        <?php endif; ?>
-        <?php foreach ($rowsSensor as $r): ?>
-          <tr>
-            <td class="text-nowrap"><?= e($r['recorded_at']) ?></td>
-            <td><?= e($r['device_name']) ?></td>
-            <td><?= e((string)$r['air_temperature']) ?></td>
-            <td><?= e((string)$r['air_humidity']) ?></td>
-            <td><?= e((string)$r['soil_moisture']) ?></td>
-            <td>
-              <span class="d-inline-block rounded" style="width:14px;height:14px;background:rgb(
-                <?= (int)$r['rgb_red'] ?>,<?= (int)$r['rgb_green'] ?>,<?= (int)$r['rgb_blue'] ?>)"></span>
-              <span class="small text-muted"><?= (int)$r['rgb_red'] ?>/<?= (int)$r['rgb_green'] ?>/<?= (int)$r['rgb_blue'] ?></span>
-            </td>
-            <td><span class="badge bg-<?= e($statusColors[$r['plant_status']] ?? 'secondary') ?>"><?= e($r['plant_status']) ?></span></td>
-          </tr>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
+  <div class="panel">
+    <h2>&#127777;&#65039; Data Sensor (maks 200 baris terbaru)</h2>
+    <table class="tbl">
+      <thead><tr>
+        <th>Waktu</th><th>Perangkat</th><th>Suhu (&deg;C)</th><th>Kelemb. Udara (%)</th>
+        <th>Kelemb. Tanah (%)</th><th>RGB</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+      <?php if (!$rowsSensor): ?>
+        <tr><td colspan="7" class="center muted" style="padding:20px 10px">Tidak ada data pada rentang ini.</td></tr>
+      <?php endif; ?>
+      <?php foreach ($rowsSensor as $r): ?>
+        <tr>
+          <td><?= e($r['recorded_at']) ?></td>
+          <td><?= e($r['device_name']) ?></td>
+          <td><?= e((string)$r['air_temperature']) ?></td>
+          <td><?= e((string)$r['air_humidity']) ?></td>
+          <td><?= e((string)$r['soil_moisture']) ?></td>
+          <td>
+            <span class="rgb-chip" style="background:rgb(
+              <?= (int)$r['rgb_red'] ?>,<?= (int)$r['rgb_green'] ?>,<?= (int)$r['rgb_blue'] ?>)"></span>
+            <span class="rgb-val"><?= (int)$r['rgb_red'] ?>/<?= (int)$r['rgb_green'] ?>/<?= (int)$r['rgb_blue'] ?></span>
+          </td>
+          <td><span class="pill <?= e($statusPill[$r['plant_status']] ?? 'off') ?>"><?= e($r['plant_status']) ?></span></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
   </div>
 
   <!-- Tabel aktuator -->
-  <div class="card card-m p-3">
-    <h2 class="h6 fw-bold">⚡ Riwayat Aktuator (maks 200 baris terbaru)</h2>
-    <div class="table-responsive">
-      <table class="table table-sm table-striped align-middle mb-0">
-        <thead class="table-light"><tr>
-          <th>Waktu</th><th>Perangkat</th><th>Aktuator</th><th>Status</th>
-        </tr></thead>
-        <tbody>
-        <?php if (!$rowsActuator): ?>
-          <tr><td colspan="4" class="text-center text-muted py-3">Tidak ada data pada rentang ini.</td></tr>
-        <?php endif; ?>
-        <?php foreach ($rowsActuator as $r): ?>
-          <tr>
-            <td class="text-nowrap"><?= e($r['executed_at']) ?></td>
-            <td><?= e($r['device_name']) ?></td>
-            <td><?= e($r['actuator_name']) ?></td>
-            <td><span class="badge bg-<?= $r['status'] === 'ON' ? 'success' : 'secondary' ?>"><?= e($r['status']) ?></span></td>
-          </tr>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
+  <div class="panel">
+    <h2>&#9889; Riwayat Aktuator (maks 200 baris terbaru)</h2>
+    <table class="tbl">
+      <thead><tr>
+        <th>Waktu</th><th>Perangkat</th><th>Aktuator</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+      <?php if (!$rowsActuator): ?>
+        <tr><td colspan="4" class="center muted" style="padding:20px 10px">Tidak ada data pada rentang ini.</td></tr>
+      <?php endif; ?>
+      <?php foreach ($rowsActuator as $r): ?>
+        <tr>
+          <td><?= e($r['executed_at']) ?></td>
+          <td><?= e($r['device_name']) ?></td>
+          <td><?= e($r['actuator_name']) ?></td>
+          <td><span class="pill <?= $r['status'] === 'ON' ? 'on' : 'off' ?>"><?= e($r['status']) ?></span></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
   </div>
 </main>
 </body>

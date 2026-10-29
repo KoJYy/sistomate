@@ -1,258 +1,669 @@
 <?php
 // app.php - dashboard operasional SISTOMATE (wajib login).
-// Visualisasi: gauge meter suhu/kelembapan, indikator warna daun RGB + badge
-// status tanaman, badge aktuator, grafik tren Chart.js (data dari live.php).
+// Restorasi desain asli: font Archivo + palet sage green (dari commit 58c26fa).
 require_once __DIR__ . '/db.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_login();
-
 $user = current_user();
 
 // Ambang histeresis dari tabel configs (fallback = nilai firmware).
 $cfg = db()->query('SELECT * FROM configs WHERE id = 1')->fetch()
     ?: ['soil_on' => 40, 'soil_off' => 55, 'temp_on' => 32, 'temp_off' => 31, 'fert_duration_s' => 7];
 
-$statusColors = ['sehat' => 'success', 'kering' => 'warning', 'layu' => 'info', 'sakit' => 'danger'];
+// Posisi zona ambang di gauge (skala suhu 20-40 derajat C, tanah 0-100%).
+$soilOnPct  = max(0.0, min(100.0, (float) $cfg['soil_on']));
+$soilOffPct = max(0.0, min(100.0, (float) $cfg['soil_off']));
+$pctSuhu    = fn($t) => max(0.0, min(100.0, ((float) $t - 20) / 20 * 100));
+$tempOffPct = $pctSuhu($cfg['temp_off']);
+$tempOnPct  = $pctSuhu($cfg['temp_on']);
+$cfgJs = [
+    'soil_on' => (float) $cfg['soil_on'],
+    'soil_off' => (float) $cfg['soil_off'],
+    'temp_on' => (float) $cfg['temp_on'],
+    'temp_off' => (float) $cfg['temp_off'],
+];
 ?>
 <!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard - SISTOMATE</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<title>SISTOMATE - Monitor Greenhouse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,600;1,9..144,700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 <style>
-  body { background: #f4f7f4; }
-  .card-m { border: none; border-radius: 1rem; box-shadow: 0 6px 16px rgba(0,0,0,.06); }
-  .gauge-wrap { position: relative; }
-  .gauge-wrap canvas { width: 100%; height: auto; }
-  .gauge-val { position: absolute; left: 0; right: 0; bottom: 6%;
-               text-align: center; font-weight: 700; font-size: 1.35rem; }
-  .rgb-bar { height: 10px; border-radius: 5px; }
-  #statBadge { font-size: 1rem; }
+  :root {
+    --bg: #EFF3EC;
+    --surface: #FFFFFF;
+    --line: #D7E0D4;
+    --line-soft: #E6ECE3;
+    --ink: #16241B;
+    --muted: #66786C;
+    --sehat: #1B9E5A;
+    --layu: #D08700;
+    --sakit: #D64545;
+    --kering: #9A6A3C;
+    --on: #0B7285;
+    --soilc: #2563EB;
+    --suhuc: #EA580C;
+    --sans: "Archivo", system-ui, -apple-system, sans-serif;
+    --serif: "Fraunces", Georgia, serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: var(--bg); }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px 56px;
+  }
+  :focus-visible { outline: 2px solid var(--sehat); outline-offset: 2px; }
+
+  /* header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 0 14px;
+    font-size: 13.5px;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .brand { font-weight: 700; letter-spacing: .02em; font-size: 15px; }
+  .brand span { color: var(--muted); font-weight: 500; margin-left: 10px; font-size: 13px; }
+  .live { display: flex; align-items: center; gap: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .live b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 12.5px; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--sehat);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  .dot.stale { background: var(--sakit); animation: none; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+  /* navigasi utama */
+  .navbar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .navbar a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 13px;
+    border-radius: 999px;
+    transition: background .15s, color .15s;
+  }
+  .navbar a:hover { background: var(--line-soft); color: var(--ink); }
+  .navbar a.on { background: var(--ink); color: var(--bg); font-weight: 600; }
+  .navbar .uname { color: var(--muted); font-size: 13px; padding: 0 8px; }
+
+  /* hero: kartu status bertint + 3 kartu metrik */
+  .hero { display: grid; gap: 14px; padding: 14px 0 8px; }
+  .status-card {
+    background: rgba(27, 158, 90, .1);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 26px 30px 28px;
+    transition: background .5s;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .status-why { text-align: right; max-width: 270px; margin-bottom: 10px; }
+  .status-why span { font-size: 13px; color: var(--muted); }
+  .status-why p { font-size: 14.5px; line-height: 1.45; margin-top: 4px; }
+  .status-kicker { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .status-word {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(3.4rem, 9vw, 6rem);
+    line-height: 1;
+    letter-spacing: -.03em;
+    color: var(--sehat);
+    transition: color .5s;
+  }
+
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 20px 20px;
+    box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
+  }
+  .metric .top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .metric .label { font-size: 13px; color: var(--muted); }
+  .metric .value {
+    font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+    line-height: 1;
+  }
+  .metric .value small { font-size: .48em; font-weight: 600; color: var(--muted); margin-left: 2px; }
+
+  /* gauge ambang histeresis */
+  .track { position: relative; height: 7px; background: var(--line-soft); border-radius: 4px; overflow: visible; }
+  .zone { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+  .needle {
+    position: absolute; top: -4px; bottom: -4px; width: 3px;
+    background: var(--ink);
+    border-radius: 2px;
+    transition: left .8s cubic-bezier(.2, .7, .3, 1);
+  }
+  .tick { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .55; }
+  .amb { font-size: 11.5px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+
+  /* dua kolom: aktuator + riwayat */
+  .pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px 0;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px 22px 20px;
+    box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
+  }
+  /* panel dalam .pair ikut tinggi baris grid */
+  .pair .panel { display: flex; flex-direction: column; }
+  .pair .panel .tiles { flex: 1; }
+  h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
+
+  /* tile aktuator */
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tile {
+    background: var(--bg);
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .tile .act-name { font-size: 13.5px; font-weight: 600; }
+  .tile .big {
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.15;
+    color: var(--muted);
+    transition: color .25s;
+  }
+  .tile .big.on { color: var(--on); }
+  .tile .act-last { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: auto; padding-top: 8px; }
+  .chip {
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 11.5px; font-weight: 700; letter-spacing: .05em;
+    padding: 3px 11px;
+    border-radius: 999px;
+    background: var(--line-soft);
+    color: var(--muted);
+    margin-top: 6px;
+    transition: background .25s, color .25s;
+  }
+  .chip.on { background: var(--on); color: #fff; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  td { padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
+  tr:last-child td { border-bottom: 0; }
+  td.t { color: var(--muted); font-variant-numeric: tabular-nums; width: 92px; }
+  td.st { text-align: right; width: 64px; font-weight: 700; font-size: 12.5px; }
+  .st-on { color: var(--on); }
+  .st-off { color: var(--muted); }
+
+  /* tren: area chart */
+  .trend { padding: 4px 0; }
+  .sparks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .spark-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .spark-head .name { font-size: 13px; color: var(--muted); }
+  .spark-head .now {
+    font-size: clamp(1.25rem, 2.2vw, 1.6rem); font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .spark-head .now small { font-size: .55em; color: var(--muted); font-weight: 600; }
+  svg.spark { display: block; width: 100%; height: 84px; background: var(--bg); border: 1px solid var(--line-soft); border-radius: 10px; }
+  .axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  /* sumbu: label Y HTML di kiri (SVG stretched, teks di dlm viewBox bakal melar) */
+  .chart { display: flex; gap: 8px; }
+  .yax {
+    display: flex; flex-direction: column; justify-content: space-between;
+    align-items: flex-end; flex: none;
+    width: 46px; height: 84px; padding: 3px 0 9px;
+    font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums;
+  }
+  .plot { flex: 1; min-width: 0; }
+
+  /* rgb */
+  .rgb { padding: 4px 0; }
+  .rgb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+  .rgb-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px 16px;
+    box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
+  }
+  .rgb .label { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); margin-bottom: 9px; }
+  .rgb .label b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.15rem; }
+  .bar { height: 12px; background: var(--line-soft); border-radius: 6px; overflow: hidden; }
+  .bar div { height: 100%; border-radius: 6px; transition: width .8s cubic-bezier(.2, .7, .3, 1); }
+  .verdict {
+    display: inline-block;
+    font-size: 13.5px; font-weight: 600;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 18px;
+    box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
+  }
+
+  footer {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px; color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+
+  /* angka yang barusan berubah */
+  .flash { animation: flashbg .7s ease-out; }
+  @keyframes flashbg {
+    0% { background: rgba(27, 158, 90, .18); }
+    100% { background: transparent; }
+  }
+
+  @media (max-width: 760px) {
+    .brand span { display: none; }
+    .navbar { order: 3; width: 100%; overflow-x: auto; }
+    .metrics, .sparks, .rgb-grid, .tiles { grid-template-columns: 1fr; }
+    .pair { grid-template-columns: 1fr; gap: 14px; }
+    .status-card { padding: 22px 22px 24px; flex-direction: column; align-items: flex-start; gap: 14px; }
+    .status-why { text-align: left; margin-bottom: 0; max-width: none; }
+    .status-word { font-size: clamp(3.2rem, 16vw, 4.6rem); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dot { animation: none; }
+    .flash { animation: none; }
+    .needle, .bar div, .status-word, .chip, .tile .big, .status-card { transition: none; }
+  }
 </style>
 </head>
 <body>
-<?= navbar('app', $user['name']) ?>
 
-<main class="container pb-5">
-  <!-- Baris status + koneksi -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <div>
-      <h1 class="h4 fw-bold mb-0">Dashboard Real-time</h1>
-      <small class="text-muted" id="deviceInfo">Greenhouse Mini - memuat…</small>
+<header>
+  <div class="brand">SISTOMATE <span>greenhouse tomat</span></div>
+  <nav class="navbar">
+    <a href="app.php" class="on">Dashboard</a>
+    <a href="history.php">Riwayat</a>
+    <a href="settings.php">Pengaturan</a>
+    <span class="uname">👤 <?= e($user['name']) ?></span>
+    <a href="logout.php">Logout</a>
+  </nav>
+  <div class="live">
+    <span class="dot" id="dot"></span>
+    <b id="livetxt">LIVE</b>
+    <span id="clock">--:--:--</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="status-card" id="statusCard">
+    <div class="status-main">
+      <div class="status-kicker">status tanaman</div>
+      <div class="status-word" id="status">-</div>
     </div>
-    <div class="text-end">
-      <span class="badge bg-secondary" id="statBadge">…</span>
-      <span class="badge bg-success" id="connBadge">MENGHUBUNGKAN</span>
+    <div class="status-why">
+      <span>alasan</span>
+      <p id="why">-</p>
     </div>
   </div>
+  <div class="metrics">
+    <div class="metric">
+      <div class="top">
+        <span class="label">suhu udara</span>
+        <span class="value" id="suhu">-<small>°C</small></span>
+      </div>
+      <div class="track">
+        <div class="zone" style="left:0;width:<?= $tempOffPct ?>%;background:rgba(27,158,90,.28)"></div>
+        <div class="zone" style="left:<?= $tempOnPct ?>%;right:0;background:rgba(208,135,0,.32)"></div>
+        <div class="tick" style="left:<?= $tempOffPct ?>%"></div>
+        <div class="tick" style="left:<?= $tempOnPct ?>%"></div>
+        <div class="needle" id="ndl-suhu" style="left:50%"></div>
+      </div>
+      <div class="amb">kipas: ON di atas <?= e((string)$cfg['temp_on']) ?>&deg;C, OFF di bawah <?= e((string)$cfg['temp_off']) ?>&deg;C</div>
+    </div>
+    <div class="metric">
+      <div class="top">
+        <span class="label">kelembapan udara</span>
+        <span class="value" id="rh">-<small>%</small></span>
+      </div>
+    </div>
+    <div class="metric">
+      <div class="top">
+        <span class="label">kelembapan tanah</span>
+        <span class="value" id="soil">-<small>%</small></span>
+      </div>
+      <div class="track">
+        <div class="zone" style="left:0;width:<?= $soilOnPct ?>%;background:rgba(154,106,60,.35)"></div>
+        <div class="tick" style="left:<?= $soilOnPct ?>%"></div>
+        <div class="tick" style="left:<?= $soilOffPct ?>%"></div>
+        <div class="needle" id="ndl-soil" style="left:50%"></div>
+      </div>
+      <div class="amb">pompa: ON di bawah <?= e((string)$cfg['soil_on']) ?>%, OFF di atas <?= e((string)$cfg['soil_off']) ?>%</div>
+    </div>
+  </div>
+</section>
 
-  <!-- GAUGE METER -->
-  <div class="row g-3 mb-3">
-    <div class="col-md-4">
-      <div class="card card-m p-3 text-center">
-        <div class="small text-muted mb-1">🌡️ Suhu Udara</div>
-        <div class="gauge-wrap"><canvas id="gTemp" width="300" height="190"></canvas>
-          <div class="gauge-val" id="vTemp">–</div></div>
-        <div class="small text-muted">Ambang kipas: &gt; <?= e((string)$cfg['temp_on']) ?> °C (ON) /
-          <?= e((string)$cfg['temp_off']) ?> °C (OFF)</div>
+<div class="pair">
+  <div class="panel">
+    <h2>aktuator</h2>
+    <div class="tiles">
+      <div class="tile">
+        <div class="act-name">Pompa Air</div>
+        <div class="big" id="pompa-big">-</div>
+        <span class="chip" id="pompa-state">-</span>
+        <div class="act-last" id="pompa-last">-</div>
       </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card card-m p-3 text-center">
-        <div class="small text-muted mb-1">💦 Kelembapan Udara</div>
-        <div class="gauge-wrap"><canvas id="gHum" width="300" height="190"></canvas>
-          <div class="gauge-val" id="vHum">–</div></div>
-        <div class="small text-muted">Relatif terhadap udara greenhouse</div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card card-m p-3 text-center">
-        <div class="small text-muted mb-1">🌱 Kelembapan Tanah</div>
-        <div class="gauge-wrap"><canvas id="gSoil" width="300" height="190"></canvas>
-          <div class="gauge-val" id="vSoil">–</div></div>
-        <div class="small text-muted">Ambang pompa: &lt; <?= e((string)$cfg['soil_on']) ?> % (ON) /
-          &ge; <?= e((string)$cfg['soil_off']) ?> % (OFF)</div>
+      <div class="tile">
+        <div class="act-name">Kipas Exhaust</div>
+        <div class="big" id="kipas-big">-</div>
+        <span class="chip" id="kipas-state">-</span>
+        <div class="act-last" id="kipas-last">-</div>
       </div>
     </div>
   </div>
+  <div class="panel">
+    <h2>riwayat aktuator</h2>
+    <table><tbody id="history-act"></tbody></table>
+  </div>
+</div>
 
-  <!-- RGB + AKTUATOR -->
-  <div class="row g-3 mb-3">
-    <div class="col-md-6">
-      <div class="card card-m p-3 h-100">
-        <h2 class="h6 fw-bold">🌈 Warna Daun (TCS34725)</h2>
-        <div class="d-flex align-items-center gap-3 mb-2">
-          <div id="rgbSwatch" style="width:42px;height:42px;border-radius:10px;background:#888"></div>
-          <div><span class="badge bg-success" id="leafBadge">–</span>
-            <div class="small text-muted" id="leafNote">rasio hijau/merah: –</div></div>
+<section class="trend">
+  <div class="sparks">
+    <div class="panel">
+      <div class="spark-head">
+        <span class="name">kelembapan tanah</span>
+        <span class="now" id="now-soil">-<small>%</small></span>
+      </div>
+      <div class="chart">
+        <div class="yax" aria-hidden="true">
+          <span id="y-top-soil">-</span><span id="y-mid-soil">-</span><span id="y-bot-soil">-</span>
         </div>
-        <div class="small text-muted">R</div><div class="rgb-bar bg-danger mb-2" id="barR" style="width:0%"></div>
-        <div class="small text-muted">G</div><div class="rgb-bar bg-success mb-2" id="barG" style="width:0%"></div>
-        <div class="small text-muted">B</div><div class="rgb-bar bg-primary mb-2" id="barB" style="width:0%"></div>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="card card-m p-3 h-100">
-        <h2 class="h6 fw-bold">⚡ Status Aktuator</h2>
-        <div class="d-flex flex-wrap gap-2 mb-3" id="actBadges">
-          <span class="badge bg-secondary">Pompa Air: …</span>
-          <span class="badge bg-secondary">Pompa Pupuk: …</span>
-          <span class="badge bg-secondary">Kipas Exhaust: …</span>
+        <div class="plot">
+          <svg class="spark" id="sp-soil" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
+            <g stroke="#D7E0D4" stroke-width="1" vector-effect="non-scaling-stroke">
+              <line x1="0" y1="8" x2="600" y2="8"/><line x1="0" y1="38" x2="600" y2="38"/><line x1="0" y1="68" x2="600" y2="68"/>
+            </g>
+            <polygon id="fill-soil" fill="#2563EB" fill-opacity=".14" points=""/>
+            <polyline id="line-soil" fill="none" stroke="#2563EB" stroke-width="2.5" vector-effect="non-scaling-stroke" points=""/>
+          </svg>
+          <div class="axis"><span id="x0-soil">-</span><span id="x1-soil">-</span><span>sekarang</span></div>
         </div>
-        <h3 class="h6 fw-bold">🗒️ Transisi Terakhir</h3>
-        <ul class="list-unstyled small mb-0" id="actList"><li class="text-muted">memuat…</li></ul>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="spark-head">
+        <span class="name">suhu udara</span>
+        <span class="now" id="now-suhu">-<small>°C</small></span>
+      </div>
+      <div class="chart">
+        <div class="yax" aria-hidden="true">
+          <span id="y-top-suhu">-</span><span id="y-mid-suhu">-</span><span id="y-bot-suhu">-</span>
+        </div>
+        <div class="plot">
+          <svg class="spark" id="sp-suhu" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
+            <g stroke="#D7E0D4" stroke-width="1" vector-effect="non-scaling-stroke">
+              <line x1="0" y1="8" x2="600" y2="8"/><line x1="0" y1="38" x2="600" y2="38"/><line x1="0" y1="68" x2="600" y2="68"/>
+            </g>
+            <polygon id="fill-suhu" fill="#EA580C" fill-opacity=".14" points=""/>
+            <polyline id="line-suhu" fill="none" stroke="#EA580C" stroke-width="2.5" vector-effect="non-scaling-stroke" points=""/>
+          </svg>
+          <div class="axis"><span id="x0-suhu">-</span><span id="x1-suhu">-</span><span>sekarang</span></div>
+        </div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- GRAFIK TREN -->
-  <div class="card card-m p-3">
-    <h2 class="h6 fw-bold mb-2">📈 Tren 60 Bacaan Terakhir</h2>
-    <canvas id="trend" height="90"></canvas>
+<section class="rgb">
+  <h2 style="margin-top:14px">warna daun (TCS34725)</h2>
+  <div class="rgb-grid">
+    <div class="rgb-card">
+      <div class="label">merah <b id="v-r">0</b></div>
+      <div class="bar"><div id="b-r" style="background:#EF4444;width:0%"></div></div>
+    </div>
+    <div class="rgb-card">
+      <div class="label">hijau <b id="v-g">0</b></div>
+      <div class="bar"><div id="b-g" style="background:#1B9E5A;width:0%"></div></div>
+    </div>
+    <div class="rgb-card">
+      <div class="label">biru <b id="v-b">0</b></div>
+      <div class="bar"><div id="b-b" style="background:#2563EB;width:0%"></div></div>
+    </div>
   </div>
+  <div class="verdict" id="verdict">-</div>
+</section>
 
-  <div class="small text-muted mt-3 text-center" id="todayInfo"></div>
-</main>
+<footer>
+  <span id="dev">-</span>
+  <span id="today">-</span>
+  <span>update tiap 5 detik</span>
+</footer>
 
 <script>
-const CFG = {
-  soilOn:  <?= json_encode((float)$cfg['soil_on']) ?>,
-  soilOff: <?= json_encode((float)$cfg['soil_off']) ?>,
-  tempOn:  <?= json_encode((float)$cfg['temp_on']) ?>,
-  tempOff: <?= json_encode((float)$cfg['temp_off']) ?>
-};
-const STATUS_COLORS = <?= json_encode($statusColors) ?>;
+  const $ = id => document.getElementById(id);
+  // ambang histeresis dari tabel configs (di-encode PHP, fallback firmware 40/55/32/31/7)
+  const CFG = <?= json_encode($cfgJs, JSON_UNESCAPED_UNICODE) ?>;
+  const STATUS_COLOR = {
+    sehat: '#1B9E5A', layu: '#D08700',
+    sakit: '#D64545', kering: '#9A6A3C'
+  };
+  let lastPollOk = Date.now();
 
-/* ---- Gauge meter spidometer bulat (canvas, tanpa pustaka) ---- */
-function drawGauge(id, val, min, max, unit, marks) {
-  const cv = document.getElementById(id), ctx = cv.getContext('2d');
-  const W = cv.width, H = cv.height, cx = W / 2, cy = H * 0.92, R = W * 0.42;
-  const A0 = Math.PI * 0.85, A1 = Math.PI * 2.15;           // busur 234 derajat
-  ctx.clearRect(0, 0, W, H);
-  // lintasan abu-abu
-  ctx.lineWidth = 20; ctx.lineCap = 'round';
-  ctx.strokeStyle = '#e5e7eb';
-  ctx.beginPath(); ctx.arc(cx, cy, R, A0, A1); ctx.stroke();
-  // zona ambang (histeresis)
-  (marks || []).forEach(m => {
-    ctx.strokeStyle = m.color; ctx.lineWidth = 20;
-    const t0 = A0 + (Math.min(Math.max(m.from, min), max) - min) / (max - min) * (A1 - A0);
-    const t1 = A0 + (Math.min(Math.max(m.to,   min), max) - min) / (max - min) * (A1 - A0);
-    ctx.beginPath(); ctx.arc(cx, cy, R, t0, t1); ctx.stroke();
-  });
-  if (val == null || isNaN(val)) return;
-  // jarum
-  const t = A0 + (Math.min(Math.max(val, min), max) - min) / (max - min) * (A1 - A0);
-  ctx.strokeStyle = '#16241B'; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(t) * (R - 26), cy + Math.sin(t) * (R - 26)); ctx.stroke();
-  ctx.fillStyle = '#16241B';
-  ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
-}
-
-/* ---- Grafik tren Chart.js ---- */
-const trendCtx = document.getElementById('trend');
-const trend = new Chart(trendCtx, {
-  type: 'line',
-  data: { labels: [], datasets: [
-    { label: 'Kelembapan Tanah (%)', data: [], borderColor: '#2563EB',
-      backgroundColor: 'rgba(37,99,235,.12)', fill: true, tension: .3, pointRadius: 0 },
-    { label: 'Suhu Udara (°C)', data: [], borderColor: '#EA580C',
-      backgroundColor: 'rgba(234,88,12,.10)', fill: true, tension: .3, pointRadius: 0 }
-  ]},
-  options: {
-    animation: false,
-    scales: { x: { ticks: { maxTicksLimit: 8 } }, y: { beginAtZero: false } },
-    plugins: { legend: { position: 'bottom' } }
+  function flash(el) {
+    el.classList.remove('flash');
+    void el.offsetWidth;          // restart animasi
+    el.classList.add('flash');
   }
-});
 
-/* ---- Polling live.php tiap 5 detik ---- */
-function fmtTime(s) { return s ? s.substring(11, 19) : ''; }
+  function setText(id, txt) {
+    const el = $(id);
+    if (el.textContent !== txt) { el.textContent = txt; flash(el); }
+  }
 
-async function refresh() {
-  try {
-    const r = await fetch('live.php', { cache: 'no-store' });
-    const d = await r.json();
-    if (!d.ok) throw new Error('payload tidak ok');
-    document.getElementById('connBadge').className = 'badge bg-success';
-    document.getElementById('connBadge').textContent = 'LIVE';
+  // angka + satuan: flash HANYA kalau nilai berubah (bandingin dataset, bukan innerHTML)
+  function setVal(id, txt, unit) {
+    const el = $(id);
+    if (el.dataset.v !== txt) {
+      el.dataset.v = txt;
+      el.innerHTML = txt + '<small>' + unit + '</small>';
+      flash(el);
+    }
+  }
 
+  function gauge(id, pct) {
+    const el = $(id);
+    const v = Math.max(0, Math.min(100, pct));
+    el.style.left = v + '%';
+  }
+
+  // area chart: polyline + polygon ditutup ke baseline (fill di bawah garis)
+  function spark(lineId, fillId, arr) {
+    const line = $(lineId), fill = $(fillId);
+    if (!arr.length) { line.setAttribute('points', ''); fill.setAttribute('points', ''); return; }
+    const min = Math.min(...arr), max = Math.max(...arr);
+    const span = (max - min) || 1;
+    const pts = arr.map((v, i) => {
+      const x = (i / Math.max(1, arr.length - 1)) * 600;
+      const y = 68 - ((v - min) / span) * 60;   // padding 4px atas-bawah
+      return x.toFixed(1) + ',' + y.toFixed(1);
+    });
+    line.setAttribute('points', pts.join(' '));
+    fill.setAttribute('points', pts.join(' ') + ' 600,74 0,74');
+  }
+
+  function timeOnly(s) {
+    if (!s) return '-';
+    return s.slice(11, 19);       // "HH:MM:SS" dari datetime MySQL
+  }
+
+  // label sumbu: Y dari min/mid/max data, X dari jam terlama + jam tengah history
+  function axes(prefix, arr, times, fmt) {
+    const set = (id, txt) => { $(id).textContent = txt; };
+    if (!arr.length) {
+      ['y-top-', 'y-mid-', 'y-bot-'].forEach(p => set(p + prefix, '-'));
+      set('x0-' + prefix, '-'); set('x1-' + prefix, '-');
+      return;
+    }
+    const min = Math.min(...arr), max = Math.max(...arr);
+    const span = (max - min) || 1;
+    set('y-top-' + prefix, fmt(max));
+    set('y-mid-' + prefix, fmt(min + span / 2));
+    set('y-bot-' + prefix, fmt(min));
+    const n = arr.length;
+    set('x0-' + prefix, timeOnly(times[0]).slice(0, 5));      // HH:MM
+    set('x1-' + prefix, timeOnly(times[n >> 1]).slice(0, 5));
+  }
+
+  function render(d) {
     const L = d.latest;
-    if (L) {
-      drawGauge('gTemp', +L.air_temperature, 20, 45, '°C',
-        [{ from: CFG.tempOn, to: 45, color: '#fca5a5' }]);
-      drawGauge('gHum',  +L.air_humidity, 0, 100, '%', []);
-      drawGauge('gSoil', +L.soil_moisture, 0, 100, '%',
-        [{ from: 0, to: CFG.soilOn, color: '#fca5a5' },
-         { from: CFG.soilOff, to: 100, color: '#86efac' }]);
-      document.getElementById('vTemp').textContent = (+L.air_temperature).toFixed(1) + ' °C';
-      document.getElementById('vHum').textContent  = (+L.air_humidity).toFixed(0) + ' %';
-      document.getElementById('vSoil').textContent = (+L.soil_moisture).toFixed(0) + ' %';
+    if (!L) return;
 
-      // status tanaman
-      const badge = document.getElementById('statBadge');
-      badge.className = 'badge bg-' + (STATUS_COLORS[L.plant_status] || 'secondary');
-      badge.textContent = 'Status: ' + L.plant_status.toUpperCase();
-
-      // warna daun RGB
-      const mx = Math.max(+L.rgb_red, +L.rgb_green, +L.rgb_blue, 1);
-      document.getElementById('barR').style.width = (+L.rgb_red  / mx * 100) + '%';
-      document.getElementById('barG').style.width = (+L.rgb_green / mx * 100) + '%';
-      document.getElementById('barB').style.width = (+L.rgb_blue / mx * 100) + '%';
-      document.getElementById('rgbSwatch').style.background =
-        `rgb(${+L.rgb_red},${+L.rgb_green},${+L.rgb_blue})`;
-      const ratio = (+L.rgb_green / Math.max(+L.rgb_red, 1)).toFixed(2);
-      const leaf = document.getElementById('leafBadge');
-      const dominan = ratio >= 0.75 ? ['hijau dominan', 'success'] : ['merah dominan', 'danger'];
-      leaf.className = 'badge bg-' + dominan[1];
-      leaf.textContent = 'Daun: ' + dominan[0];
-      document.getElementById('leafNote').textContent = 'rasio hijau/merah: ' + ratio;
+    // status hero: warna kata + tint latar kartu (hex 8-digit, alpha 10%)
+    const sw = $('status');
+    if (sw.textContent !== L.plant_status) {
+      const c = STATUS_COLOR[L.plant_status] || '#16241B';
+      sw.textContent = L.plant_status;
+      sw.style.color = c;
+      $('statusCard').style.background = c + '1A';
     }
-    if (d.device) {
-      document.getElementById('deviceInfo').textContent =
-        d.device.device_name + ' - ' + d.device.location;
-    }
-    if (d.today) {
-      document.getElementById('todayInfo').textContent =
-        'Hari ini: ' + d.today.sensor_rows + ' bacaan sensor · ' +
-        d.today.actuator_events + ' event aktuator · terakhir diperbarui ' +
-        new Date().toLocaleTimeString('id-ID');
-    }
+    // alasan status: diturunkan dari data yang sama dengan heuristik firmware
+    const soilR = Math.round(L.soil_moisture), tempR = L.air_temperature.toFixed(1);
+    const why = L.plant_status === 'kering' ? 'kelembapan tanah ' + soilR + '% - di bawah ' + CFG.soil_on + '%'
+      : L.plant_status === 'layu' ? 'suhu ' + tempR + '°C - di atas ' + CFG.temp_on + '°C'
+      : L.plant_status === 'sakit' ? 'spektrum daun tidak lagi hijau dominan'
+      : 'tanah ' + soilR + '% dan suhu ' + tempR + '°C - semuanya dalam batas';
+    if ($('why').textContent !== why) $('why').textContent = why;
 
-    // badge aktuator (status terakhir tiap nama)
-    const latest = {};
-    (d.actuators || []).forEach(a => { if (!(a.actuator_name in latest)) latest[a.actuator_name] = a; });
-    const nama = { pompa_air: 'Pompa Air', pompa_pupuk: 'Pompa Pupuk', kipas_exhaust: 'Kipas Exhaust' };
-    document.getElementById('actBadges').innerHTML =
-      Object.entries(nama).map(([k, label]) => {
-        const a = latest[k];
-        const on = a && a.status === 'ON';
-        return `<span class="badge bg-${on ? 'success' : 'secondary'}">${label}: ${a ? a.status : '–'}</span>`;
-      }).join(' ');
-    document.getElementById('actList').innerHTML =
-      (d.actuators || []).slice(0, 5).map(a =>
-        `<li>${nama[a.actuator_name] || a.actuator_name} <b>${a.status}</b> · ${fmtTime(a.executed_at)}</li>`
-      ).join('') || '<li class="text-muted">belum ada event</li>';
+    // metrik + gauge (skala suhu 20-40°C)
+    setVal('suhu', L.air_temperature.toFixed(1), '°C');
+    setVal('rh', String(Math.round(L.air_humidity)), '%');
+    setVal('soil', String(Math.round(L.soil_moisture)), '%');
+    gauge('ndl-soil', L.soil_moisture);
+    gauge('ndl-suhu', (L.air_temperature - 20) / 20 * 100);
 
-    // grafik tren
+    // aktuator: state terakhir per nama (normalisasi: 'pompa_air' == 'Pompa Air')
+    const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const byName = {};
+    (d.actuators || []).forEach(a => {
+      const k = norm(a.actuator_name);
+      if (!byName[k]) byName[k] = a;
+    });
+    [['Pompa Air', 'pompa'], ['Kipas Exhaust', 'kipas']].forEach(([name, key]) => {
+      const a = byName[norm(name)];
+      const st = a ? a.status : '-';
+      const big = $(key + '-big');
+      const chip = $(key + '-state');
+      if (big.textContent !== st) flash(big);
+      big.textContent = st;
+      big.className = 'big' + (st === 'ON' ? ' on' : '');
+      if (chip.textContent !== st) flash(chip);
+      chip.textContent = st;
+      chip.className = 'chip' + (st === 'ON' ? ' on' : '');
+      setText(key + '-last', a ? 'terakhir ' + timeOnly(a.executed_at) : 'belum ada event');
+    });
+
+    // riwayat tabel
+    const rows = (d.actuators || []).map(a =>
+      '<tr><td class="t">' + timeOnly(a.executed_at) + '</td>' +
+      '<td>' + a.actuator_name + '</td>' +
+      '<td class="st ' + (a.status === 'ON' ? 'st-on' : 'st-off') + '">' + a.status + '</td></tr>'
+    ).join('');
+    $('history-act').innerHTML = rows || '<tr><td class="t">-</td><td>belum ada event</td><td class="st"></td></tr>';
+
+    // sparkline (area)
     const hist = d.history || [];
-    trend.data.labels = hist.map(h => fmtTime(h.recorded_at));
-    trend.data.datasets[0].data = hist.map(h => +h.soil_moisture);
-    trend.data.datasets[1].data = hist.map(h => +h.air_temperature);
-    trend.update('none');
-  } catch (e) {
-    document.getElementById('connBadge').className = 'badge bg-danger';
-    document.getElementById('connBadge').textContent = 'TERPUTUS';
+    const soilArr = hist.map(h => +h.soil_moisture);
+    const suhuArr = hist.map(h => +h.air_temperature);
+    spark('line-soil', 'fill-soil', soilArr);
+    spark('line-suhu', 'fill-suhu', suhuArr);
+    axes('soil', soilArr, hist.map(h => h.recorded_at), v => Math.round(v) + '%');
+    axes('suhu', suhuArr, hist.map(h => h.recorded_at), v => v.toFixed(1) + '°C');
+    $('now-soil').innerHTML = Math.round(L.soil_moisture) + '<small>%</small>';
+    $('now-suhu').innerHTML = L.air_temperature.toFixed(1) + '<small>°C</small>';
+
+    // rgb
+    const r = +L.rgb_red, g = +L.rgb_green, b = +L.rgb_blue;
+    const mx = Math.max(r, g, b, 1);
+    setText('v-r', String(r)); setText('v-g', String(g)); setText('v-b', String(b));
+    $('b-r').style.width = (r / mx * 100) + '%';
+    $('b-g').style.width = (g / mx * 100) + '%';
+    $('b-b').style.width = (b / mx * 100) + '%';
+    const verdict = $('verdict');
+    // ambang sama dengan firmware: sakit = G/R < 0.75 (heuristik 21 Okt)
+    const redDom = g * 4 < r * 3 && r > 100;
+    const redThin = !redDom && r > g && r > 100;
+    const vtxt = r <= 100
+      ? 'sinyal terlalu lemah - dekatkan daun ke sensor'
+      : redDom
+        ? 'merah dominan - indikasi daun kuning/stres'
+        : redThin
+          ? 'merah tipis unggul - masih dalam ambang daun sehat'
+          : 'hijau dominan - spektrum daun sehat';
+    if (verdict.dataset.t !== vtxt) {
+      verdict.dataset.t = vtxt;
+      verdict.innerHTML = '<b style="color:' +
+        (r <= 100 ? 'var(--muted)' : redDom ? 'var(--sakit)' : 'var(--sehat)') +
+        '">' + vtxt + '</b>';
+    }
+
+    // footer
+    if (d.device) $('dev').textContent = d.device.device_name + ', ' + d.device.location;
+    if (d.today) $('today').textContent =
+      Number(d.today.sensor_rows).toLocaleString('id-ID') + ' bacaan, ' +
+      Number(d.today.actuator_events).toLocaleString('id-ID') + ' event hari ini';
+
+    lastPollOk = Date.now();
   }
-}
-refresh();
-setInterval(refresh, 5000);
+
+  async function poll() {
+    try {
+      const res = await fetch('live.php', { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const d = await res.json();
+      if (d.ok) render(d);
+    } catch (e) { /* biarkan; dot stale di bawah */ }
+    finally { setTimeout(poll, 5000); }
+  }
+
+  // jam + indikator koneksi
+  setInterval(() => {
+    $('clock').textContent = new Date().toLocaleTimeString('id-ID', { hour12: false });
+    const stale = Date.now() - lastPollOk > 12000;
+    $('dot').classList.toggle('stale', stale);
+    $('livetxt').textContent = stale ? 'TERPUTUS' : 'LIVE';
+  }, 1000);
+
+  poll();
 </script>
 </body>
 </html>

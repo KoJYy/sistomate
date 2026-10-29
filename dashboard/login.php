@@ -34,38 +34,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login - SISTOMATE</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-  body { min-height: 100vh; display: grid; place-items: center;
-         background: linear-gradient(135deg, #e8f5e9, #fff8e1); }
-  .login-card { max-width: 400px; width: 100%; border: none; border-radius: 1rem;
-                box-shadow: 0 10px 30px rgba(0,0,0,.08); }
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
-<div class="card login-card p-4">
-  <div class="text-center mb-3">
-    <div style="font-size:2.5rem">🌱</div>
-    <h1 class="h4 fw-bold mb-0">SISTOMATE</h1>
-    <small class="text-muted">Monitoring &amp; Otomasi Greenhouse Tomat</small>
-  </div>
-  <?php if ($error !== ''): ?>
-    <div class="alert alert-danger py-2" role="alert"><?= e($error) ?></div>
-  <?php endif; ?>
-  <form method="post" action="login.php">
-    <div class="mb-3">
-      <label for="email" class="form-label">Email</label>
-      <input type="email" class="form-control" id="email" name="email"
+<div class="login-wrap">
+  <div class="panel login-card">
+    <div class="center">
+      <div class="mark">&#127793;</div>
+      <h1>SISTOMATE</h1>
+      <p class="muted small">Monitoring &amp; Otomasi Greenhouse Tomat</p>
+    </div>
+    <?php if ($error !== ''): ?>
+      <div class="alert err mt-block" role="alert"><?= e($error) ?></div>
+    <?php endif; ?>
+    <form method="post" action="login.php">
+      <label class="f mt-block" for="email">Email</label>
+      <input type="email" id="email" name="email"
              required autofocus value="<?= e($_POST['email'] ?? '') ?>">
+      <label class="f" for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+      <div class="mt-block">
+        <button type="submit" class="btn block">Masuk</button>
+      </div>
+    </form>
+    <div class="center mt-block">
+      <a class="link" href="index.html">&larr; Kembali ke beranda</a>
     </div>
-    <div class="mb-3">
-      <label for="password" class="form-label">Password</label>
-      <input type="password" class="form-control" id="password" name="password" required>
-    </div>
-    <button type="submit" class="btn btn-success w-100">Masuk</button>
-  </form>
-  <div class="text-center mt-3">
-    <a href="index.html" class="small text-decoration-none">← Kembali ke beranda</a>
   </div>
 </div>
 </body>
