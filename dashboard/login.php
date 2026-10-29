@@ -38,6 +38,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
+<style>
+  /* tombol lihat sandi: menempel di kanan input password */
+  .pw-wrap { position: relative; }
+  .pw-wrap input { padding-right: 44px; }
+  .pw-eye {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    display: grid; place-items: center;
+    width: 34px; height: 34px;
+    background: none; border: 0; border-radius: 8px;
+    color: var(--muted); cursor: pointer;
+    transition: color .15s, background .15s;
+  }
+  .pw-eye:hover, .pw-eye:focus-visible { color: var(--ink); background: var(--line-soft); }
+  .pw-eye svg {
+    width: 19px; height: 19px;
+    fill: none; stroke: currentColor;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  }
+</style>
 </head>
 <body>
 <div class="login-wrap">
@@ -55,7 +74,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <input type="email" id="email" name="email"
              required autofocus value="<?= e($_POST['email'] ?? '') ?>">
       <label class="f" for="password">Password</label>
-      <input type="password" id="password" name="password" required>
+      <div class="pw-wrap">
+        <input type="password" id="password" name="password" required>
+        <button type="button" class="pw-eye" id="pwEye" aria-label="Tampilkan password"
+                onpointerdown="pwShow(true)" onpointerup="pwShow(false)" onpointerleave="pwShow(false)">
+          <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/>
+            <circle cx="12" cy="12" r="2.8"/>
+          </svg>
+          <svg class="eye-shut" viewBox="0 0 24 24" aria-hidden="true" style="display:none">
+            <path d="M3 3l18 18"/>
+            <path d="M10.6 6.2A10.9 10.9 0 0 1 12 6c6.5 0 10 6 10 6a18.4 18.4 0 0 1-3.1 3.9"/>
+            <path d="M6.6 7.9C3.9 9.6 2 12 2 12s3.5 6.5 10 6.5c1.4 0 2.7-.3 3.8-.8"/>
+            <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+          </svg>
+        </button>
+      </div>
       <div class="mt-block">
         <button type="submit" class="btn block">Masuk</button>
       </div>
@@ -65,5 +99,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
   </div>
 </div>
+<script>
+function pwShow(show) {
+  const i = document.getElementById('password');
+  i.type = show ? 'text' : 'password';
+  document.querySelector('.eye-open').style.display = show ? 'none' : '';
+  document.querySelector('.eye-shut').style.display = show ? '' : 'none';
+}
+</script>
 </body>
 </html>

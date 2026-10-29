@@ -21,13 +21,14 @@ VALUES (1, 40.00, 55.00, 32.00, 31.00, 7)
 ON DUPLICATE KEY UPDATE id = id;
 
 -- Akun admin default untuk dashboard web.
--- Email : admin@sistomate.local
--- Password: AdminSistomate2026  (GANTI SEGERA setelah login pertama!)
+-- Email : admin@sistomate.id
+-- Password: admin123@  (GANTI SEGERA setelah login pertama!)
+-- Hash: password_hash('admin123@', PASSWORD_BCRYPT, cost 12), diverifikasi password_verify.
 INSERT INTO users (name, email, password_hash)
-SELECT 'Administrator', 'admin@sistomate.local',
-       '$2y$12$an/VJV0gCODjeeANXPtS4.YAFAKohbRh4Y9uahVByGFoZfRTdNFUW'
+SELECT 'Administrator', 'admin@sistomate.id',
+       '$2y$12$ZhNhUzsjX6Wi3B98aMzo5ux/SZZ.Q2GDI6cikjtAM2wUp3R938GTG'
 WHERE NOT EXISTS (
-  SELECT 1 FROM users WHERE email = 'admin@sistomate.local'
+  SELECT 1 FROM users WHERE email = 'admin@sistomate.id'
 );
 
 -- ---------------------------------------------------------------------------
