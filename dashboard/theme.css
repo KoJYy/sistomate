@@ -8,8 +8,8 @@
   --line: #D7E0D4;
   --line-soft: #E6ECE3;
   --ink: #16241B;
-  --muted: #66786C;
-  --sehat: #1B9E5A;
+  --muted: #465B4E;
+  --sehat: #167D47;
   --layu: #D08700;
   --sakit: #D64545;
   --kering: #9A6A3C;
@@ -147,10 +147,11 @@ table.tbl tbody tr:nth-child(odd) { background: rgba(230, 236, 227, .4); }
 
 /* pil status + chip RGB */
 .pill { display: inline-block; font-size: 14px; font-weight: 700; letter-spacing: .04em; padding: 3px 11px; border-radius: 999px; }
-.pill.sehat { background: rgba(27, 158, 90, .14); color: var(--sehat); }
-.pill.layu { background: rgba(208, 135, 0, .16); color: var(--layu); }
-.pill.sakit { background: rgba(214, 69, 69, .14); color: var(--sakit); }
-.pill.kering { background: rgba(154, 106, 60, .16); color: var(--kering); }
+/* teks pill dgn warna khusus (var semantik terlalu terang utk latar tint - kontras AA) */
+.pill.sehat { background: rgba(27, 158, 90, .14); color: #12693C; }
+.pill.layu { background: rgba(208, 135, 0, .16); color: #7F5100; }
+.pill.sakit { background: rgba(214, 69, 69, .14); color: #A82E2E; }
+.pill.kering { background: rgba(154, 106, 60, .16); color: #754E2C; }
 .pill.on { background: var(--on); color: #fff; }
 .pill.off { background: var(--line-soft); color: var(--muted); }
 .rgb-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; }

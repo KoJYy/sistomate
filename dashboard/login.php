@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="pw-wrap">
         <input type="password" id="password" name="password" required>
         <button type="button" class="pw-eye" id="pwEye" aria-label="Tampilkan password"
-                onpointerdown="pwShow(true)" onpointerup="pwShow(false)" onpointerleave="pwShow(false)">
+                onclick="pwToggle()">
           <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/>
             <circle cx="12" cy="12" r="2.8"/>
@@ -100,8 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
 </div>
 <script>
-function pwShow(show) {
+function pwToggle() {
   const i = document.getElementById('password');
+  const show = i.type === 'password';
   i.type = show ? 'text' : 'password';
   document.querySelector('.eye-open').style.display = show ? 'none' : '';
   document.querySelector('.eye-shut').style.display = show ? '' : 'none';

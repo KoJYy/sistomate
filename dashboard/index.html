@@ -30,11 +30,12 @@
     margin-bottom: 18px;
   }
   .lp-hero p.lead {
-    max-width: 840px;
+    max-width: min(72ch, 700px);
     margin: 0 auto 28px;
     font-size: 18px;
     line-height: 1.6;
     color: var(--ink);
+    text-wrap: pretty;
   }
   .lp-cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .lp-cta .btn { font-size: 17px; padding: 16px 32px; }
@@ -55,6 +56,9 @@
     stroke: var(--sehat); fill: none;
     stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
   }
+
+  /* teks rapi: cegah baris terakhir yatim (straggler) */
+  p, p.desc, p.solusi, p.lead { text-wrap: pretty; }
 
   section.lp { padding: 48px 0 8px; }
   section.lp > h2 {
@@ -92,7 +96,7 @@
   .hw-card b { display: block; font-size: 14.5px; }
   .hw-card span { font-size: 14px; color: var(--muted); }
 
-  .layer { border-left: 3px solid var(--sehat); }
+  .layer { border: 1px solid var(--line); }
   .layer b.lyr { font-size: 18px; color: var(--ink); }
   .layer p { font-size: 16px; color: var(--muted); margin: 6px 0 0; }
 

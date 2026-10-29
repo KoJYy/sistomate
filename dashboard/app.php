@@ -42,8 +42,8 @@ $cfgJs = [
     --line: #D7E0D4;
     --line-soft: #E6ECE3;
     --ink: #16241B;
-    --muted: #66786C;
-    --sehat: #1B9E5A;
+    --muted: #465B4E;
+    --sehat: #167D47;
     --layu: #D08700;
     --sakit: #D64545;
     --kering: #9A6A3C;
@@ -89,10 +89,8 @@ $cfgJs = [
   .dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--sehat);
-    animation: pulse 1.6s ease-in-out infinite;
   }
-  .dot.stale { background: var(--sakit); animation: none; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+  .dot.stale { background: var(--sakit); }
 
   /* navigasi utama */
   .navbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -199,16 +197,14 @@ $cfgJs = [
   .pair .panel .tiles { flex: 1; }
   h2 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
 
-  /* tile aktuator */
+  /* tile aktuator: FLAT - bukan kartu bersarang (panel sudah kartu); pemisah = garis 1px */
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .tile {
-    background: var(--bg);
-    border: 1px solid var(--line-soft);
-    border-radius: 14px;
-    padding: 14px 16px;
     display: flex;
     flex-direction: column;
+    padding: 4px 12px 4px 0;
   }
+  .tile + .tile { border-left: 1px solid var(--line-soft); padding-left: 16px; }
   .tile .act-name { font-size: 16px; font-weight: 600; }
   .tile .big {
     font-size: 2.4rem;
