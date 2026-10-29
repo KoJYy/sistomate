@@ -63,20 +63,21 @@ $saved = isset($_GET['saved']);
 <body>
 <?= navbar('settings', $user['name']) ?>
 
-<main style="max-width:720px">
+<main>
+  <div class="settings-wrap">
   <h1 class="page-title">Pengaturan Ambang Histeresis</h1>
   <p class="lead-muted">Nilai disimpan ke tabel <code>configs</code> dan menjadi acuan
     logika kendali firmware (pompa air &amp; kipas exhaust).</p>
 
   <?php if ($saved): ?>
-    <div class="alert ok" role="alert">&#9989; Konfigurasi tersimpan.</div>
+    <div class="alert ok" role="alert">Konfigurasi tersimpan.</div>
   <?php endif; ?>
   <?php if ($error !== ''): ?>
     <div class="alert err" role="alert"><?= e($error) ?></div>
   <?php endif; ?>
 
   <form method="post" action="settings.php" class="panel">
-    <h2>&#128167; Kelembapan Tanah - Pompa Air</h2>
+    <h2>Kelembapan Tanah - Pompa Air</h2>
     <label class="f">Pompa ON di bawah: <b><span id="lSoilOn"><?= e((string)$cfg['soil_on']) ?></span> %</b></label>
     <input type="range" min="5" max="95" step="1"
            id="soil_on" name="soil_on" value="<?= e((string)$cfg['soil_on']) ?>"
@@ -86,7 +87,7 @@ $saved = isset($_GET['saved']);
            id="soil_off" name="soil_off" value="<?= e((string)$cfg['soil_off']) ?>"
            oninput="lSoilOff.textContent=this.value">
 
-    <h2 class="mt-block">&#127777;&#65039; Suhu Udara - Kipas Exhaust</h2>
+    <h2 class="mt-block">Suhu Udara - Kipas Exhaust</h2>
     <label class="f">Kipas ON di atas: <b><span id="lTempOn"><?= e((string)$cfg['temp_on']) ?></span> &deg;C</b></label>
     <input type="range" min="15" max="45" step="1"
            id="temp_on" name="temp_on" value="<?= e((string)$cfg['temp_on']) ?>"
@@ -96,19 +97,20 @@ $saved = isset($_GET['saved']);
            id="temp_off" name="temp_off" value="<?= e((string)$cfg['temp_off']) ?>"
            oninput="lTempOff.textContent=this.value">
 
-    <h2 class="mt-block">&#129514; Fertigasi Terjadwal</h2>
+    <h2 class="mt-block">Fertigasi Terjadwal</h2>
     <label class="f">Durasi dosis: <b><span id="lFert"><?= e((string)$cfg['fert_duration_s']) ?></span> detik</b></label>
     <input type="range" min="1" max="60" step="1"
            id="fert_duration_s" name="fert_duration_s" value="<?= e((string)$cfg['fert_duration_s']) ?>"
            oninput="lFert.textContent=this.value">
 
     <div class="mt-block">
-      <button type="submit" class="btn block">&#128190; Simpan Konfigurasi</button>
+      <button type="submit" class="btn block">Simpan Konfigurasi</button>
     </div>
   </form>
 
   <p class="small muted center mt-block">Perubahan berlaku untuk tampilan dashboard;
     firmware membaca nilai yang sama saat integrasi configs selesai.</p>
+  </div>
 </main>
 </body>
 </html>

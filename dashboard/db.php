@@ -79,11 +79,11 @@ function navbar(string $active, string $userName, bool $live = false): string
             . '<span id="clock">--:--:--</span>'
             . '</div>';
     }
-    $right .= '<span class="uname">&#128100; ' . e($userName) . '</span>';
+    $right .= '<span class="uname">' . e($userName) . '</span>';
     $right .= '<a class="logout" href="logout.php">Logout</a>';
     return '<header>'
         . '<div class="brand-group">'
-        .   '<div class="brand">SISTOMATE <span>greenhouse tomat</span></div>'
+        .   '<div class="brand">SISTOMATE <span>tanaman tomat</span></div>'
         .   '<nav class="navbar">' . $nav . '</nav>'
         . '</div>'
         . '<div class="header-right">' . $right . '</div>'

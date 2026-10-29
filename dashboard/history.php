@@ -72,15 +72,15 @@ $statusPill = ['sehat' => 'sehat', 'kering' => 'kering', 'layu' => 'layu', 'saki
       <div><button class="btn">Terapkan Filter</button></div>
     </form>
     <div class="mt-block small">
-      <a class="link" href="export-csv.php?jenis=sensor&date_from=<?= e($dateFrom) ?>&date_to=<?= e($dateTo) ?>">&#11015;&#65039; Export sensor (.csv)</a>
+      <a class="link" href="export-csv.php?jenis=sensor&date_from=<?= e($dateFrom) ?>&date_to=<?= e($dateTo) ?>">Export sensor (.csv)</a>
       &nbsp;&middot;&nbsp;
-      <a class="link" href="export-csv.php?jenis=actuator&date_from=<?= e($dateFrom) ?>&date_to=<?= e($dateTo) ?>">&#11015;&#65039; Export aktuator (.csv)</a>
+      <a class="link" href="export-csv.php?jenis=actuator&date_from=<?= e($dateFrom) ?>&date_to=<?= e($dateTo) ?>">Export aktuator (.csv)</a>
     </div>
   </div>
 
   <!-- Tabel sensor -->
   <div class="panel">
-    <h2>&#127777;&#65039; Data Sensor (maks 200 baris terbaru)</h2>
+    <h2>Data Sensor (maks 200 baris terbaru)</h2>
     <table class="tbl">
       <thead><tr>
         <th>Waktu</th><th>Perangkat</th><th>Suhu (&deg;C)</th><th>Kelemb. Udara (%)</th>
@@ -111,7 +111,7 @@ $statusPill = ['sehat' => 'sehat', 'kering' => 'kering', 'layu' => 'layu', 'saki
 
   <!-- Tabel aktuator -->
   <div class="panel">
-    <h2>&#9889; Riwayat Aktuator (maks 200 baris terbaru)</h2>
+    <h2>Riwayat Aktuator (maks 200 baris terbaru)</h2>
     <table class="tbl">
       <thead><tr>
         <th>Waktu</th><th>Perangkat</th><th>Aktuator</th><th>Status</th>

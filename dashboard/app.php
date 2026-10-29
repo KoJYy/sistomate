@@ -30,7 +30,7 @@ $cfgJs = [
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SISTOMATE - Monitor Greenhouse</title>
+<title>SISTOMATE - Monitor Tanaman Tomat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,600;1,9..144,700&display=swap" rel="stylesheet">
@@ -54,7 +54,7 @@ $cfgJs = [
     --serif: "Fraunces", Georgia, serif;
   }
   * { box-sizing: border-box; margin: 0; }
-  html { background: var(--bg); }
+  html { background: var(--bg); scrollbar-gutter: stable; overflow-y: scroll; }
   body {
     background: var(--bg);
     color: var(--ink);

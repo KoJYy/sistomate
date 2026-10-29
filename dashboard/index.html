@@ -129,7 +129,7 @@
 
 <!-- NAV -->
 <header>
-  <div class="brand">SISTOMATE <span>greenhouse tomat</span></div>
+  <div class="brand">SISTOMATE <span>tanaman tomat</span></div>
   <nav class="navbar">
     <a href="#masalah">Masalah</a>
     <a href="#spesifikasi">Spesifikasi</a>
@@ -142,19 +142,17 @@
 <!-- HERO -->
 <section class="lp-hero">
   <svg class="lp-heroicon" viewBox="0 0 64 64" aria-hidden="true">
-    <path d="M12 56V28L32 8l20 20v28"/>
-    <path d="M8 56h48"/>
-    <path d="M32 56V36"/>
-    <path d="M32 36c-7 0-11-4.5-11-11 7 0 11 4.5 11 11z"/>
-    <path d="M32 36c7 0 11-4.5 11-11-7 0-11 4.5-11 11z"/>
+    <path d="M32 54V30"/>
+    <path d="M32 40c-9 0-15-6-15-15 9 0 15 6 15 15z"/>
+    <path d="M32 34c0-9 6-15 15-15 0 9-6 15-15 15z"/>
+    <path d="M20 54h24"/>
   </svg>
   <div class="lp-kicker">Internet of Things &middot; Basis Data Relasional</div>
   <h1>SISTOMATE</h1>
   <p class="lead">
-    Solusi presisi pertanian tomat: sistem otomasi penyiraman dan monitoring kesehatan
-    tanaman berbasis Internet of Things dengan integrasi basis data relasional.
-    Greenhouse mini 100&times;80&times;60 cm, sensor RGB daun, logika histeresis,
-    dan dashboard real-time dalam satu kesatuan.
+    Solusi presisi pertanian tomat: sistem otomasi penyiraman, fertigasi terjadwal,
+    pemantauan mikroklimat, dan deteksi kesehatan daun berbasis sensor RGB TCS34725,
+    terintegrasi basis data relasional dengan dashboard real-time dalam satu kesatuan.
   </p>
   <div class="lp-cta">
     <a href="login.php" class="btn">Buka Dashboard</a>
@@ -189,7 +187,7 @@
       <p class="desc">Memeriksa ribuan tanaman satu per satu setiap hari melelahkan
         dan rawan terlewat.</p>
       <p class="solusi"><b>Solusi:</b> dashboard web real-time - satu layar, seluruh
-        kondisi greenhouse terpantau.</p>
+        kondisi tanaman dan lingkungan terpantau.</p>
     </div>
     <div class="panel card-solusi">
       <div class="card-head"><span class="num-pill">4</span>
@@ -205,7 +203,7 @@
 <!-- SPESIKASI HARDWARE -->
 <section id="spesifikasi" class="lp">
   <h2>Spesifikasi Hardware</h2>
-  <p class="sub">Greenhouse mini 100&times;80&times;60 cm dengan enam komponen inti.</p>
+  <p class="sub">Modul mikrokontroler, tiga sensor telemetri, dan aktuator kendali otomatis.</p>
   <div class="lp-grid g6">
     <div class="panel hw-card">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
@@ -243,12 +241,13 @@
     </div>
     <div class="panel hw-card">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 21V10L12 3l8 7v11"/>
-        <path d="M2.5 21h19"/>
-        <path d="M12 21v-6"/>
-        <path d="M12 15c-2.5 0-4-1.6-4-4 2.5 0 4 1.6 4 4z"/>
-      </svg><b>Greenhouse Mini</b>
-      <span>Rangka 100&times;80&times;60 cm</span>
+        <circle cx="12" cy="12" r="2"/>
+        <path d="M12 10c0-4 1-7 4-7s3 4-4 7z"/>
+        <path d="M14 12c4 0 7 1 7 4s-4 3-7-4z"/>
+        <path d="M12 14c0 4-1 7-4 7s-3-4 4-7z"/>
+        <path d="M10 12c-4 0-7-1-7-4s4-3 7 4z"/>
+      </svg><b>Aktuator Fisik</b>
+      <span>Pompa air, pompa pupuk, kipas DC</span>
     </div>
   </div>
 </section>
@@ -260,23 +259,23 @@
   <div class="lp-grid g2">
     <div class="panel layer">
       <b class="lyr">1 &middot; Persepsi</b>
-      <p>Tiga sensor (DHT11, soil moisture, TCS34725) + ESP32-CAM mengumpulkan data
-        lingkungan dan foto daun.</p>
+      <p>Tiga modul sensor (DHT11, kelembapan tanah kapasitif, dan TCS34725) membaca
+        kondisi mikroklimat serta parameter spektrum daun secara kontinu.</p>
     </div>
     <div class="panel layer">
       <b class="lyr">2 &middot; Kontrol &amp; Aktuasi</b>
-      <p>ESP32 memutuskan aksi lewat logika histeresis &amp; fertigasi terjadwal,
-        lalu menggerakkan aktuator lewat relay.</p>
+      <p>ESP32 mengeksekusi logika histeresis mandiri dan jadwal pupuk cair,
+        mengendalikan pompa air, pompa pupuk, dan kipas melalui modul relay.</p>
     </div>
     <div class="panel layer">
       <b class="lyr">3 &middot; Komunikasi &amp; Data</b>
-      <p>Data dikirim via Wi-Fi HTTP POST dengan X-API-Key, divalidasi ingest.php
-        (perbandingan konstan waktu), disimpan di MySQL.</p>
+      <p>Telemetri dikirim oleh ESP32 via Wi-Fi HTTP POST JSON ke backend PHP,
+        divalidasi dan dicatat ke database MySQL.</p>
     </div>
     <div class="panel layer">
-      <b class="lyr">4 &middot; Presentasi &amp; Kecerdasan</b>
-      <p>Dashboard web menampilkan gauge &amp; tren real-time, ekspor CSV, dan analisis
-        AI (Gemini) untuk kesehatan daun.</p>
+      <b class="lyr">4 &middot; Presentasi &amp; Pemantauan</b>
+      <p>Dashboard web responsif menyajikan status kesehatan daun berbasis rasio warna
+        TCS34725, grafik histeresis, riwayat aktuasi, dan ekspor CSV.</p>
     </div>
   </div>
 </section>

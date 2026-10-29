@@ -62,9 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="login-wrap">
   <div class="panel login-card">
     <div class="center">
-      <div class="mark">&#127793;</div>
+      <div class="mark"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--sehat)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22V12"/><path d="M12 14c-4 0-7-3-7-7 4 0 7 3 7 7z"/><path d="M12 12c0-4 3-7 7-7 0 4-3 7-7 7z"/><path d="M8 22h8"/></svg></div>
       <h1>SISTOMATE</h1>
-      <p class="muted small">Monitoring &amp; Otomasi Greenhouse Tomat</p>
+      <p class="muted small">Monitoring &amp; Otomasi Tanaman Tomat</p>
     </div>
     <?php if ($error !== ''): ?>
       <div class="alert err mt-block" role="alert"><?= e($error) ?></div>
