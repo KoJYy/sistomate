@@ -4,208 +4,278 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SISTOMATE - Solusi Presisi Pertanian Tomat</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 <style>
-  :root { --green-900:#14532d; --green-700:#15803d; --green-500:#22c55e; --cream:#fffdf5; }
-  body { background: var(--cream); }
-  .hero {
-    background: radial-gradient(1200px 500px at 80% -10%, #bbf7d0 0%, transparent 60%),
-                linear-gradient(135deg, var(--green-900), var(--green-700));
-    color: #fff; border-radius: 0 0 2rem 2rem;
+  /* landing khusus: mengikuti pola app.php (.status-card/.panel/.pill/.btn) */
+  .lp-hero {
+    background: rgba(27, 158, 90, .1);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 56px 40px;
+    margin: 14px 0;
+    text-align: center;
   }
-  .hero .badge-soft { background: rgba(255,255,255,.15); color:#fff; }
-  .card-solusi { border: none; border-radius: 1rem; box-shadow: 0 6px 18px rgba(20,83,45,.08);
-                 transition: transform .15s ease; height: 100%; }
-  .card-solusi:hover { transform: translateY(-4px); }
-  .num-circle { width: 2.2rem; height: 2.2rem; border-radius: 50%; display: grid; place-items: center;
-                background: var(--green-500); color: #fff; font-weight: 700; flex: 0 0 auto; }
-  .layer { border-left: 4px solid var(--green-500); background: #fff; border-radius: .75rem;
-           box-shadow: 0 4px 12px rgba(0,0,0,.05); }
-  .profil-card { border: none; border-radius: 1rem; background: #fff; box-shadow: 0 6px 18px rgba(20,83,45,.08); }
-  footer { background: var(--green-900); }
+  .lp-kicker { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .lp-hero h1 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(2.6rem, 7vw, 4.4rem);
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    color: var(--sehat);
+    margin-bottom: 14px;
+  }
+  .lp-hero p.lead {
+    max-width: 640px;
+    margin: 0 auto 24px;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .lp-cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .lp-cta .btn.ghost {
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--line);
+  }
+  .lp-emoji { font-size: 3.4rem; line-height: 1; margin-bottom: 12px; }
+
+  section.lp { padding: 44px 0 8px; }
+  section.lp > h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.8rem;
+    letter-spacing: -.01em;
+    color: var(--ink);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  section.lp > p.sub { text-align: center; color: var(--muted); font-size: 13.5px; margin-bottom: 24px; }
+
+  .lp-grid { display: grid; gap: 14px; }
+  .lp-grid.g4 { grid-template-columns: repeat(4, 1fr); }
+  .lp-grid.g6 { grid-template-columns: repeat(6, 1fr); }
+  .lp-grid.g2 { grid-template-columns: repeat(2, 1fr); }
+
+  .card-solusi { display: flex; flex-direction: column; gap: 8px; }
+  .card-head { display: flex; align-items: center; gap: 10px; }
+  .num-pill {
+    display: inline-grid; place-items: center;
+    width: 26px; height: 26px; flex: none;
+    border-radius: 999px;
+    background: var(--sehat); color: #fff;
+    font-size: 12.5px; font-weight: 700;
+  }
+  .card-head h3 { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .card-solusi p.desc { font-size: 13px; color: var(--muted); }
+  .card-solusi p.solusi { font-size: 13px; margin: 0; }
+  .card-solusi p.solusi b { color: var(--sehat); }
+
+  .hw-card { text-align: center; padding: 18px 14px; }
+  .hw-card .ico { font-size: 1.9rem; line-height: 1; margin-bottom: 8px; }
+  .hw-card b { display: block; font-size: 13.5px; }
+  .hw-card span { font-size: 12px; color: var(--muted); }
+
+  .layer { border-left: 3px solid var(--sehat); }
+  .layer b.lyr { font-size: 13.5px; color: var(--ink); }
+  .layer p { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+
+  .team-card { text-align: center; padding: 18px 12px; }
+  .team-card .ico { font-size: 1.9rem; line-height: 1; margin-bottom: 8px; }
+  .team-card b { display: block; font-size: 13px; }
+  .team-card .role { font-size: 12px; color: var(--muted); }
+
+  .lp-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 760px) {
+    .lp-grid.g4, .lp-grid.g6, .lp-grid.g2 { grid-template-columns: 1fr 1fr; }
+    .lp-hero { padding: 40px 22px; }
+  }
+  @media (max-width: 480px) {
+    .lp-grid.g4, .lp-grid.g6 { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 
 <!-- NAV -->
-<nav class="navbar navbar-expand-lg navbar-dark" style="background:var(--green-900)">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="index.html">🌱 SISTOMATE</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navLanding">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navLanding">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="#masalah">Masalah</a></li>
-        <li class="nav-item"><a class="nav-link" href="#spesifikasi">Spesifikasi</a></li>
-        <li class="nav-item"><a class="nav-link" href="#arsitektur">Arsitektur</a></li>
-        <li class="nav-item"><a class="nav-link" href="#tim">Tim</a></li>
-        <li class="nav-item ms-lg-2"><a class="btn btn-success btn-sm" href="login.php">Buka Dashboard</a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
-
-<!-- HERO -->
-<header class="hero py-5">
-  <div class="container py-4">
-    <div class="row align-items-center g-4">
-      <div class="col-lg-7">
-        <span class="badge badge-soft rounded-pill mb-3 px-3 py-2">Internet of Things · Basis Data Relasional</span>
-        <h1 class="display-5 fw-bold mb-3">SISTOMATE - Solusi Presisi Pertanian Tomat</h1>
-        <p class="lead mb-4 opacity-90">
-          Sistem otomasi penyiraman dan monitoring kesehatan tanaman tomat berbasis Internet of Things
-          dengan integrasi basis data relasional. Greenhouse mini 100&times;80&times;60 cm, sensor RGB daun,
-          histeresis, dan dashboard real-time dalam satu kesatuan.
-        </p>
-        <a href="login.php" class="btn btn-light btn-lg fw-semibold shadow">🚀 Buka Dashboard</a>
-        <a href="#masalah" class="btn btn-outline-light btn-lg ms-2">Pelajari Lebih Lanjut</a>
-      </div>
-      <div class="col-lg-5 text-center">
-        <div style="font-size:9rem" class="mb-2">🍅🌿</div>
-      </div>
-    </div>
-  </div>
+<header>
+  <div class="brand">SISTOMATE <span>greenhouse tomat</span></div>
+  <nav class="navbar">
+    <a href="#masalah">Masalah</a>
+    <a href="#spesifikasi">Spesifikasi</a>
+    <a href="#arsitektur">Arsitektur</a>
+    <a href="#tim">Tim</a>
+    <a href="login.php" class="on">Buka Dashboard</a>
+  </nav>
 </header>
 
+<!-- HERO -->
+<section class="lp-hero">
+  <div class="lp-emoji">&#127813;&#127807;</div>
+  <div class="lp-kicker">Internet of Things &middot; Basis Data Relasional</div>
+  <h1>SISTOMATE</h1>
+  <p class="lead">
+    Solusi presisi pertanian tomat: sistem otomasi penyiraman dan monitoring kesehatan
+    tanaman berbasis Internet of Things dengan integrasi basis data relasional.
+    Greenhouse mini 100&times;80&times;60 cm, sensor RGB daun, logika histeresis,
+    dan dashboard real-time dalam satu kesatuan.
+  </p>
+  <div class="lp-cta">
+    <a href="login.php" class="btn">&#128640; Buka Dashboard</a>
+    <a href="#masalah" class="btn ghost">Pelajari Lebih Lanjut</a>
+  </div>
+</section>
+
 <!-- 4 MASALAH vs SOLUSI -->
-<section id="masalah" class="py-5">
-  <div class="container py-3">
-    <h2 class="fw-bold text-center mb-2">4 Masalah Petani, 4 Solusi SISTOMATE</h2>
-    <p class="text-center text-muted mb-4">Dari keluhan lapangan menuju jawaban teknis yang terukur.</p>
-    <div class="row g-4">
-      <div class="col-md-6 col-lg-3">
-        <div class="card card-solusi p-4">
-          <div class="d-flex align-items-center gap-2 mb-2"><span class="num-circle">1</span>
-            <h3 class="h6 fw-bold mb-0">Penilaian Subjektif</h3></div>
-          <p class="small text-muted mb-2">Mata manusia mudah tertipu pencahayaan - dua pekebun bisa beda
-            penilaian pada daun yang sama.</p>
-          <p class="small mb-0"><b>Solusi:</b> sensor warna RGB TCS34725 membaca spektral daun menjadi
-            angka rasio hijau/merah yang objektif.</p>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <div class="card card-solusi p-4">
-          <div class="d-flex align-items-center gap-2 mb-2"><span class="num-circle">2</span>
-            <h3 class="h6 fw-bold mb-0">Keterlambatan Penanganan</h3></div>
-          <p class="small text-muted mb-2">Gejala baru sadar ketika daun sudah kuning pucat - tanaman
-            terlanjur sakit parah.</p>
-          <p class="small mb-0"><b>Solusi:</b> DHT11 + sensor kelembapan tanah kapasitif dibaca terus
-            menerus, pompa &amp; kipas langsung menindak.</p>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <div class="card card-solusi p-4">
-          <div class="d-flex align-items-center gap-2 mb-2"><span class="num-circle">3</span>
-            <h3 class="h6 fw-bold mb-0">Keterbatasan Fisik</h3></div>
-          <p class="small text-muted mb-2">Memeriksa ribuan tanaman satu per satu setiap hari melelahkan
-            dan rawan terlewat.</p>
-          <p class="small mb-0"><b>Solusi:</b> dashboard web real-time - satu layar, seluruh kondisi
-            greenhouse terpantau.</p>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <div class="card card-solusi p-4">
-          <div class="d-flex align-items-center gap-2 mb-2"><span class="num-circle">4</span>
-            <h3 class="h6 fw-bold mb-0">Tanpa Catatan Historis</h3></div>
-          <p class="small text-muted mb-2">Riwayat hanya di ingatan pekebun - evaluasi pupuk &amp;
-            jadwal siram tidak pernah pasti.</p>
-          <p class="small mb-0"><b>Solusi:</b> MySQL lima tabel menyimpan seluruh sensor &amp; aktuator
-            sebagai riwayat yang dapat ditelusuri + ekspor CSV.</p>
-        </div>
-      </div>
+<section id="masalah" class="lp">
+  <h2>4 Masalah Petani, 4 Solusi SISTOMATE</h2>
+  <p class="sub">Dari keluhan lapangan menuju jawaban teknis yang terukur.</p>
+  <div class="lp-grid g4">
+    <div class="panel card-solusi">
+      <div class="card-head"><span class="num-pill">1</span>
+        <h3>Penilaian Subjektif</h3></div>
+      <p class="desc">Mata manusia mudah tertipu pencahayaan - dua pekebun bisa beda
+        penilaian pada daun yang sama.</p>
+      <p class="solusi"><b>Solusi:</b> sensor warna RGB TCS34725 membaca spektral daun
+        menjadi angka rasio hijau/merah yang objektif.</p>
+    </div>
+    <div class="panel card-solusi">
+      <div class="card-head"><span class="num-pill">2</span>
+        <h3>Keterlambatan Penanganan</h3></div>
+      <p class="desc">Gejala baru sadar ketika daun sudah kuning pucat - tanaman
+        terlanjur sakit parah.</p>
+      <p class="solusi"><b>Solusi:</b> DHT11 + sensor kelembapan tanah kapasitif dibaca
+        terus menerus, pompa &amp; kipas langsung menindak.</p>
+    </div>
+    <div class="panel card-solusi">
+      <div class="card-head"><span class="num-pill">3</span>
+        <h3>Keterbatasan Fisik</h3></div>
+      <p class="desc">Memeriksa ribuan tanaman satu per satu setiap hari melelahkan
+        dan rawan terlewat.</p>
+      <p class="solusi"><b>Solusi:</b> dashboard web real-time - satu layar, seluruh
+        kondisi greenhouse terpantau.</p>
+    </div>
+    <div class="panel card-solusi">
+      <div class="card-head"><span class="num-pill">4</span>
+        <h3>Tanpa Catatan Historis</h3></div>
+      <p class="desc">Riwayat hanya di ingatan pekebun - evaluasi pupuk &amp; jadwal
+        siram tidak pernah pasti.</p>
+      <p class="solusi"><b>Solusi:</b> MySQL enam tabel menyimpan seluruh sensor &amp;
+        aktuator sebagai riwayat yang dapat ditelusuri + ekspor CSV.</p>
     </div>
   </div>
 </section>
 
 <!-- SPESIKASI HARDWARE -->
-<section id="spesifikasi" class="py-5" style="background:#f0fdf4">
-  <div class="container py-3">
-    <h2 class="fw-bold text-center mb-4">Spesifikasi Hardware</h2>
-    <div class="row g-3 justify-content-center">
-      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
-        <div style="font-size:2rem">🧠</div><b class="small">ESP32</b>
-        <span class="small text-muted">Mikrokontroler Wi-Fi</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
-        <div style="font-size:2rem">🌈</div><b class="small">TCS34725</b>
-        <span class="small text-muted">Sensor warna RGB daun (I2C)</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
-        <div style="font-size:2rem">🌡️</div><b class="small">DHT11</b>
-        <span class="small text-muted">Suhu &amp; kelembapan udara</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
-        <div style="font-size:2rem">💧</div><b class="small">Soil Kapasitif</b>
-        <span class="small text-muted">Kelembapan tanah (GPIO34)</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
-        <div style="font-size:2rem">⚡</div><b class="small">Relay 4 Kanal</b>
-        <span class="small text-muted">Pompa air, pompa pupuk, kipas, cadangan</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="card card-solusi p-3 text-center h-100">
-        <div style="font-size:2rem">🏠</div><b class="small">Greenhouse Mini</b>
-        <span class="small text-muted">Rangka 100&times;80&times;60 cm</span></div></div>
+<section id="spesifikasi" class="lp">
+  <h2>Spesifikasi Hardware</h2>
+  <p class="sub">Greenhouse mini 100&times;80&times;60 cm dengan enam komponen inti.</p>
+  <div class="lp-grid g6">
+    <div class="panel hw-card">
+      <div class="ico">&#129504;</div><b>ESP32</b>
+      <span>Mikrokontroler Wi-Fi</span>
+    </div>
+    <div class="panel hw-card">
+      <div class="ico">&#127752;</div><b>TCS34725</b>
+      <span>Sensor warna RGB daun (I2C)</span>
+    </div>
+    <div class="panel hw-card">
+      <div class="ico">&#127777;&#65039;</div><b>DHT11</b>
+      <span>Suhu &amp; kelembapan udara</span>
+    </div>
+    <div class="panel hw-card">
+      <div class="ico">&#128167;</div><b>Soil Kapasitif</b>
+      <span>Kelembapan tanah (GPIO34)</span>
+    </div>
+    <div class="panel hw-card">
+      <div class="ico">&#9889;</div><b>Relay 4 Kanal</b>
+      <span>Pompa air, pompa pupuk, kipas, cadangan</span>
+    </div>
+    <div class="panel hw-card">
+      <div class="ico">&#127968;</div><b>Greenhouse Mini</b>
+      <span>Rangka 100&times;80&times;60 cm</span>
     </div>
   </div>
 </section>
 
 <!-- ARSITEKTUR 4 LAYER -->
-<section id="arsitektur" class="py-5">
-  <div class="container py-3">
-    <h2 class="fw-bold text-center mb-4">Arsitektur Sistem 4 Lapis</h2>
-    <div class="row g-3">
-      <div class="col-lg-6">
-        <div class="layer p-3 mb-3"><b>1 · ESP32 Edge</b>
-          <p class="small text-muted mb-0">Akuisisi 3 sensor, logika histeresis &amp; fertigasi terjadwal,
-            kirim JSON + X-API-Key via HTTP POST.</p></div>
-        <div class="layer p-3"><b>2 · Backend Ingest (PHP)</b>
-          <p class="small text-muted mb-0">Validasi API key dengan perbandingan konstan waktu,
-            prepared statement PDO ke MySQL.</p></div>
-      </div>
-      <div class="col-lg-6">
-        <div class="layer p-3 mb-3"><b>3 · Basis Data MySQL</b>
-          <p class="small text-muted mb-0">Lima tabel relasional (users, devices, sensor_logs,
-            actuator_logs, gallery) + configs, dikelola via DBeaver.</p></div>
-        <div class="layer p-3"><b>4 · Dashboard Web</b>
-          <p class="small text-muted mb-0">Gauge meter, grafik tren Chart.js, riwayat + ekspor CSV,
-            pengaturan ambang histeresis.</p></div>
-      </div>
+<section id="arsitektur" class="lp">
+  <h2>Arsitektur Sistem 4 Layer</h2>
+  <p class="sub">Pemisahan layer memudahkan pengujian dan pengembangan per bagian.</p>
+  <div class="lp-grid g2">
+    <div class="panel layer">
+      <b class="lyr">1 &middot; Persepsi</b>
+      <p>Tiga sensor (DHT11, soil moisture, TCS34725) + ESP32-CAM mengumpulkan data
+        lingkungan dan foto daun.</p>
+    </div>
+    <div class="panel layer">
+      <b class="lyr">2 &middot; Kontrol &amp; Aktuasi</b>
+      <p>ESP32 memutuskan aksi lewat logika histeresis &amp; fertigasi terjadwal,
+        lalu menggerakkan aktuator lewat relay.</p>
+    </div>
+    <div class="panel layer">
+      <b class="lyr">3 &middot; Komunikasi &amp; Data</b>
+      <p>Data dikirim via Wi-Fi HTTP POST dengan X-API-Key, divalidasi ingest.php
+        (perbandingan konstan waktu), disimpan di MySQL.</p>
+    </div>
+    <div class="panel layer">
+      <b class="lyr">4 &middot; Presentasi &amp; Kecerdasan</b>
+      <p>Dashboard web menampilkan gauge &amp; tren real-time, ekspor CSV, dan analisis
+        AI (Gemini) untuk kesehatan daun.</p>
     </div>
   </div>
 </section>
 
 <!-- PROFIL TIM -->
-<section id="tim" class="py-5" style="background:#f0fdf4">
-  <div class="container py-3">
-    <h2 class="fw-bold text-center mb-2">Profil Tim</h2>
-    <p class="text-center text-muted mb-4">Kelompok 3 (Golongan B) - Program Studi Teknologi Rekayasa
-      Komputer, Politeknik Negeri Jember.</p>
-    <div class="row g-3 justify-content-center">
-      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
-        <div style="font-size:2rem">🗄️</div><b class="small d-block">Yuda Maredya A. P.</b>
-        <span class="small text-muted">Database</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
-        <div style="font-size:2rem">🔧</div><b class="small d-block">Abiyu Ammar Hady</b>
-        <span class="small text-muted">Hardware</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
-        <div style="font-size:2rem">💾</div><b class="small d-block">Ibror Yusron S.</b>
-        <span class="small text-muted">Firmware</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
-        <div style="font-size:2rem">🧊</div><b class="small d-block">Moch Calvin A.</b>
-        <span class="small text-muted">3D CAD</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
-        <div style="font-size:2rem">🎨</div><b class="small d-block">Nabil Laudza N.</b>
-        <span class="small text-muted">Frontend</span></div></div>
-      <div class="col-6 col-md-4 col-lg-2"><div class="profil-card p-3 text-center h-100">
-        <div style="font-size:2rem">📝</div><b class="small d-block">Tio Dwi H.</b>
-        <span class="small text-muted">Dokumentasi</span></div></div>
+<section id="tim" class="lp">
+  <h2>Profil Tim</h2>
+  <p class="sub">Kelompok 3 (Golongan B) - Program Studi Teknologi Rekayasa Komputer,
+    Politeknik Negeri Jember.</p>
+  <div class="lp-grid g6">
+    <div class="panel team-card">
+      <div class="ico">&#128451;&#65039;</div><b>Yuda Maredya A. P.</b>
+      <span class="role">Database</span>
     </div>
-    <div class="text-center mt-4">
-      <a href="login.php" class="btn btn-success btn-lg fw-semibold shadow">🚀 Buka Dashboard</a>
+    <div class="panel team-card">
+      <div class="ico">&#128295;</div><b>Abiyu Ammar Hady</b>
+      <span class="role">Hardware</span>
     </div>
+    <div class="panel team-card">
+      <div class="ico">&#128187;</div><b>Ibror Yusron S.</b>
+      <span class="role">Firmware</span>
+    </div>
+    <div class="panel team-card">
+      <div class="ico">&#129482;</div><b>Moch Calvin A.</b>
+      <span class="role">3D CAD</span>
+    </div>
+    <div class="panel team-card">
+      <div class="ico">&#127912;</div><b>Nabil Laudza N.</b>
+      <span class="role">Frontend</span>
+    </div>
+    <div class="panel team-card">
+      <div class="ico">&#128221;</div><b>Tio Dwi H.</b>
+      <span class="role">Dokumentasi</span>
+    </div>
+  </div>
+  <div class="lp-cta" style="margin-top:24px">
+    <a href="login.php" class="btn">&#128640; Buka Dashboard</a>
   </div>
 </section>
 
-<footer class="text-center text-white py-3">
-  <small>SISTOMATE &copy; 2026 · Kelompok 3 Golongan B · Workshop Basis Data &amp; Workshop Sistem Tertanam</small>
+<footer class="lp-footer">
+  SISTOMATE &copy; 2026 &middot; Kelompok 3 Golongan B &middot;
+  Workshop Basis Data &amp; Workshop Sistem Tertanam
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
