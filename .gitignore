@@ -1,6 +1,6 @@
 *.pdf
 !examples/*.pdf
-!docs/cad/*.pdf
+!gambar/*.pdf
 *.FCBak
 *.docx
 !reference.docx
@@ -77,5 +77,5 @@ test.sh
 whisper.js
 Screenshot*.png
 
-# Catatan pribadi (lokal saja)
-/docs/WBD.txt
+# Dokumen lokal (tidak dipublikasikan)
+/docs/

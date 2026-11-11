@@ -2,13 +2,13 @@
 
 Proyek Workshop Basis Data: SISTOMATE (otomasi penyiraman & monitoring tanaman tomat berbasis ESP32 + PHP + MySQL) beserta model CAD 3D mini greenhouse.
 
-Isi repo publik: `dashboard/`, `sistomate-firmware/`, `sql/`, `docs/`, `gambar/`, `README.md`, `LICENSE`, `.gitignore`.
+Isi repo publik: `dashboard/`, `sistomate-firmware/`, `sql/`, `gambar/`, `README.md`, `LICENSE`, `.gitignore`. Folder `docs/` hanya ada di mesin pengembangan dan tidak dipublikasikan.
 
 ## Sumber kebenaran (dan dokumen usang)
 
 - **`CLAUDE.md` (arsip lokal, tidak dipublikasikan) sebagian usang** — masih menyebut Gemini, ESP32-CAM, 10 tabel, tanaman cabai, dan webroot `/usr/share/nginx/html`. Jangan implementasi dari situ.
 - Juga usang: `docs/superpowers/specs/2026-09-01-plantmonitor-design.md` (desain awal, bukan sistem final).
-- Yang berlaku: `sql/schema.sql` + `sql/configs.sql`, `dashboard/*.php`, `sistomate-firmware/SISTOMATE/SISTOMATE.ino`, `docs/web-spec.md`.
+- Yang berlaku: `sql/schema.sql` + `sql/configs.sql`, `dashboard/*.php`, `sistomate-firmware/SISTOMATE/SISTOMATE.ino`, `docs/web-spec.md` (lokal).
 - Sistem final: 5 tabel inti (`users`, `devices`, `sensor_logs`, `actuator_logs`, `gallery`) + `configs`; tanpa AI/Gemini, tanpa ESP32-CAM.
 - Firmware acuan: relay aktif-LOW GPIO 26/14/27, soil GPIO 34, DHT11 GPIO 13, TCS34725 I2C 21/22, histeresis 40/55/32/31.
 
@@ -38,7 +38,7 @@ Isi repo publik: `dashboard/`, `sistomate-firmware/`, `sql/`, `docs/`, `gambar/`
 
 ## CAD & FreeCAD
 
-- Model: `docs/cad/greenhouse.FCStd`; sumbu X=1000 (panjang), Y=800 (lebar), Z=600 (tinggi).
+- Model: `docs/cad/greenhouse.FCStd` (lokal); sumbu X=1000 (panjang), Y=800 (lebar), Z=600 (tinggi).
 - FreeCAD MCP: `execute_code` aman; `execute_code_async` yang menyentuh dokumen/view/GUI membuat FreeCAD crash. Flatpak `DISPLAY=:0`, RPC :9875.
 
 ## Git & kerja tim
@@ -51,4 +51,4 @@ Isi repo publik: `dashboard/`, `sistomate-firmware/`, `sql/`, `docs/`, `gambar/`
 ## Referensi
 
 - Status/backlog lokal: `tools/TODO.md` (gitignored).
-- Spesifikasi web W1–W5: `docs/web-spec.md` (status fase di header sudah usang).
+- Spesifikasi web W1–W5: `docs/web-spec.md` (lokal; status fase di header sudah usang).

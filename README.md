@@ -1,7 +1,7 @@
 # SISTOMATE: Sistem Otomasi Penyiraman dan Monitoring Kesehatan Tanaman Tomat Berbasis IoT
 
 <p align="center">
-  <img src="docs/cad/render-isometric.png" alt="SISTOMATE 3D Greenhouse" width="600"/>
+  <img src="gambar/render-isometric.png" alt="SISTOMATE 3D Greenhouse" width="600"/>
 </p>
 
 <p align="center">
@@ -95,7 +95,7 @@ Tabel pendukung **`configs`** menyimpan ambang histeresis **per perangkat** (rel
 * **Rangka Pondasi:** Balok kayu kaso $100 \times 80\text{ cm}$.
 * **Busur Atap:** 4 batang pipa PVC fleksibel $\frac{1}{2}"$ sepanjang $149\text{ cm}$ per busur (tinggi puncak $60\text{ cm}$).
 * **Selimut:** Plastik PE bening fleksibel tahan embun.
-* **Berkas Model 3D:** Tersedia lengkap dalam format `.FCStd` (FreeCAD native), `.step`, dan `.stl` di direktori `docs/cad/`.
+* **Berkas Model 3D:** tersedia di mesin pengembangan (folder `docs/cad/`), tidak disertakan di repo publik.
 
 ---
 
