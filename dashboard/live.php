@@ -4,7 +4,8 @@
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 
-$env = parse_ini_file('/etc/sistomate-ingest.env');
+$path = getenv('SISTOMATE_ENV') ?: '/etc/sistomate-ingest.env';
+$env = parse_ini_file($path);
 if ($env === false) {
     error_log('live: env file tidak terbaca');
     http_response_code(500);
