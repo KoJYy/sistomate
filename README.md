@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Smart Precision Agriculture & Automated Mini Greenhouse for Tomato Crops</b><br/>
-  Laporan Proyek Bersama: Workshop Basis Data (TRK 130805) & Workshop Sistem Tertanam<br/>
+  Proyek Bersama: Workshop Basis Data (TRK 130805) & Workshop Sistem Tertanam<br/>
   Program Studi Teknologi Rekayasa Komputer, Jurusan Teknologi Informasi<br/>
   Politeknik Negeri Jember (2026/2027)
 </p>
@@ -16,7 +16,6 @@
   <img src="https://img.shields.io/badge/Database-MySQL_8-orange?style=for-the-badge&logo=mysql" alt="MySQL">
   <img src="https://img.shields.io/badge/Backend-PHP_8_+_Nginx-purple?style=for-the-badge&logo=php" alt="PHP">
   <img src="https://img.shields.io/badge/CAD-FreeCAD_0.21-red?style=for-the-badge&logo=freecad" alt="FreeCAD">
-  <img src="https://img.shields.io/badge/Documentation-Typst_PDF-239DAD?style=for-the-badge&logo=typst" alt="Typst">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License">
 </p>
 
@@ -41,7 +40,7 @@
 
 1. **Lapisan Persepsi & Aktuasi (Edge Hardware):** ESP32, sensor kelembapan tanah kapasitif, DHT11 (suhu & RH), TCS34725 (RGB daun), pompa air submersible, pompa pupuk fertigasi, dan exhaust fan 80mm.
 2. **Lapisan Penyerapan (Ingestion Backend):** Nginx & PHP 8 endpoint (`ingest.php`) dengan validasi `X-API-Key` dan sanitasi prepared statements.
-3. **Lapisan Penyimpanan (Relational Database):** MySQL database `sistomate` dengan skema terpusat pada perangkat (*devices-centric*) yang mencakup 5 tabel.
+3. **Lapisan Penyimpanan (Relational Database):** MySQL database `sistomate` dengan skema terpusat pada perangkat (*devices-centric*) yang mencakup 5 tabel inti dan 1 tabel pendukung (`configs`).
 4. **Lapisan Penyajian (Presentation Dashboard):** Web dashboard realtime berbasis Chart.js dan Canvas Gauge yang membaca status telemetri melalui `live.php`.
 
 ---
@@ -79,12 +78,14 @@
 
 ## 🗄️ Struktur Basis Data Relasional
 
-Sistem menggunakan 5 tabel relasional dengan integritas referensial `ON DELETE CASCADE` / `RESTRICT`:
+Sistem menggunakan 5 tabel inti dengan integritas referensial `ON DELETE CASCADE` / `RESTRICT`:
 * **`users`:** Menyimpan akun pengelola dan hak akses dashboard.
 * **`devices`:** Entitas sentral yang merepresentasikan mikrokontroler ESP32 terpasang.
 * **`sensor_logs`:** Pencatatan deret waktu (*time-series*) suhu, RH, soil moisture, nilai RGB, dan status klasifikasi kesehatan tanaman.
 * **`actuator_logs`:** Audit log pencatatan setiap transisi aksi aktuator (ON/OFF) beserta timestamp eksekusi.
 * **`gallery`:** Metadata dokumentasi visual tanaman tomat yang ditangkap oleh webcam.
+
+Tabel pendukung **`configs`** menyimpan ambang histeresis **per perangkat** (relasi 1:1 ke `devices` lewat `id_device`, `ON DELETE CASCADE`); satu baris konfigurasi untuk setiap ESP32, diubah dari halaman Pengaturan.
 
 ---
 
