@@ -1,9 +1,11 @@
 -- SISTOMATE seed data demo (presentasi minggu-5).
+-- Password akun demo: Demo123!  (hanya untuk demo lokal, jangan dipakai publik)
 USE sistomate;
 
 INSERT INTO users (name, email, password_hash) VALUES
-  ('Budi Santoso', 'budi@polije.ac.id', '$2y$10$demohashbudi santosoxxx'),
-  ('Ayu Lestari', 'ayu@polije.ac.id', '$2y$10$demohashayulestarixxxx');
+  ('Budi Santoso', 'budi@polije.ac.id', '$2y$12$n/bU9Wwy9T6DHW/IyTIf0uqWvQdk8t8/EerxHJKP0TTdWZf8lNVdW'),
+  ('Ayu Lestari', 'ayu@polije.ac.id', '$2y$12$x87uoVdhh1a93KFSxy0YquRGUCzXFNHn/JxkSJdmG3HtN8Dba1N9K')
+ON DUPLICATE KEY UPDATE name = VALUES(name), password_hash = VALUES(password_hash);
 
 INSERT INTO devices (device_name, location, id_user) VALUES
   ('ESP32-Greenhouse-1', 'Bed-1-Baris-2', 1),

@@ -8,9 +8,21 @@ if (session_status() === PHP_SESSION_NONE) {
 require_login();
 $user = current_user();
 
-// Ambang histeresis dari tabel configs (fallback = nilai firmware).
-$cfg = db()->query('SELECT * FROM configs WHERE id = 1')->fetch()
-    ?: ['soil_on' => 40, 'soil_off' => 55, 'temp_on' => 32, 'temp_off' => 31, 'fert_duration_s' => 7];
+// Ambang histeresis per-device dari tabel configs (fallback = nilai firmware).
+// Device mengikuti bacaan sensor terakhir; kalau belum ada log, pakai device pertama.
+$deviceId = (int) (db()->query('SELECT id_device FROM sensor_logs ORDER BY id_log DESC LIMIT 1')->fetchColumn() ?: 0);
+if ($deviceId <= 0) {
+    $deviceId = (int) (db()->query('SELECT MIN(id_device) FROM devices')->fetchColumn() ?: 0);
+}
+$cfg = ['soil_on' => 40, 'soil_off' => 55, 'temp_on' => 32, 'temp_off' => 31, 'fert_duration_s' => 7];
+if ($deviceId > 0) {
+    $stmt = db()->prepare('SELECT * FROM configs WHERE id_device = ?');
+    $stmt->execute([$deviceId]);
+    $row = $stmt->fetch();
+    if ($row) {
+        $cfg = $row + $cfg;
+    }
+}
 
 // Posisi zona ambang di gauge (skala suhu 20-40 derajat C, tanah 0-100%).
 $soilOnPct  = max(0.0, min(100.0, (float) $cfg['soil_on']));
