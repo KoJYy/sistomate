@@ -76,3 +76,6 @@ template.typ
 test.sh
 whisper.js
 Screenshot*.png
+
+# Catatan pribadi (lokal saja)
+/docs/WBD.txt
