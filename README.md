@@ -21,6 +21,25 @@
 
 ---
 
+## 🖥️ Tampilan Web
+
+<p align="center">
+  <img src="gambar/landing-page.png" alt="Landing page SISTOMATE" width="900"/>
+</p>
+
+---
+
+## 📁 Struktur Repo
+
+```text
+dashboard/           dashboard web (PHP + HTML/CSS/JS), assets/, showcase/
+sistomate-firmware/  sketch ESP32 (SISTOMATE.ino) + endpoint ingest.php
+sql/                 skema, konfigurasi, seed, dan migrasi database
+gambar/              diagram arsitektur, skematik, flowchart, render 3D
+```
+
+---
+
 ## 📖 Tentang SISTOMATE
 
 **SISTOMATE** adalah sistem otomasi penyiraman, pemupukan (fertigasi), dan pemantauan mikroklima tanaman tomat berbasis *Internet of Things* (IoT) yang terintegrasi secara langsung dengan basis data relasional. Sistem ini diimplementasikan pada miniatur greenhouse tunnel busur berukuran $100 \times 80 \times 60\text{ cm}$ untuk memecahkan empat kelemahan utama metode pengamatan visual manual:
@@ -83,7 +102,7 @@ Sistem menggunakan 5 tabel inti dengan integritas referensial `ON DELETE CASCADE
 * **`devices`:** Entitas sentral yang merepresentasikan mikrokontroler ESP32 terpasang.
 * **`sensor_logs`:** Pencatatan deret waktu (*time-series*) suhu, RH, soil moisture, nilai RGB, dan status klasifikasi kesehatan tanaman.
 * **`actuator_logs`:** Audit log pencatatan setiap transisi aksi aktuator (ON/OFF) beserta timestamp eksekusi.
-* **`gallery`:** Metadata dokumentasi visual tanaman tomat yang ditangkap oleh webcam.
+* **`gallery`:** Metadata dokumentasi visual tanaman tomat (foto kondisi daun dan tanaman).
 
 Tabel pendukung **`configs`** menyimpan ambang histeresis **per perangkat** (relasi 1:1 ke `devices` lewat `id_device`, `ON DELETE CASCADE`); satu baris konfigurasi untuk setiap ESP32, diubah dari halaman Pengaturan.
 
@@ -95,7 +114,26 @@ Tabel pendukung **`configs`** menyimpan ambang histeresis **per perangkat** (rel
 * **Rangka Pondasi:** Balok kayu kaso $100 \times 80\text{ cm}$.
 * **Busur Atap:** 4 batang pipa PVC fleksibel $\frac{1}{2}"$ sepanjang $149\text{ cm}$ per busur (tinggi puncak $60\text{ cm}$).
 * **Selimut:** Plastik PE bening fleksibel tahan embun.
-* **Berkas Model 3D:** tersedia di mesin pengembangan (folder `docs/cad/`), tidak disertakan di repo publik.
+* **Berkas Model 3D:** tersedia terpisah (tidak disertakan di repo ini).
+
+---
+
+## 🚀 Cara Menjalankan
+
+1. **Database** — impor skema lalu konfigurasi:
+   ```bash
+   mysql -u root -p < sql/schema.sql
+   mysql -u root -p < sql/configs.sql
+   mysql -u root -p < sql/seed.sql   # opsional, data demo
+   ```
+2. **Kredensial** — isi `/etc/sistomate-ingest.env` (`API_KEY`, `DB_HOST`,
+   `DB_NAME`, `DB_USER`, `DB_PASS`).
+3. **Web** — arahkan document root ke `dashboard/` dan jalankan PHP-FPM +
+   Nginx/Apache. Buka `index.html`, lalu masuk lewat `login.php`.
+4. **Firmware** — sesuaikan `WIFI_SSID`, `WIFI_PASS`, `SERVER_URL`, dan
+   `API_KEY` di `sistomate-firmware/SISTOMATE/SISTOMATE.ino`, lalu upload ke
+   ESP32 (`arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32
+   sistomate-firmware/SISTOMATE`).
 
 ---
 

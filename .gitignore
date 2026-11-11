@@ -1,81 +1,26 @@
-*.pdf
-!examples/*.pdf
-!gambar/*.pdf
-*.FCBak
-*.docx
-!reference.docx
-*.odt
-*.html
-*.aux
-*.log
-*.out
-*.toc
-*.lof
-*.lot
-*.fls
-*.fdb_latexmk
-/tmp/
+# OS & editor
 .DS_Store
 Thumbs.db
-media/
-venv/
+*.tmp
+.~lock.*
+
+# PHP / Python
 __pycache__/
 *.pyc
-.~lock.*
-history-*.md
-*.tmp
+venv/
+
+# Artefak build
+*.pdf
+*.docx
+*.odt
+*.FCBak
 dist/
-tools/
+/tmp/
+
+# HTML di-ignore kecuali halaman dashboard
+*.html
 !dashboard/*.html
 !dashboard/showcase/*.html
 
-# Sisa generator & arsip lokal — tidak dipublikasikan ke repo publik.
-/laporan-final/
-/laporan-m5/
-/laporan-m6/
-/laporan-m7/
-/chapters/
-/presets/
-/lib/
-/examples/
-/scripts/
-/bin/
-/.agents/
-/.claude-plugin/
-/.ai-engineering-loop/
-/.devcontainer/
-/.githooks/
-/.github/
-/SISTOMATE - Project/
-SISTOMATE - Project.zip
-AUDIT-LAPORAN-FINAL.md
-CHANGELOG.md
-CLAUDE.md
-CONTRIBUTING.md
-Dockerfile
-GETTING-STARTED.md
-Makefile
-.npmignore
-apa.csl
-build-docx.sh
-build.sh
-cover.md
-docker-compose.yml
-docx.lua
-flake.lock
-flake.nix
-/laporan
-laporan.ps1
-logo.jpg
-metadata.yml
-package.json
-prompt.md
-reference.docx
-references.bib
-template.typ
-test.sh
-whisper.js
-Screenshot*.png
-
-# Dokumen lokal (tidak dipublikasikan)
-/docs/
+# Gate & catatan lokal
+tools/
