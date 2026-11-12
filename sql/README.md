@@ -4,8 +4,8 @@ Urutan eksekusi untuk instalasi baru (MySQL 8.x):
 
 ```bash
 mysql -u root -p < sql/schema.sql    # 5 tabel inti
+mysql -u root -p < sql/seed.sql      # opsional: data demo (mengisi devices)
 mysql -u root -p < sql/configs.sql   # tabel pendukung configs + akun admin default
-mysql -u root -p < sql/seed.sql      # opsional: data demo
 ```
 
 Catatan:
@@ -17,10 +17,10 @@ Catatan:
   `admin@sistomate.id`. Satu baris konfigurasi untuk setiap device. File ini
   idempotent untuk `CREATE TABLE`; baris config dibuat untuk device yang sudah
   ada saat file dijalankan.
-- Urutan praktis: jalankan `configs.sql` setelah `devices` terisi. Kalau
-  `configs.sql` dijalankan sebelum `seed.sql`, jalankan ulang sekali lagi setelah
-  seed (aman, `WHERE NOT EXISTS`) atau cukup simpan halaman Pengaturan —
-  `settings.php` melakukan upsert per device.
+- Urutan praktis: jalankan `configs.sql` **setelah** `devices` terisi (misalnya
+  setelah `seed.sql`). Kalau terlanjur dijalankan sebelum seed, jalankan ulang
+  sekali lagi setelah seed (aman, `WHERE NOT EXISTS`) atau cukup simpan halaman
+  Pengaturan — `settings.php` melakukan upsert per device.
 - `seed.sql` mengisi data demo. Password akun demo: `Demo123!`.
 - Untuk DB uji: `schema.sql` dan `seed.sql` memuat `USE sistomate`, jadi ganti nama
   database di berkas (misalnya `sed 's/sistomate/sistomate_webtest/g'`) atau sediakan

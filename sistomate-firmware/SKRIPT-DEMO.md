@@ -20,18 +20,20 @@ Status tanaman (`plant_status`): `kering` (soil<40) > `layu` (>32C) > `sakit` (d
 ## Bagian A — Persiapan Malem Ini (sekali jalan, ~30 menit)
 
 1. **Nyalakan hotspot HP di mode 2.4 GHz.** (Android: pengaturan hotspot → band 2.4. iPhone: matikan "Maximize Compatibility" → cek ESP32 tetap kelihatan — kalau gak kelihatan, berarti hotspot 5 GHz.)
-2. **Laptop nyambung ke hotspot HP yang sama.** Cek IP baru laptop:
+2. **Laptop nyambung ke hotspot HP yang sama.** Cek IP baru laptop (ganti `wlp2s0` dengan nama interface WiFi-mu):
    ```bash
    ip -4 addr show wlp2s0
    ```
    Catat IP-nya (misal `192.168.43.57`).
-3. **Edit 4 baris config paling atas** `sistomate-firmware/SISTOMATE/SISTOMATE.ino`:
+3. **Edit 5 baris config paling atas** `sistomate-firmware/SISTOMATE/SISTOMATE.ino`:
    - `WIFI_SSID` / `WIFI_PASS` = nama & password hotspot HP
    - `SERVER_URL` = `http://<IP_LAPTOP>/ingest.php` (IP dari langkah 2)
-   - `API_KEY` udah keisi, gak usah diubah.
-4. **Colok ESP32 ke laptop USB**, bilang ke Claude — upload dijalankan dari sini:
+   - `API_KEY` = samakan dengan `API_KEY` di `/etc/sistomate-ingest.env`
+     (di repo masih placeholder `sm_YOUR_SECRET_API_KEY`)
+   - `DEVICE_ID` = sesuaikan dengan `id_device` di tabel `devices`
+4. **Colok ESP32 ke laptop USB**, lalu upload dari terminal:
    ```bash
-   arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 SISTOMATE
+   arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 sistomate-firmware/SISTOMATE
    ```
    (Kalau port gak kelihatan: `sudo modprobe ch341` untuk kabel CH340.)
 5. **Test penuh 1x tanpa penonton** — buka `http://<IP_LAPTOP>/phpMyAdmin`, database `sistomate`:

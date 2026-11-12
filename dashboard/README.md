@@ -1,7 +1,7 @@
 # Dashboard SISTOMATE
 
-Struktur folder setelah pengelompokan aset. Tidak ada berkas yang dihapus;
-berkas tampilan tetap di root agar URL halaman tidak berubah.
+Struktur folder dashboard web. Halaman PHP berada di root `dashboard/`, aset
+(CSS, ikon, logo) di `assets/`, dan galeri logo di `showcase/`.
 
 ```text
 dashboard/

@@ -27,13 +27,13 @@
 #include <Preferences.h> // persist counter dosis pupuk anti dobel pas reboot
 
 // ====== ISI SEBELUM DEMO ======
-// THE PRIK (kost, 2.4GHz WPA2). IP laptop static DHCP: 192.168.1.101
-// Alternatif hotspot HP "Ayi dodol" (open): SSID "Ayi dodol", pass "", URL 10.244.177.37
-const char* WIFI_SSID   = "THE PRIK";
-const char* WIFI_PASS   = "theprik123";
-const char* SERVER_URL  = "http://192.168.1.101/ingest.php"; // IP laptop di THE PRIK
+// Jangan commit kredensial asli. Isi nilai berikut sesuai jaringan dan server
+// yang dipakai (API_KEY diambil dari /etc/sistomate-ingest.env).
+const char* WIFI_SSID   = "YOUR_WIFI_SSID";
+const char* WIFI_PASS   = "YOUR_WIFI_PASSWORD";
+const char* SERVER_URL  = "http://192.168.1.100/ingest.php"; // IP komputer server
 const char* API_KEY     = "sm_YOUR_SECRET_API_KEY";
-const int   DEVICE_ID   = 1; // ESP32-Greenhouse-1
+const int   DEVICE_ID   = 1; // sesuaikan dengan id_device di tabel devices
 // ==============================
 
 #define PIN_SOIL        34

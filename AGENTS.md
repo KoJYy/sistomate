@@ -1,54 +1,62 @@
-# AGENTS.md — SISTOMATE (WBD)
+# AGENTS.md — Panduan Kontribusi SISTOMATE
 
-Proyek Workshop Basis Data: SISTOMATE (otomasi penyiraman & monitoring tanaman tomat berbasis ESP32 + PHP + MySQL) beserta model CAD 3D mini greenhouse.
+Panduan singkat untuk anggota tim dan agen coding yang membantu pengembangan repo.
+Dokumentasi penggunaan ada di `README.md`.
 
-Isi repo publik: `dashboard/`, `sistomate-firmware/`, `sql/`, `gambar/`, `README.md`, `LICENSE`, `.gitignore`. Folder `docs/` hanya ada di mesin pengembangan dan tidak dipublikasikan.
+## Isi repo
 
-## Sumber kebenaran (dan dokumen usang)
+| Folder | Isi |
+|---|---|
+| `dashboard/` | Dashboard web (PHP + HTML/CSS/JS): landing, login, monitoring, riwayat, pengaturan. Aset di `assets/`, galeri logo di `showcase/`. |
+| `sistomate-firmware/` | Sketch ESP32 (`SISTOMATE/SISTOMATE.ino`), endpoint `ingest.php`, dan skrip demo. |
+| `sql/` | Skema, konfigurasi, seed, query demo, dan migrasi. |
+| `gambar/` | Diagram arsitektur, skematik, flowchart, dan render 3D. |
 
-- **`CLAUDE.md` (arsip lokal, tidak dipublikasikan) sebagian usang** — masih menyebut Gemini, ESP32-CAM, 10 tabel, tanaman cabai, dan webroot `/usr/share/nginx/html`. Jangan implementasi dari situ.
-- Juga usang: `docs/superpowers/specs/2026-09-01-plantmonitor-design.md` (desain awal, bukan sistem final).
-- Yang berlaku: `sql/schema.sql` + `sql/configs.sql`, `dashboard/*.php`, `sistomate-firmware/SISTOMATE/SISTOMATE.ino`, `docs/web-spec.md` (lokal).
-- Sistem final: 5 tabel inti (`users`, `devices`, `sensor_logs`, `actuator_logs`, `gallery`) + `configs`; tanpa AI/Gemini, tanpa ESP32-CAM.
-- Firmware acuan: relay aktif-LOW GPIO 26/14/27, soil GPIO 34, DHT11 GPIO 13, TCS34725 I2C 21/22, histeresis 40/55/32/31.
+Dokumen internal (CAD, ERD, spesifikasi) disimpan di luar repo dan tidak dipublikasikan.
 
-## Web dashboard
+## Sumber kebenaran
 
-- Halaman terautentikasi wajib `require_login()` + `navbar()` dari `dashboard/db.php`; navbar single-source, jangan duplikasi header per halaman. Tema bersama: `dashboard/assets/theme.css`.
-- Lint: `php -l dashboard/<file>.php`.
-- Gate cepat & aman: `python3 tools/audit-web.py` (W1–W5, harus exit 0).
-- Harness penuh: `bash tools/test-web.sh` — `php -S 127.0.0.1:8181` + DB `sistomate_webtest`; butuh `mysqld` aktif.
-- **`SISTOMATE_ENV` dibaca `dashboard/db.php` dan `dashboard/live.php`.** `ingest.php` selalu membaca `/etc/sistomate-ingest.env`; jangan asumsikan semua request terisolasi DB test.
-- Deploy: `bash tools/deploy.sh` → `/var/www/sistomate` (root nginx di `/etc/nginx/conf.d/sistomate.conf`), **bukan** `/usr/share/nginx/html`. Deploy hanya jika diminta.
-- Admin default di `sql/configs.sql` masih `admin@sistomate.id` dengan password contoh; ganti sebelum deploy publik.
+- Skema database: `sql/schema.sql` (5 tabel inti) + `sql/configs.sql` (tabel `configs`).
+- Web: `dashboard/*.php` dan `dashboard/assets/theme.css`.
+- Firmware: `sistomate-firmware/SISTOMATE/SISTOMATE.ino`.
+- Sistem final memakai 5 tabel inti (`users`, `devices`, `sensor_logs`,
+  `actuator_logs`, `gallery`) + `configs`; tanpa AI/Gemini dan tanpa ESP32-CAM.
+- Acuan pin firmware: relay aktif-LOW GPIO 26/14/27, soil GPIO 34, DHT11 GPIO 13,
+  TCS34725 I2C (SDA 21, SCL 22). Hindari GPIO strapping 0/2/12/15; GPIO 34/35 input-only.
 
-## Lingkungan database
+## Aturan web
 
-- Fedora 44, MySQL 8.4 systemd: `sudo systemctl start mysqld nginx php-fpm`. `mysqld` disabled — mati setelah reboot.
-- Root MySQL memakai password: `sudo mysql` gagal. Pakai phpMyAdmin (`http://localhost/phpMyAdmin/`) atau `MYSQL_PWD`.
-- Produksi: DB `sistomate`, kredensial di `/etc/sistomate-ingest.env`. Test: `sistomate_webtest` (kredensial di `tools/test-web.sh`).
-- Jangan menjalankan seed/DDL/destructive query ke `sistomate` saat menguji; gunakan `sistomate_webtest`.
-- Skema: `sql/schema.sql` (inti), `sql/configs.sql` (+configs & admin); data demo: `sql/seed.sql`/`sql/demo.sql`.
+- Halaman terautentikasi wajib memakai `require_login()` + `navbar()` dari
+  `dashboard/db.php`. Jangan menduplikasi header/navbar per halaman.
+- Tema bersama ada di `dashboard/assets/theme.css`; `app.php` memakai CSS inline sendiri.
+- Lint setiap perubahan: `php -l dashboard/<file>.php`.
+- `SISTOMATE_ENV` dipakai `dashboard/db.php` dan `dashboard/live.php` untuk menunjuk
+  file env alternatif (DB uji). `ingest.php` selalu membaca `/etc/sistomate-ingest.env`.
+- Jangan menjalankan seed/DDL/destructive query ke database produksi saat menguji.
+
+## Database
+
+- MySQL 8.x. Urutan instalasi: `schema.sql` → `seed.sql` (opsional) → `configs.sql`.
+  `configs.sql` harus dijalankan setelah tabel `devices` terisi.
+- `configs` bersifat per-device (`id_device` UNIQUE + FK ke `devices`).
+- Migrasi ada di `sql/migrations/`; backup dulu sebelum menjalankan migrasi produksi.
+- Detail grant user aplikasi ada di `sql/README.md`.
 
 ## Firmware
 
-- Upload: `pkill -x arduino-cli; arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 sistomate-firmware/SISTOMATE`.
-- `API_KEY` di sketch = placeholder `sm_YOUR_SECRET_API_KEY`; isi ulang dari `/etc/sistomate-ingest.env` sebelum flash. Jangan commit key asli.
-- Hindari GPIO strapping 0/2/12/15; GPIO 34/35 input-only.
+- `API_KEY`, `WIFI_SSID`, dan `WIFI_PASS` di sketch wajib placeholder di repo.
+  Isi nilai asli secara lokal dari `/etc/sistomate-ingest.env` sebelum flash.
+  **Jangan pernah commit kredensial asli.**
+- Upload:
+  ```bash
+  arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 sistomate-firmware/SISTOMATE
+  ```
 
-## CAD & FreeCAD
+## Git
 
-- Model: `docs/cad/greenhouse.FCStd` (lokal); sumbu X=1000 (panjang), Y=800 (lebar), Z=600 (tinggi).
-- FreeCAD MCP: `execute_code` aman; `execute_code_async` yang menyentuh dokumen/view/GUI membuat FreeCAD crash. Flatpak `DISPLAY=:0`, RPC :9875.
-
-## Git & kerja tim
-
-- `origin` = `KoJYy/sistomate`. Push hanya ke origin, dan hanya setelah Owner minta.
-- `.gitignore` mengabaikan `tools/`, `*.pdf`, `*.docx`, `*.html` — kecuali `dashboard/*.html` dan `dashboard/showcase/*.html`. Gate scripts di `tools/` tidak ikut clone.
-- Sesi paralel bisa meninggalkan perubahan/untracked (mis. `docs/WBD.txt`, `dashboard.zip`); jangan commit/revert pekerjaan yang bukan milikmu. Cek `git status` sebelum commit.
-- Konvensi tim: S1 = Tech Lead/Auditor, S2 = Implementer; komunikasi via `node whisper.js s1|s2 "..."`. TDD: buktikan RED dulu, klaim GREEN harus disertai output gate.
-
-## Referensi
-
-- Status/backlog lokal: `tools/TODO.md` (gitignored).
-- Spesifikasi web W1–W5: `docs/web-spec.md` (lokal; status fase di header sudah usang).
+- Remote utama: `KoJYy/sistomate`. Push hanya setelah diminta pemilik repo.
+- Sebelum commit: cek `git status` dan `git diff`; jangan commit/revert pekerjaan
+  anggota lain yang belum selesai.
+- Jangan commit file lokal/artefak (mis. `tools/`, `docs/`, arsip, screenshot mentah).
+- Sebelum mengklaim perbaikan selesai, jalankan pengujian yang relevan dan
+  sertakan buktinya.

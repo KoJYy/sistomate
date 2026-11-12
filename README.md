@@ -60,7 +60,7 @@ gambar/              diagram arsitektur, skematik, flowchart, render 3D
 1. **Lapisan Persepsi & Aktuasi (Edge Hardware):** ESP32, sensor kelembapan tanah kapasitif, DHT11 (suhu & RH), TCS34725 (RGB daun), pompa air submersible, pompa pupuk fertigasi, dan exhaust fan 80mm.
 2. **Lapisan Penyerapan (Ingestion Backend):** Nginx & PHP 8 endpoint (`ingest.php`) dengan validasi `X-API-Key` dan sanitasi prepared statements.
 3. **Lapisan Penyimpanan (Relational Database):** MySQL database `sistomate` dengan skema terpusat pada perangkat (*devices-centric*) yang mencakup 5 tabel inti dan 1 tabel pendukung (`configs`).
-4. **Lapisan Penyajian (Presentation Dashboard):** Web dashboard realtime berbasis Chart.js dan Canvas Gauge yang membaca status telemetri melalui `live.php`.
+4. **Lapisan Penyajian (Presentation Dashboard):** Web dashboard realtime berbasis Chart.js untuk grafik tren dan gauge SVG/CSS untuk indikator, membaca status telemetri melalui `live.php`.
 
 ---
 
@@ -93,6 +93,8 @@ gambar/              diagram arsitektur, skematik, flowchart, render 3D
 * **Histeresis Ventilasi (Kipas Exhaust):** ON saat Suhu Udara $> 32^\circ\text{C}$, OFF saat Suhu Udara $\le 31^\circ\text{C}$.
 * **Jadwal Fertigasi Presisi:** Dosis larutan pupuk cair dijalankan otomatis $1 \times$ per minggu setiap hari **Senin pukul 07:00 WIB** (NTP sinkron) selama **7 detik**, dengan interlock pengaman: fertigasi hanya boleh aktif jika kelembapan tanah $\ge 40\%$.
 
+> Nilai di atas adalah **default firmware**. Ambang histeresis dan durasi fertigasi dapat diubah **per perangkat** dari halaman Pengaturan (tabel `configs`).
+
 ---
 
 ## 🗄️ Struktur Basis Data Relasional
@@ -120,14 +122,17 @@ Tabel pendukung **`configs`** menyimpan ambang histeresis **per perangkat** (rel
 
 ## 🚀 Cara Menjalankan
 
-1. **Database** — impor skema lalu konfigurasi:
+1. **Database** — impor skema, data demo, lalu konfigurasi (urutan penting: `devices` harus terisi sebelum `configs.sql`):
    ```bash
    mysql -u root -p < sql/schema.sql
-   mysql -u root -p < sql/configs.sql
-   mysql -u root -p < sql/seed.sql   # opsional, data demo
+   mysql -u root -p < sql/seed.sql     # opsional, mengisi devices + akun demo
+   mysql -u root -p < sql/configs.sql  # setelah devices ada
    ```
+   Akun admin default: `admin@sistomate.id` / `admin123@` — **ganti setelah login pertama**.
+   Akun demo (jika `seed.sql` dijalankan): `budi@polije.ac.id`, `ayu@polije.ac.id`,
+   `candra@polije.ac.id` — password `Demo123!`.
 2. **Kredensial** — isi `/etc/sistomate-ingest.env` (`API_KEY`, `DB_HOST`,
-   `DB_NAME`, `DB_USER`, `DB_PASS`).
+   `DB_NAME`, `DB_USER`, `DB_PASS`). Lihat `sql/README.md` untuk grant user aplikasi.
 3. **Web** — arahkan document root ke `dashboard/` dan jalankan PHP-FPM +
    Nginx/Apache. Buka `index.html`, lalu masuk lewat `login.php`.
 4. **Firmware** — sesuaikan `WIFI_SSID`, `WIFI_PASS`, `SERVER_URL`, dan
