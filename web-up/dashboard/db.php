@@ -111,10 +111,6 @@ function navbar(string $active, string $userName, bool $live = false): string
         .       '<span class="brand-sub">tanaman tomat</span>'
         .     '</div>'
         .   '</a>'
-        .   '<div class="inst-logos" aria-label="Afiliasi Akademik">'
-        .     '<img src="assets/logo-jti.svg" alt="Jurusan Teknologi Informasi Politeknik Negeri Jember" class="inst-logo jti">'
-        .     '<img src="assets/logo-trk.svg" alt="Teknologi Rekayasa Komputer" class="inst-logo trk">'
-        .   '</div>'
         . '</div>'
         . '<nav class="sidebar-nav" aria-label="Navigasi Utama">'
         .   $nav
