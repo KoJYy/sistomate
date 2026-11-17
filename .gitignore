@@ -21,6 +21,8 @@ dist/
 *.html
 !dashboard/*.html
 !dashboard/showcase/*.html
+!web-up/dashboard/*.html
+!web-up/dashboard/showcase/*.html
 
 # Gate & catatan lokal
 tools/
