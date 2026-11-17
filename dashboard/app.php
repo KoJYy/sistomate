@@ -24,12 +24,9 @@ if ($deviceId > 0) {
     }
 }
 
-// Posisi zona ambang di gauge (skala suhu 20-40 derajat C, tanah 0-100%).
+// Posisi ambang di gauge tanah (0-100%).
 $soilOnPct  = max(0.0, min(100.0, (float) $cfg['soil_on']));
 $soilOffPct = max(0.0, min(100.0, (float) $cfg['soil_off']));
-$pctSuhu    = fn($t) => max(0.0, min(100.0, ((float) $t - 20) / 20 * 100));
-$tempOffPct = $pctSuhu($cfg['temp_off']);
-$tempOnPct  = $pctSuhu($cfg['temp_on']);
 $cfgJs = [
     'soil_on' => (float) $cfg['soil_on'],
     'soil_off' => (float) $cfg['soil_off'],
@@ -160,6 +157,8 @@ $cfgJs = [
 
   .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .metric {
+    display: flex;
+    flex-direction: column;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 16px;
@@ -190,7 +189,7 @@ $cfgJs = [
     transition: left .8s cubic-bezier(.2, .7, .3, 1);
   }
   .tick { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .55; }
-  .amb { font-size: 15px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .amb { font-size: 15px; color: var(--muted); margin-top: auto; padding-top: 8px; font-variant-numeric: tabular-nums; }
 
   /* dua kolom: aktuator + riwayat */
   .pair {
@@ -352,13 +351,6 @@ $cfgJs = [
       <div class="top">
         <span class="label">suhu udara</span>
         <span class="value" id="suhu">-<small>°C</small></span>
-      </div>
-      <div class="track">
-        <div class="zone" style="left:0;width:<?= $tempOffPct ?>%;background:rgba(27,158,90,.28)"></div>
-        <div class="zone" style="left:<?= $tempOnPct ?>%;right:0;background:rgba(208,135,0,.32)"></div>
-        <div class="tick" style="left:<?= $tempOffPct ?>%"></div>
-        <div class="tick" style="left:<?= $tempOnPct ?>%"></div>
-        <div class="needle" id="ndl-suhu" style="left:50%"></div>
       </div>
       <div class="amb">kipas: ON di atas <?= e((string)$cfg['temp_on']) ?>&deg;C, OFF di bawah <?= e((string)$cfg['temp_off']) ?>&deg;C</div>
     </div>
@@ -581,12 +573,11 @@ $cfgJs = [
       : 'tanah ' + soilR + '% dan suhu ' + tempR + '°C - semuanya dalam batas';
     if ($('why').textContent !== why) $('why').textContent = why;
 
-    // metrik + gauge (skala suhu 20-40°C)
+    // metrik + gauge tanah
     setVal('suhu', L.air_temperature.toFixed(1), '°C');
     setVal('rh', String(Math.round(L.air_humidity)), '%');
     setVal('soil', String(Math.round(L.soil_moisture)), '%');
     gauge('ndl-soil', L.soil_moisture);
-    gauge('ndl-suhu', (L.air_temperature - 20) / 20 * 100);
 
     // aktuator: state terakhir per nama (normalisasi: 'pompa_air' == 'Pompa Air')
     const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '');
