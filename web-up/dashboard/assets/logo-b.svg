@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Logo SISTOMATE Opsi B - Monogram S-Flora">
+  <title>SISTOMATE - Monogram S-Flora</title>
+  <defs>
+    <clipPath id="sflora">
+      <path d="M45 18c-3.5-5-9-8-15-8-7.5 0-13.5 4.5-13.5 11 0 6 4.5 9 13 10.5l4 .7c5 .8 7.5 2.5 7.5 5.5 0 3.5-3.5 6-9 6-4.5 0-8.5-2-11.5-5.5l-5.5 4.5C20 47 26.5 51 34.5 51c8.5 0 15-4.5 15-11.5 0-6.5-4.5-9.5-13.5-11l-4-.7c-4.5-.8-7-2.3-7-5 0-3.2 3.2-5.5 8-5.5 3.8 0 7.2 1.6 9.8 4.2z"/>
+    </clipPath>
+  </defs>
+  <!-- huruf S tebal mengalir: kurva atas = daun tomat, kurva bawah = buah tomat padat -->
+  <path fill="#167D47" d="M45 18c-3.5-5-9-8-15-8-7.5 0-13.5 4.5-13.5 11 0 6 4.5 9 13 10.5l4 .7c5 .8 7.5 2.5 7.5 5.5 0 3.5-3.5 6-9 6-4.5 0-8.5-2-11.5-5.5l-5.5 4.5C20 47 26.5 51 34.5 51c8.5 0 15-4.5 15-11.5 0-6.5-4.5-9.5-13.5-11l-4-.7c-4.5-.8-7-2.3-7-5 0-3.2 3.2-5.5 8-5.5 3.8 0 7.2 1.6 9.8 4.2z"/>
+  <!-- aksen kilau pada kurva daun atas, terklip rapi ke siluet S -->
+  <path clip-path="url(#sflora)" fill="#22A55F" opacity=".55" d="M30 10c-7.5 0-13.5 4.5-13.5 11 0 2.8 1.1 5.1 3 6.9-2.6-2.2-4-5.2-4-8.5C15.5 13.2 22 8.7 30 8.7z"/>
+  <!-- nodus sensor IoT di pusat kurva S + titik kilau -->
+  <circle cx="36" cy="33" r="3.5" fill="#16241B"/>
+  <circle cx="34.8" cy="31.8" r="1.1" fill="#FFFFFF"/>
+</svg>
