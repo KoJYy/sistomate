@@ -24,9 +24,6 @@ if ($deviceId > 0) {
     }
 }
 
-// Posisi ambang di gauge tanah (0-100%).
-$soilOnPct  = max(0.0, min(100.0, (float) $cfg['soil_on']));
-$soilOffPct = max(0.0, min(100.0, (float) $cfg['soil_off']));
 $cfgJs = [
     'soil_on' => (float) $cfg['soil_on'],
     'soil_off' => (float) $cfg['soil_off'],
@@ -77,56 +74,6 @@ $cfgJs = [
     padding: 0 32px 64px;
   }
   :focus-visible { outline: 2px solid var(--sehat); outline-offset: 2px; }
-
-  /* header */
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 0 14px;
-    font-size: 15px;
-    gap: 14px;
-    flex-wrap: wrap;
-  }
-  /* sisi kiri: brand + nav pil terkunci berdampingan (posisi nav tak melompat) */
-  .brand-group { display: flex; align-items: center; gap: 24px; }
-  /* sisi kanan: [live] + nama user + logout */
-  .header-right { display: flex; align-items: center; gap: 16px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; font-size: 20px; }
-  .brand span { color: var(--muted); font-weight: 500; font-size: 15px; }
-  .brand-logo { width: 24px; height: 24px; flex-shrink: 0; color: var(--sehat); }
-  .live { display: flex; align-items: center; gap: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .live b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 14.5px; }
-  .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--sehat);
-  }
-  .dot.stale { background: var(--sakit); }
-
-  /* navigasi utama */
-  .navbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .navbar a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: 500;
-    padding: 6px 13px;
-    border-radius: 999px;
-    transition: background .15s, color .15s;
-  }
-  .navbar a:hover { background: var(--line-soft); color: var(--ink); }
-  .navbar a.on { background: var(--ink); color: var(--bg); font-weight: 600; }
-  .uname { color: var(--muted); font-size: 15.5px; padding: 0 8px; }
-  .logout {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: 500;
-    padding: 6px 13px;
-    border-radius: 999px;
-    transition: background .15s, color .15s;
-  }
-  .logout:hover { background: var(--line-soft); color: var(--ink); }
 
   /* sidebar vertikal (pengganti top navbar) */
   .sidebar {
@@ -377,16 +324,6 @@ $cfgJs = [
   }
   .metric .value small { font-size: .48em; font-weight: 600; color: var(--muted); margin-left: 2px; }
 
-  /* gauge ambang histeresis */
-  .track { position: relative; height: 12px; background: var(--line-soft); border-radius: 4px; overflow: visible; }
-  .zone { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
-  .needle {
-    position: absolute; top: -4px; bottom: -4px; width: 4px;
-    background: var(--ink);
-    border-radius: 2px;
-    transition: left .8s cubic-bezier(.2, .7, .3, 1);
-  }
-  .tick { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .55; }
   .amb { font-size: 15px; color: var(--muted); margin-top: auto; padding-top: 8px; font-variant-numeric: tabular-nums; }
 
   /* dua kolom: aktuator + riwayat */
@@ -408,45 +345,83 @@ $cfgJs = [
   .pair .panel .tiles { flex: 1; }
   h2 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
 
-  /* tile aktuator: FLAT - bukan kartu bersarang (panel sudah kartu); pemisah = garis 1px */
-  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  /* aktuator: baris horizontal dengan ikon + chip status */
+  .tiles { display: flex; flex-direction: column; gap: 10px; }
   .tile {
     display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .act-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .act-pompa { color: #2563EB; background: rgba(37, 99, 235, .08); border-color: rgba(37, 99, 235, .2); }
+  .act-pupuk { color: var(--sehat); background: rgba(22, 125, 71, .08); border-color: rgba(22, 125, 71, .2); }
+  .act-kipas { color: #EA580C; background: rgba(234, 88, 12, .08); border-color: rgba(234, 88, 12, .2); }
+  .act-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
     flex-direction: column;
-    padding: 4px 12px 4px 0;
+    gap: 2px;
   }
-  .tile + .tile { border-left: 1px solid var(--line-soft); padding-left: 16px; }
-  .tile .act-name { font-size: 16px; font-weight: 600; }
-  .tile .big {
-    font-size: 2.4rem;
-    font-weight: 700;
-    letter-spacing: -.02em;
-    line-height: 1.15;
+  .tile .act-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.25;
+    white-space: nowrap;
+  }
+  .tile .act-last {
+    font-size: 12.5px;
     color: var(--muted);
-    transition: color .25s;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+    white-space: nowrap;
   }
-  .tile .big.on { color: var(--on); }
-  .tile .act-last { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: auto; padding-top: 8px; }
   .chip {
     display: inline-block;
-    align-self: flex-start;
-    font-size: 14px; font-weight: 700; letter-spacing: .05em;
-    padding: 3px 11px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    padding: 4px 12px;
+    min-width: 48px;
+    text-align: center;
     border-radius: 999px;
     background: var(--line-soft);
     color: var(--muted);
-    margin-top: 6px;
-    transition: background .25s, color .25s;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+    transition: background .25s, color .25s, border-color .25s;
   }
-  .chip.on { background: var(--on); color: #fff; }
+  .chip.on { background: var(--on); color: #FFFFFF; border-color: var(--on); }
 
   table { width: 100%; border-collapse: collapse; font-size: 15px; }
   td { padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
   tr:last-child td { border-bottom: 0; }
   td.t { color: var(--muted); font-variant-numeric: tabular-nums; width: 92px; }
-  td.st { text-align: right; width: 64px; font-weight: 700; font-size: 14.5px; }
-  .st-on { color: var(--on); }
-  .st-off { color: var(--muted); }
+  td.st { text-align: right; width: 68px; font-weight: 700; font-size: 12px; }
+  .st-on, .st-off {
+    display: inline-block;
+    padding: 3px 10px;
+    min-width: 44px;
+    text-align: center;
+    border-radius: 999px;
+  }
+  .st-on { background: var(--on); color: #FFFFFF; }
+  .st-off { background: var(--line-soft); color: var(--muted); }
 
   /* tren: area chart */
   .trend { padding: 4px 0; }
@@ -461,9 +436,9 @@ $cfgJs = [
     font-variant-numeric: tabular-nums;
   }
   .spark-head .now small { font-size: .55em; color: var(--muted); font-weight: 600; }
-  svg.spark { display: block; width: 100%; height: 130px; background: var(--bg); border: 1px solid var(--line-soft); border-radius: 10px; }
+  svg.spark { display: block; width: 100%; height: 130px; background: #F8FAF7; border: 1px solid rgba(215, 224, 212, .75); border-radius: 12px; }
   .axis { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
-  /* sumbu: label Y HTML di kiri (SVG stretched, teks di dlm viewBox bakal melar) */
+  /* sumbu: label Y HTML di kiri presisi sejajar garis grid */
   .chart { display: flex; gap: 8px; }
   .yax {
     display: flex; flex-direction: column; justify-content: space-between;
@@ -472,6 +447,40 @@ $cfgJs = [
     font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums;
   }
   .plot { flex: 1; min-width: 0; }
+  .spark-wrap { position: relative; }
+
+  /* pin live: bulat sempurna, tidak ikut distorsi skala SVG */
+  .chart-pin {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 2px solid #FFFFFF;
+    transform: translate(-50%, -50%);
+    display: none;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .pin-soil {
+    background: #2563EB;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, .4);
+    animation: pin-pulse-soil 2.2s infinite;
+  }
+  .pin-suhu {
+    background: #EA580C;
+    box-shadow: 0 0 0 2px rgba(234, 88, 12, .4);
+    animation: pin-pulse-suhu 2.2s infinite;
+  }
+  @keyframes pin-pulse-soil {
+    0%   { box-shadow: 0 0 0 2px rgba(37, 99, 235, .5), 0 0 0 0 rgba(37, 99, 235, .35); }
+    70%  { box-shadow: 0 0 0 2px rgba(37, 99, 235, .5), 0 0 0 9px rgba(37, 99, 235, 0); }
+    100% { box-shadow: 0 0 0 2px rgba(37, 99, 235, .5), 0 0 0 0 rgba(37, 99, 235, 0); }
+  }
+  @keyframes pin-pulse-suhu {
+    0%   { box-shadow: 0 0 0 2px rgba(234, 88, 12, .5), 0 0 0 0 rgba(234, 88, 12, .35); }
+    70%  { box-shadow: 0 0 0 2px rgba(234, 88, 12, .5), 0 0 0 9px rgba(234, 88, 12, 0); }
+    100% { box-shadow: 0 0 0 2px rgba(234, 88, 12, .5), 0 0 0 0 rgba(234, 88, 12, 0); }
+  }
 
   /* rgb */
   .rgb { padding: 4px 0; }
@@ -555,13 +564,7 @@ $cfgJs = [
     body:has(.sidebar) > main {
       padding: 16px 0 48px;
     }
-  }
-
-  @media (max-width: 760px) {
-    .brand span { display: none; }
-    .brand-group { flex-wrap: wrap; width: 100%; }
-    .navbar { width: 100%; overflow-x: auto; }
-    .metrics, .sparks, .rgb-grid, .tiles { grid-template-columns: 1fr; }
+    .metrics, .sparks, .rgb-grid { grid-template-columns: 1fr; }
     .pair { grid-template-columns: 1fr; gap: 14px; }
     .status-card { padding: 22px 22px 24px; flex-direction: column; align-items: flex-start; gap: 14px; }
     .status-why { text-align: left; margin-bottom: 0; max-width: none; }
@@ -570,7 +573,8 @@ $cfgJs = [
   @media (prefers-reduced-motion: reduce) {
     .dot { animation: none; }
     .flash { animation: none; }
-    .needle, .bar div, .status-word, .chip, .tile .big, .status-card { transition: none; }
+    .chart-pin { animation: none; }
+    .bar div, .status-word, .chip, .status-card { transition: none; }
   }
 </style>
 </head>
@@ -582,11 +586,11 @@ $cfgJs = [
 <section class="hero">
   <div class="status-card" id="statusCard">
     <div class="status-main">
-      <div class="status-kicker">status tanaman</div>
+      <div class="status-kicker">kondisi tanaman</div>
       <div class="status-word" id="status">-</div>
     </div>
     <div class="status-why">
-      <span>alasan</span>
+      <span>keterangan</span>
       <p id="why">-</p>
     </div>
   </div>
@@ -609,12 +613,6 @@ $cfgJs = [
         <span class="label">kelembapan tanah</span>
         <span class="value" id="soil">-<small>%</small></span>
       </div>
-      <div class="track">
-        <div class="zone" style="left:0;width:<?= $soilOnPct ?>%;background:rgba(154,106,60,.35)"></div>
-        <div class="tick" style="left:<?= $soilOnPct ?>%"></div>
-        <div class="tick" style="left:<?= $soilOffPct ?>%"></div>
-        <div class="needle" id="ndl-soil" style="left:50%"></div>
-      </div>
       <div class="amb">pompa: ON di bawah <?= e((string)$cfg['soil_on']) ?>%, OFF di atas <?= e((string)$cfg['soil_off']) ?>%</div>
     </div>
   </div>
@@ -624,23 +622,35 @@ $cfgJs = [
   <div class="panel">
     <h2>aktuator</h2>
     <div class="tiles">
-      <div class="tile">
-        <div class="act-name">Pompa Air</div>
-        <div class="big" id="pompa-big">-</div>
+      <div class="tile" id="act-row-pompa">
+        <div class="act-icon act-pompa">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+        </div>
+        <div class="act-body">
+          <div class="act-name">Pompa Air</div>
+          <div class="act-last" id="pompa-last">-</div>
+        </div>
         <span class="chip" id="pompa-state">-</span>
-        <div class="act-last" id="pompa-last">-</div>
       </div>
-      <div class="tile">
-        <div class="act-name">Pompa Pupuk</div>
-        <div class="big" id="pupuk-big">-</div>
+      <div class="tile" id="act-row-pupuk">
+        <div class="act-icon act-pupuk">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+        </div>
+        <div class="act-body">
+          <div class="act-name">Pompa Pupuk</div>
+          <div class="act-last" id="pupuk-last">-</div>
+        </div>
         <span class="chip" id="pupuk-state">-</span>
-        <div class="act-last" id="pupuk-last">-</div>
       </div>
-      <div class="tile">
-        <div class="act-name">Kipas Exhaust</div>
-        <div class="big" id="kipas-big">-</div>
+      <div class="tile" id="act-row-kipas">
+        <div class="act-icon act-kipas">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 12c0-3 2.5-5 5-5 0 2.5-2 5-5 5Z"/><path d="M12 12c3 0 5 2.5 5 5-2.5 0-5-2-5-5Z"/><path d="M12 12c0 3-2.5 5-5 5 0-2.5 2-5 5-5Z"/><path d="M12 12c-3 0-5-2.5-5-5 2.5 0 5 2 5 5Z"/></svg>
+        </div>
+        <div class="act-body">
+          <div class="act-name">Kipas Exhaust</div>
+          <div class="act-last" id="kipas-last">-</div>
+        </div>
         <span class="chip" id="kipas-state">-</span>
-        <div class="act-last" id="kipas-last">-</div>
       </div>
     </div>
   </div>
@@ -662,13 +672,23 @@ $cfgJs = [
           <span id="y-top-soil">-</span><span id="y-mid-soil">-</span><span id="y-bot-soil">-</span>
         </div>
         <div class="plot">
-          <svg class="spark" id="sp-soil" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
-            <g stroke="#D7E0D4" stroke-width="1" vector-effect="non-scaling-stroke">
-              <line x1="0" y1="8" x2="600" y2="8"/><line x1="0" y1="38" x2="600" y2="38"/><line x1="0" y1="68" x2="600" y2="68"/>
-            </g>
-            <polygon id="fill-soil" fill="#2563EB" fill-opacity=".14" points=""/>
-            <polyline id="line-soil" fill="none" stroke="#2563EB" stroke-width="2.5" vector-effect="non-scaling-stroke" points=""/>
-          </svg>
+          <div class="spark-wrap">
+            <svg class="spark" id="sp-soil" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="grad-soil" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2563EB" stop-opacity="0.22"/>
+                  <stop offset="60%" stop-color="#2563EB" stop-opacity="0.06"/>
+                  <stop offset="100%" stop-color="#2563EB" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+              <g stroke="rgba(200, 212, 198, .75)" stroke-width="1" stroke-dasharray="4,4" vector-effect="non-scaling-stroke">
+                <line x1="0" y1="10" x2="600" y2="10"/><line x1="0" y1="37" x2="600" y2="37"/><line x1="0" y1="64" x2="600" y2="64"/>
+              </g>
+              <path id="fill-soil" fill="url(#grad-soil)" d=""/>
+              <path id="line-soil" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d=""/>
+            </svg>
+            <div class="chart-pin pin-soil" id="pin-soil" aria-hidden="true"></div>
+          </div>
           <div class="axis"><span id="x0-soil">-</span><span id="x1-soil">-</span><span>sekarang</span></div>
         </div>
       </div>
@@ -683,13 +703,23 @@ $cfgJs = [
           <span id="y-top-suhu">-</span><span id="y-mid-suhu">-</span><span id="y-bot-suhu">-</span>
         </div>
         <div class="plot">
-          <svg class="spark" id="sp-suhu" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
-            <g stroke="#D7E0D4" stroke-width="1" vector-effect="non-scaling-stroke">
-              <line x1="0" y1="8" x2="600" y2="8"/><line x1="0" y1="38" x2="600" y2="38"/><line x1="0" y1="68" x2="600" y2="68"/>
-            </g>
-            <polygon id="fill-suhu" fill="#EA580C" fill-opacity=".14" points=""/>
-            <polyline id="line-suhu" fill="none" stroke="#EA580C" stroke-width="2.5" vector-effect="non-scaling-stroke" points=""/>
-          </svg>
+          <div class="spark-wrap">
+            <svg class="spark" id="sp-suhu" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="grad-suhu" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#EA580C" stop-opacity="0.22"/>
+                  <stop offset="60%" stop-color="#EA580C" stop-opacity="0.06"/>
+                  <stop offset="100%" stop-color="#EA580C" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+              <g stroke="rgba(200, 212, 198, .75)" stroke-width="1" stroke-dasharray="4,4" vector-effect="non-scaling-stroke">
+                <line x1="0" y1="10" x2="600" y2="10"/><line x1="0" y1="37" x2="600" y2="37"/><line x1="0" y1="64" x2="600" y2="64"/>
+              </g>
+              <path id="fill-suhu" fill="url(#grad-suhu)" d=""/>
+              <path id="line-suhu" fill="none" stroke="#EA580C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d=""/>
+            </svg>
+            <div class="chart-pin pin-suhu" id="pin-suhu" aria-hidden="true"></div>
+          </div>
           <div class="axis"><span id="x0-suhu">-</span><span id="x1-suhu">-</span><span>sekarang</span></div>
         </div>
       </div>
@@ -698,7 +728,7 @@ $cfgJs = [
 </section>
 
 <section class="rgb">
-  <h2 style="margin-top:14px">warna daun (TCS34725)</h2>
+  <h2 style="margin-top:14px">warna daun</h2>
   <div class="rgb-grid">
     <div class="rgb-card">
       <div class="label">merah <b id="v-r">0</b></div>
@@ -754,25 +784,70 @@ $cfgJs = [
     }
   }
 
-  function gauge(id, pct) {
-    const el = $(id);
-    const v = Math.max(0, Math.min(100, pct));
-    el.style.left = v + '%';
-  }
-
-  // area chart: polyline + polygon ditutup ke baseline (fill di bawah garis)
-  function spark(lineId, fillId, arr) {
-    const line = $(lineId), fill = $(fillId);
-    if (!arr.length) { line.setAttribute('points', ''); fill.setAttribute('points', ''); return; }
+  // area chart: monotone cubic spline + gradient fill + live circular pin
+  function spark(lineId, fillId, pinId, arr) {
+    const line = $(lineId), fill = $(fillId), pin = $(pinId);
+    if (!line || !fill) return;
+    if (!arr.length) {
+      line.setAttribute('d', '');
+      fill.setAttribute('d', '');
+      if (pin) pin.style.display = 'none';
+      return;
+    }
     const min = Math.min(...arr), max = Math.max(...arr);
     const span = (max - min) || 1;
+    const n = arr.length;
+    // Inset horizontal 10px..590px (tidak menabrak border), vertikal 10px..64px (presisi garis grid)
     const pts = arr.map((v, i) => {
-      const x = (i / Math.max(1, arr.length - 1)) * 600;
-      const y = 68 - ((v - min) / span) * 60;   // padding 4px atas-bawah
-      return x.toFixed(1) + ',' + y.toFixed(1);
+      const x = n === 1 ? 300 : 10 + (i / (n - 1)) * 580;
+      const y = 64 - ((v - min) / span) * 54;
+      return { x, y };
     });
-    line.setAttribute('points', pts.join(' '));
-    fill.setAttribute('points', pts.join(' ') + ' 600,74 0,74');
+
+    if (n === 1) {
+      const d = `M 10,${pts[0].y.toFixed(1)} L 590,${pts[0].y.toFixed(1)}`;
+      line.setAttribute('d', d);
+      fill.setAttribute('d', d + ` L 590,74 L 10,74 Z`);
+    } else {
+      // Monotone Cubic Hermite Spline: mencegah overshoot di puncak/lembah
+      const m = new Array(n).fill(0);
+      for (let i = 0; i < n; i++) {
+        if (i === 0) {
+          m[i] = (pts[1].y - pts[0].y) / (pts[1].x - pts[0].x || 1);
+        } else if (i === n - 1) {
+          m[i] = (pts[n - 1].y - pts[n - 2].y) / (pts[n - 1].x - pts[n - 2].x || 1);
+        } else {
+          const d1 = pts[i].y - pts[i - 1].y;
+          const d2 = pts[i + 1].y - pts[i].y;
+          if (d1 * d2 <= 0) {
+            m[i] = 0; // Puncak atau lembah lokal: horizontal mulus tanpa gelembung
+          } else {
+            m[i] = (d1 / (pts[i].x - pts[i - 1].x || 1) + d2 / (pts[i + 1].x - pts[i].x || 1)) / 2;
+          }
+        }
+      }
+
+      let d = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+      for (let i = 0; i < n - 1; i++) {
+        const p0 = pts[i];
+        const p1 = pts[i + 1];
+        const dx = (p1.x - p0.x) / 3;
+        const cp1x = p0.x + dx;
+        const cp1y = p0.y + m[i] * dx;
+        const cp2x = p1.x - dx;
+        const cp2y = p1.y - m[i + 1] * dx;
+        d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p1.x.toFixed(1)},${p1.y.toFixed(1)}`;
+      }
+      line.setAttribute('d', d);
+      fill.setAttribute('d', d + ` L ${pts[n - 1].x.toFixed(1)},74 L ${pts[0].x.toFixed(1)},74 Z`);
+    }
+
+    if (pin) {
+      const last = pts[pts.length - 1];
+      pin.style.left = (last.x / 600 * 100).toFixed(2) + '%';
+      pin.style.top = (last.y / 74 * 100).toFixed(2) + '%';
+      pin.style.display = 'block';
+    }
   }
 
   function timeOnly(s) {
@@ -810,7 +885,7 @@ $cfgJs = [
       sw.style.color = c;
       $('statusCard').style.background = c + '1A';
     }
-    // alasan status: diturunkan dari data yang sama dengan heuristik firmware
+    // keterangan status: diturunkan dari data yang sama dengan heuristik firmware
     const soilR = Math.round(L.soil_moisture), tempR = L.air_temperature.toFixed(1);
     const why = L.plant_status === 'kering' ? 'kelembapan tanah ' + soilR + '% - di bawah ' + CFG.soil_on + '%'
       : L.plant_status === 'layu' ? 'suhu ' + tempR + '°C - di atas ' + CFG.temp_on + '°C'
@@ -818,11 +893,10 @@ $cfgJs = [
       : 'tanah ' + soilR + '% dan suhu ' + tempR + '°C - semuanya dalam batas';
     if ($('why').textContent !== why) $('why').textContent = why;
 
-    // metrik + gauge tanah
+    // metrik nilai
     setVal('suhu', L.air_temperature.toFixed(1), '°C');
     setVal('rh', String(Math.round(L.air_humidity)), '%');
     setVal('soil', String(Math.round(L.soil_moisture)), '%');
-    gauge('ndl-soil', L.soil_moisture);
 
     // aktuator: state terakhir per nama (normalisasi: 'pompa_air' == 'Pompa Air')
     const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -834,11 +908,7 @@ $cfgJs = [
     [['Pompa Air', 'pompa'], ['Pompa Pupuk', 'pupuk'], ['Kipas Exhaust', 'kipas']].forEach(([name, key]) => {
       const a = byName[norm(name)];
       const st = a ? a.status : '-';
-      const big = $(key + '-big');
       const chip = $(key + '-state');
-      if (big.textContent !== st) flash(big);
-      big.textContent = st;
-      big.className = 'big' + (st === 'ON' ? ' on' : '');
       if (chip.textContent !== st) flash(chip);
       chip.textContent = st;
       chip.className = 'chip' + (st === 'ON' ? ' on' : '');
@@ -849,7 +919,7 @@ $cfgJs = [
     const rows = (d.actuators || []).map(a =>
       '<tr><td class="t">' + timeOnly(a.executed_at) + '</td>' +
       '<td>' + a.actuator_name + '</td>' +
-      '<td class="st ' + (a.status === 'ON' ? 'st-on' : 'st-off') + '">' + a.status + '</td></tr>'
+      '<td class="st"><span class="' + (a.status === 'ON' ? 'st-on' : 'st-off') + '">' + a.status + '</span></td></tr>'
     ).join('');
     $('history-act').innerHTML = rows || '<tr><td class="t">-</td><td>belum ada event</td><td class="st"></td></tr>';
 
@@ -857,8 +927,8 @@ $cfgJs = [
     const hist = d.history || [];
     const soilArr = hist.map(h => +h.soil_moisture);
     const suhuArr = hist.map(h => +h.air_temperature);
-    spark('line-soil', 'fill-soil', soilArr);
-    spark('line-suhu', 'fill-suhu', suhuArr);
+    spark('line-soil', 'fill-soil', 'pin-soil', soilArr);
+    spark('line-suhu', 'fill-suhu', 'pin-suhu', suhuArr);
     axes('soil', soilArr, hist.map(h => h.recorded_at), v => Math.round(v) + '%');
     axes('suhu', suhuArr, hist.map(h => h.recorded_at), v => v.toFixed(1) + '°C');
     $('now-soil').innerHTML = Math.round(L.soil_moisture) + '<small>%</small>';
