@@ -497,6 +497,7 @@ $cfgJs = [
     font-variant-numeric: tabular-nums;
   }
   .plot { position: relative; flex: 1; min-width: 0; }
+  .spark-wrap { position: relative; }
 
   /* Pin live pulse HTML: bulat sempurna tanpa distorsi skala SVG */
   .chart-pin {
@@ -726,7 +727,8 @@ $cfgJs = [
           <span id="y-top-soil">-</span><span id="y-mid-soil">-</span><span id="y-bot-soil">-</span>
         </div>
         <div class="plot">
-          <svg class="spark" id="sp-soil" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
+          <div class="spark-wrap">
+            <svg class="spark" id="sp-soil" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
             <defs>
               <linearGradient id="grad-soil" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stop-color="#2563EB" stop-opacity="0.22"/>
@@ -739,8 +741,9 @@ $cfgJs = [
             </g>
             <path id="fill-soil" fill="url(#grad-soil)" d=""/>
             <path id="line-soil" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d=""/>
-          </svg>
-          <div class="chart-pin pin-soil" id="pin-soil" aria-hidden="true"></div>
+            </svg>
+            <div class="chart-pin pin-soil" id="pin-soil" aria-hidden="true"></div>
+          </div>
           <div class="axis"><span id="x0-soil">-</span><span id="x1-soil">-</span><span>sekarang</span></div>
         </div>
       </div>
@@ -755,7 +758,8 @@ $cfgJs = [
           <span id="y-top-suhu">-</span><span id="y-mid-suhu">-</span><span id="y-bot-suhu">-</span>
         </div>
         <div class="plot">
-          <svg class="spark" id="sp-suhu" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
+          <div class="spark-wrap">
+            <svg class="spark" id="sp-suhu" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
             <defs>
               <linearGradient id="grad-suhu" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stop-color="#EA580C" stop-opacity="0.22"/>
@@ -768,8 +772,9 @@ $cfgJs = [
             </g>
             <path id="fill-suhu" fill="url(#grad-suhu)" d=""/>
             <path id="line-suhu" fill="none" stroke="#EA580C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d=""/>
-          </svg>
-          <div class="chart-pin pin-suhu" id="pin-suhu" aria-hidden="true"></div>
+            </svg>
+            <div class="chart-pin pin-suhu" id="pin-suhu" aria-hidden="true"></div>
+          </div>
           <div class="axis"><span id="x0-suhu">-</span><span id="x1-suhu">-</span><span>sekarang</span></div>
         </div>
       </div>
