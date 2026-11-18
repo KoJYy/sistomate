@@ -99,8 +99,8 @@ $statusPill = ['sehat' => 'sehat', 'kering' => 'kering', 'layu' => 'layu', 'saki
           <td><?= e((string)$r['air_humidity']) ?></td>
           <td><?= e((string)$r['soil_moisture']) ?></td>
           <td>
-            <span class="rgb-chip" style="background:rgb(
-              <?= (int)$r['rgb_red'] ?>,<?= (int)$r['rgb_green'] ?>,<?= (int)$r['rgb_blue'] ?>)"></span>
+            <span class="rgb-chip <?= e($statusPill[$r['plant_status']] ?? 'off') ?>"
+                  title="Warna status: <?= e($r['plant_status']) ?>"></span>
             <span class="rgb-val"><?= (int)$r['rgb_red'] ?>/<?= (int)$r['rgb_green'] ?>/<?= (int)$r['rgb_blue'] ?></span>
           </td>
           <td><span class="pill <?= e($statusPill[$r['plant_status']] ?? 'off') ?>"><?= e($r['plant_status']) ?></span></td>

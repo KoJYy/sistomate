@@ -397,6 +397,11 @@ table.tbl tbody tr:nth-child(odd) { background: rgba(230, 236, 227, .4); }
 .pill.on     { background: var(--on); color: #FFFFFF; min-width: 52px; }
 .pill.off    { background: var(--line-soft); color: var(--muted); border: 1px solid var(--line); min-width: 52px; }
 .rgb-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; }
+.rgb-chip.sehat  { background: #167D47; }
+.rgb-chip.layu   { background: #D97706; }
+.rgb-chip.sakit  { background: #DC2626; }
+.rgb-chip.kering { background: #9A6A3C; }
+.rgb-chip.off    { background: var(--line-soft); }
 .rgb-val { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* util layout */
