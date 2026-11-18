@@ -53,15 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($error === '') {
         // Upsert per-device: UNIQUE(id_device) membuat ON DUPLICATE KEY aman
         // baik saat baris belum ada maupun saat nilainya sama (rowCount 0).
+        // CATATAN: pakai VALUES(kolom) agar portabel MySQL 8 + MariaDB 10.11 (STB);
+        // alias "AS new" hanya didukung MySQL 8.0.19+ dan error 1064 di MariaDB.
         $stmt = db()->prepare(
             'INSERT INTO configs (id_device, soil_on, soil_off, temp_on, temp_off, fert_duration_s)
-             VALUES (?, ?, ?, ?, ?, ?) AS new
+             VALUES (?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
-               soil_on = new.soil_on,
-               soil_off = new.soil_off,
-               temp_on = new.temp_on,
-               temp_off = new.temp_off,
-               fert_duration_s = new.fert_duration_s'
+               soil_on = VALUES(soil_on),
+               soil_off = VALUES(soil_off),
+               temp_on = VALUES(temp_on),
+               temp_off = VALUES(temp_off),
+               fert_duration_s = VALUES(fert_duration_s)'
         );
         $stmt->execute([$deviceId, $soilOn, $soilOff, $tempOn, $tempOff, $fert]);
         header('Location: settings.php?saved=1&id_device=' . $deviceId);

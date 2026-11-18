@@ -9,8 +9,8 @@ require_login();
 $user = current_user();
 
 // Ambang histeresis per-device dari tabel configs (fallback = nilai firmware).
-// Device mengikuti bacaan sensor terakhir; kalau belum ada log, pakai device pertama.
-$deviceId = (int) (db()->query('SELECT id_device FROM sensor_logs ORDER BY id_log DESC LIMIT 1')->fetchColumn() ?: 0);
+// Device mengikuti bacaan sensor terakhir (urut waktu, bukan id insert).
+$deviceId = (int) (db()->query('SELECT id_device FROM sensor_logs ORDER BY recorded_at DESC, id_log DESC LIMIT 1')->fetchColumn() ?: 0);
 if ($deviceId <= 0) {
     $deviceId = (int) (db()->query('SELECT MIN(id_device) FROM devices')->fetchColumn() ?: 0);
 }

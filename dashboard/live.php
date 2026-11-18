@@ -24,29 +24,39 @@ try {
         ]
     );
 
+    // "Terbaru" = waktu bacaan, bukan urutan insert. Backfill data lama (id baru)
+    // tidak boleh menimpa tampilan live.
     $latest = $pdo->query(
         'SELECT recorded_at, air_temperature, air_humidity, soil_moisture,
                 rgb_red, rgb_green, rgb_blue, plant_status, id_device
-         FROM sensor_logs ORDER BY id_log DESC LIMIT 1'
+         FROM sensor_logs ORDER BY recorded_at DESC, id_log DESC LIMIT 1'
     )->fetch();
+    $deviceId = $latest ? (int) $latest['id_device'] : 0;
 
-    // 60 bacaan terakhir (interval 2 dtk = jendela 120 detik), urut lama -> baru
-    $history = $pdo->query(
+    // 60 bacaan terakhir perangkat yang tampil (interval 2 dtk = jendela 120 detik), urut lama -> baru
+    $stmt = $pdo->prepare(
         'SELECT recorded_at, soil_moisture, air_temperature
-         FROM sensor_logs ORDER BY id_log DESC LIMIT 60'
-    )->fetchAll();
-    $history = array_reverse($history);
+         FROM sensor_logs WHERE id_device = ?
+         ORDER BY recorded_at DESC, id_log DESC LIMIT 60'
+    );
+    $stmt->execute([$deviceId]);
+    $history = array_reverse($stmt->fetchAll());
 
-    $actuators = $pdo->query(
+    $stmt = $pdo->prepare(
         'SELECT actuator_name, status, executed_at
-         FROM actuator_logs ORDER BY id_action DESC LIMIT 5'
-    )->fetchAll();
+         FROM actuator_logs WHERE id_device = ?
+         ORDER BY id_action DESC LIMIT 5'
+    );
+    $stmt->execute([$deviceId]);
+    $actuators = $stmt->fetchAll();
 
-    $today = $pdo->query(
+    $stmt = $pdo->prepare(
         'SELECT
-            (SELECT COUNT(*) FROM sensor_logs WHERE recorded_at >= CURDATE())  AS sensor_rows,
-            (SELECT COUNT(*) FROM actuator_logs WHERE executed_at >= CURDATE()) AS actuator_events'
-    )->fetch();
+            (SELECT COUNT(*) FROM sensor_logs WHERE id_device = ? AND recorded_at >= CURDATE())  AS sensor_rows,
+            (SELECT COUNT(*) FROM actuator_logs WHERE id_device = ? AND executed_at >= CURDATE()) AS actuator_events'
+    );
+    $stmt->execute([$deviceId, $deviceId]);
+    $today = $stmt->fetch();
 
     $device = null;
     if ($latest) {
