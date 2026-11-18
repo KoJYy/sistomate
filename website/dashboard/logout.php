@@ -8,5 +8,5 @@ if (ini_get('session.use_cookies')) {
         $p['path'], $p['domain'], $p['secure'], $p['httponly']);
 }
 session_destroy();
-header('Location: index.html');
+header('Location: ../index.html');
 exit;

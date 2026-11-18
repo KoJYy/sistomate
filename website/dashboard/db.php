@@ -8,9 +8,10 @@ function db(): PDO
     static $pdo = null;
     if ($pdo === null) {
         $path = getenv('SISTOMATE_ENV')
-            ?: (file_exists(__DIR__ . '/../.env') ? __DIR__ . '/../.env'
+            ?: (file_exists(__DIR__ . '/../../.env') ? __DIR__ . '/../../.env'
+            : (file_exists(__DIR__ . '/../.env') ? __DIR__ . '/../.env'
             : (file_exists(__DIR__ . '/.env') ? __DIR__ . '/.env'
-            : '/etc/sistomate-ingest.env'));
+            : '/etc/sistomate-ingest.env')));
         $env = parse_ini_file($path);
         if ($env === false) {
             http_response_code(500);

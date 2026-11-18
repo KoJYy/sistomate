@@ -1,30 +1,36 @@
-# Dashboard SISTOMATE v2
+# Website SISTOMATE
 
-UI landing page & dashboard operasional yang diperbarui (`dashboard-v2/`), terhubung ke MySQL 8 (`sistomate`) via PDO dengan fallback mode demo otomatis bila konfigurasi/DB lokal belum aktif.
+Folder web produksi: landing page publik + dashboard terautentikasi.
 
 ```text
-dashboard-v2/
-├── index.html          landing page publik
-├── credits.html        atribusi foto Wikimedia Commons
-├── login.php           form login operator (verifikasi tabel users)
-├── logout.php          keluar session
-├── demo.php            pintu masuk cepat demo (login otomatis + fallback demo)
-├── demo-data.php       generator simulasi telemetri saat mode fallback aktif
-├── app.php             dashboard pemantauan real-time & kendali histeresis
-├── history.php         riwayat sensor_logs & actuator_logs + filter tanggal
-├── settings.php        pengaturan ambang histeresis per-device (tabel configs)
-├── export-csv.php      unduhan CSV riwayat sensor/aktuator
-├── live.php            JSON API untuk polling dashboard 5 detik
-├── db.php              koneksi PDO MySQL (.env.local / SISTOMATE_ENV / /etc/sistomate-ingest.env) + fallback demo
-├── theme.css           stylesheet bersama halaman dashboard
-└── assets/             sistem desain landing, ikon, gambar WebP, diagram & efek UI
+website/
+├── index.html          landing page publik (URL "/")
+├── assets/             CSS, ikon, dan logo bersama
+│   ├── theme.css       CSS bersama (landing/login/history/settings/showcase)
+│   ├── favicon.svg     ikon tab browser
+│   ├── logo.svg        master logo (salinan Opsi A)
+│   ├── logo-a.svg      Opsi A: Botanical Crest
+│   ├── logo-b.svg      Opsi B: S-Flora
+│   └── logo-c.svg      Opsi C: Agritech Shield
+├── showcase/
+│   └── logos.html      galeri tiga opsi logo
+└── dashboard/          aplikasi setelah login
+    ├── login.php       form login
+    ├── logout.php      keluar session
+    ├── app.php         dashboard utama
+    ├── history.php     riwayat sensor + aktuator
+    ├── settings.php    pengaturan ambang histeresis
+    ├── export-csv.php  unduhan CSV dari halaman riwayat
+    ├── live.php        JSON API untuk polling dashboard
+    └── db.php          koneksi PDO, require_login(), navbar()
 ```
 
-## Menjalankan Lokal (Laragon MySQL + PHP Built-in Server)
+Catatan:
 
-```bash
-mysql -u root -p < sql/sistomate.sql
-php -S 0.0.0.0:8080 -t dashboard-v2
-```
-
-Buka `http://127.0.0.1:8080/index.html` atau `demo.php`.
+- Document root diarahkan ke `website/`, bukan ke `website/dashboard/`.
+- Landing page ada di `/`; login di `/dashboard/login.php`.
+- `assets/` dipakai bersama oleh landing page dan dashboard.
+- `app.php` memakai CSS inline sendiri; `assets/theme.css` dipakai halaman lain.
+- `showcase/logos.html` dibuka langsung lewat `/showcase/logos.html`.
+- Endpoint firmware `ingest.php` tetap ditempatkan di root web (di luar folder ini,
+  dari `sistomate-firmware/ingest.php`).

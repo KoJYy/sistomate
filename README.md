@@ -32,7 +32,13 @@
 ## 📁 Struktur Repo
 
 ```text
-dashboard/           dashboard web (PHP + HTML/CSS/JS), assets/, showcase/
+website/             web produksi: landing page + dashboard
+  index.html         landing page publik
+  dashboard/         login, monitoring, riwayat, pengaturan
+  assets/            CSS, ikon, dan logo bersama
+  showcase/          galeri logo
+arsip-website/       arsip versi web lama (tidak dipakai)
+web-up/              kandidat versi dashboard berikutnya (belum dipakai)
 sistomate-firmware/  sketch ESP32 (SISTOMATE.ino) + endpoint ingest.php
 sql/                 skema, konfigurasi, seed, dan migrasi database
 gambar/              diagram arsitektur, skematik, flowchart, render 3D
@@ -133,8 +139,8 @@ Tabel pendukung **`configs`** menyimpan ambang histeresis **per perangkat** (rel
    `candra@polije.ac.id` — password `Demo123!`.
 2. **Kredensial** — isi `/etc/sistomate-ingest.env` (`API_KEY`, `DB_HOST`,
    `DB_NAME`, `DB_USER`, `DB_PASS`). Lihat `sql/README.md` untuk grant user aplikasi.
-3. **Web** — arahkan document root ke `dashboard/` dan jalankan PHP-FPM +
-   Nginx/Apache. Buka `index.html`, lalu masuk lewat `login.php`.
+3. **Web** — arahkan document root ke `website/` dan jalankan PHP-FPM +
+   Nginx/Apache. Buka `index.html`, lalu masuk lewat `dashboard/login.php`.
 4. **Firmware** — sesuaikan `WIFI_SSID`, `WIFI_PASS`, `SERVER_URL`, dan
    `API_KEY` di `sistomate-firmware/SISTOMATE/SISTOMATE.ino`, lalu upload ke
    ESP32 (`arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32

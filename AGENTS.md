@@ -7,7 +7,9 @@ Dokumentasi penggunaan ada di `README.md`.
 
 | Folder | Isi |
 |---|---|
-| `dashboard/` | Dashboard web (PHP + HTML/CSS/JS): landing, login, monitoring, riwayat, pengaturan. Aset di `assets/`, galeri logo di `showcase/`. |
+| `website/` | Web produksi: landing page (`index.html`) + dashboard terautentikasi (`dashboard/`: login, monitoring, riwayat, pengaturan). Aset di `assets/`, galeri logo di `showcase/`. |
+| `arsip-website/` | Arsip versi web lama — tidak dipakai. |
+| `web-up/` | Kandidat versi dashboard berikutnya — belum dipakai. |
 | `sistomate-firmware/` | Sketch ESP32 (`SISTOMATE/SISTOMATE.ino`), endpoint `ingest.php`, dan skrip demo. |
 | `sql/` | Skema, konfigurasi, seed, query demo, dan migrasi. |
 | `gambar/` | Diagram arsitektur, skematik, flowchart, dan render 3D. |
@@ -17,7 +19,7 @@ Dokumen internal (CAD, ERD, spesifikasi) disimpan di luar repo dan tidak dipubli
 ## Sumber kebenaran
 
 - Skema database: `sql/schema.sql` (5 tabel inti) + `sql/configs.sql` (tabel `configs`).
-- Web: `dashboard/*.php` dan `dashboard/assets/theme.css`.
+- Web: `website/dashboard/*.php` dan `website/assets/theme.css`.
 - Firmware: `sistomate-firmware/SISTOMATE/SISTOMATE.ino`.
 - Sistem final memakai 5 tabel inti (`users`, `devices`, `sensor_logs`,
   `actuator_logs`, `gallery`) + `configs`; tanpa AI/Gemini dan tanpa ESP32-CAM.
@@ -27,11 +29,12 @@ Dokumen internal (CAD, ERD, spesifikasi) disimpan di luar repo dan tidak dipubli
 ## Aturan web
 
 - Halaman terautentikasi wajib memakai `require_login()` + `navbar()` dari
-  `dashboard/db.php`. Jangan menduplikasi header/navbar per halaman.
-- Tema bersama ada di `dashboard/assets/theme.css`; `app.php` memakai CSS inline sendiri.
-- Lint setiap perubahan: `php -l dashboard/<file>.php`.
-- `SISTOMATE_ENV` dipakai `dashboard/db.php` dan `dashboard/live.php` untuk menunjuk
-  file env alternatif (DB uji). `ingest.php` selalu membaca `/etc/sistomate-ingest.env`.
+  `website/dashboard/db.php`. Jangan menduplikasi header/navbar per halaman.
+- Tema bersama ada di `website/assets/theme.css`; `app.php` memakai CSS inline sendiri.
+- Lint setiap perubahan: `php -l website/dashboard/<file>.php`.
+- `SISTOMATE_ENV` dipakai `website/dashboard/db.php` dan `website/dashboard/live.php`
+  untuk menunjuk file env alternatif (DB uji). `ingest.php` selalu membaca
+  `/etc/sistomate-ingest.env`.
 - Jangan menjalankan seed/DDL/destructive query ke database produksi saat menguji.
 
 ## Database

@@ -17,10 +17,10 @@ venv/
 dist/
 /tmp/
 
-# HTML di-ignore kecuali halaman dashboard
+# HTML di-ignore kecuali landing page & showcase website
 *.html
-!dashboard/*.html
-!dashboard/showcase/*.html
+!website/*.html
+!website/showcase/*.html
 !web-up/dashboard/*.html
 !web-up/dashboard/showcase/*.html
 
