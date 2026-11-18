@@ -51,7 +51,7 @@ $statusPill = ['sehat' => 'sehat', 'kering' => 'kering', 'layu' => 'layu', 'saki
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/theme.css">
 </head>
-<body>
+<body class="has-sidebar">
 <?= navbar('history', $user['name']) ?>
 
 <main>

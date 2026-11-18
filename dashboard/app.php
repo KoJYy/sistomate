@@ -128,6 +128,204 @@ $cfgJs = [
   }
   .logout:hover { background: var(--line-soft); color: var(--ink); }
 
+  /* sidebar vertikal (pengganti top navbar) */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    z-index: 1000;
+    overflow-y: auto;
+  }
+
+  .sidebar-brand {
+    margin-bottom: 28px;
+    padding: 0 4px;
+  }
+  .sidebar-brand .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .sidebar-brand .brand-logo {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+  .sidebar-brand .brand-name {
+    font-weight: 700;
+    letter-spacing: .02em;
+    font-size: 18px;
+    line-height: 1.15;
+  }
+  .sidebar-brand .brand-sub {
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 12.5px;
+    display: block;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 10px 14px;
+    border-radius: 10px;
+    transition: background .15s, color .15s;
+  }
+  .nav-icon {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+  }
+  .nav-item:hover {
+    background: var(--line-soft);
+    color: var(--ink);
+  }
+  .nav-item.on,
+  .nav-item[aria-current="page"] {
+    background: var(--ink);
+    color: var(--bg);
+    font-weight: 600;
+  }
+  .nav-item.on .nav-icon,
+  .nav-item[aria-current="page"] .nav-icon {
+    stroke: var(--bg);
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .sidebar-footer .live {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(22, 125, 71, .08);
+    border: 1px solid rgba(22, 125, 71, .18);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .sidebar-footer .live b {
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: .04em;
+    font-size: 12.5px;
+  }
+  .sidebar-footer .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--sehat);
+    flex-shrink: 0;
+  }
+  .sidebar-footer .dot.stale {
+    background: var(--sakit);
+  }
+
+  .sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--line-soft);
+    border-radius: 12px;
+  }
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--sehat);
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 14px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .user-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .sidebar-user .uname {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0;
+  }
+  .logout-btn {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background .15s, color .15s;
+  }
+  .logout-btn:hover {
+    background: rgba(214, 69, 69, .12);
+    color: var(--sakit);
+  }
+  .logout-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  /* layout desktop dengan sidebar */
+  @media (min-width: 821px) {
+    body.has-sidebar,
+    body:has(.sidebar) {
+      padding-left: 260px;
+      max-width: none;
+      margin: 0;
+      padding-top: 0;
+      padding-right: 0;
+      padding-bottom: 0;
+    }
+    .main-content,
+    body.has-sidebar > main,
+    body:has(.sidebar) > main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px 36px 64px;
+      box-sizing: border-box;
+      width: 100%;
+    }
+  }
+
   /* hero: kartu status bertint + 3 kartu metrik */
   .hero { display: grid; gap: 14px; padding: 14px 0 8px; }
   .status-card {
@@ -314,6 +512,51 @@ $cfgJs = [
     100% { background: transparent; }
   }
 
+  @media (max-width: 820px) {
+    .sidebar {
+      position: sticky;
+      top: 0;
+      width: 100%;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 16px;
+      gap: 10px;
+    }
+    .sidebar-brand { margin-bottom: 0; }
+    .sidebar-nav {
+      flex-direction: row;
+      overflow-x: auto;
+      gap: 6px;
+      padding-bottom: 2px;
+    }
+    .nav-item {
+      white-space: nowrap;
+      padding: 7px 12px;
+      font-size: 14px;
+    }
+    .sidebar-footer {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0;
+      padding-top: 8px;
+      border-top: 1px solid var(--line-soft);
+    }
+    .sidebar-footer .live { padding: 5px 10px; }
+    .sidebar-user { padding: 4px 8px; }
+    body.has-sidebar,
+    body:has(.sidebar) {
+      padding: 0 16px 48px;
+    }
+    .main-content,
+    body.has-sidebar > main,
+    body:has(.sidebar) > main {
+      padding: 16px 0 48px;
+    }
+  }
+
   @media (max-width: 760px) {
     .brand span { display: none; }
     .brand-group { flex-wrap: wrap; width: 100%; }
@@ -331,10 +574,11 @@ $cfgJs = [
   }
 </style>
 </head>
-<body>
+<body class="has-sidebar">
 
 <?= navbar('app', $user['name'], true) ?>
 
+<main class="main-content">
 <section class="hero">
   <div class="status-card" id="statusCard">
     <div class="status-main">
@@ -477,6 +721,7 @@ $cfgJs = [
   <span id="today">-</span>
   <span>update tiap 5 detik</span>
 </footer>
+</main>
 
 <script>
   const $ = id => document.getElementById(id);
