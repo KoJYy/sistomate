@@ -1,0 +1,11 @@
+# Kredensial lokal (salin dari .env.example)
+.env
+dashboard/.env
+
+# Foto unggahan galeri (pertahankan .htaccess)
+dashboard/uploads/gallery/*
+!dashboard/uploads/gallery/.htaccess
+
+# Pastikan berkas HTML landing & showcase tetap ikut ter-track meski root mengabaikan *.html
+!dashboard/*.html
+!dashboard/showcase/*.html

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Logo SISTOMATE Opsi C - The Agritech Shield">
+  <title>SISTOMATE - The Agritech Shield</title>
+  <!-- perisai kontur tomat padat -->
+  <rect x="8" y="8" width="48" height="48" rx="18" fill="#167D47"/>
+  <!-- irisan daging buah tomat interior (negative space) -->
+  <path fill="#FFFFFF" d="M32 20c7.7 0 13.5 5.6 13.5 13 0 5.2-2.5 9.8-6.5 12.8-2.1 1.6-4.5 2.5-7 2.5s-4.9-.9-7-2.5C21 42.8 18.5 38.2 18.5 33 18.5 25.6 24.3 20 32 20z"/>
+  <!-- 4 nodus sensor telemetri / biji lokul -->
+  <circle cx="26" cy="28" r="2.4" fill="#167D47"/>
+  <circle cx="38" cy="28" r="2.4" fill="#167D47"/>
+  <circle cx="29" cy="37" r="2.4" fill="#167D47"/>
+  <circle cx="35" cy="37" r="2.4" fill="#167D47"/>
+  <!-- mahkota 3 kelopak bintang di puncak perisai (di dalam bidang hijau, terbaca di latar apa pun) -->
+  <g fill="#FFFFFF">
+    <path d="M32 17.5C29.6 14.6 29.6 11 32 8.5 34.4 11 34.4 14.6 32 17.5Z"/>
+    <path d="M32 17.5C29.6 14.6 29.6 11 32 8.5 34.4 11 34.4 14.6 32 17.5Z" transform="rotate(-52 32 16)"/>
+    <path d="M32 17.5C29.6 14.6 29.6 11 32 8.5 34.4 11 34.4 14.6 32 17.5Z" transform="rotate(52 32 16)"/>
+  </g>
+  <circle cx="32" cy="16.4" r="2" fill="#16241B"/>
+</svg>
