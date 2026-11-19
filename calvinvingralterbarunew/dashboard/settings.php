@@ -27,7 +27,7 @@ foreach ($devices as $d) {
     }
 }
 
-$defaults = ['soil_on' => 40, 'soil_off' => 55, 'temp_on' => 32, 'temp_off' => 31, 'fert_duration_s' => 7];
+$defaults = ['soil_on' => 40, 'soil_off' => 60, 'temp_on' => 27, 'temp_off' => 25, 'fert_duration_s' => 7];
 $cfg = $defaults;
 if ($deviceId > 0) {
     $stmt = db()->prepare('SELECT * FROM configs WHERE id_device = ?');

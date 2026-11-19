@@ -13,16 +13,16 @@ flowchart TD
 
     %% pompa
     P -->|"< 40%"| P_ON["Pompa ON"]
-    P -->|"≥ 55%"| P_OFF["Pompa OFF"]
-    P -->|"40–55% · tahan"| P_H["Tahan status"]
+    P -->|"≥ 60%"| P_OFF["Pompa OFF"]
+    P -->|"40–60% · tahan"| P_H["Tahan status"]
     P_ON --> POST
     P_OFF --> POST
     P_H --> POST
 
     %% kipas
-    K -->|"> 32°C"| K_ON["Kipas ON"]
-    K -->|"≤ 31°C"| K_OFF["Kipas OFF"]
-    K -->|"31–32°C · tahan"| K_H["Tahan status"]
+    K -->|"> 27°C"| K_ON["Kipas ON"]
+    K -->|"≤ 25°C"| K_OFF["Kipas OFF"]
+    K -->|"25–27°C · tahan"| K_H["Tahan status"]
     K_ON --> POST
     K_OFF --> POST
     K_H --> POST

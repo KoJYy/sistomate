@@ -18,6 +18,8 @@ calvinvingralterbarunew/
 ### Ringkasan Pembaruan di Paket Ini
 
 - **Status Tanaman 3 Kondisi (`sehat`, `layu`, `sakit`):** status `kering` digabung ke `layu` (stres air/panas: kelembapan tanah `< soil_on` atau kipas/suhu panas `> temp_on`); `sakit` dari spektrum daun TCS34725 (`G/R < 0.75` dan `R > 100`); selebihnya `sehat`.
+- **Ambang Default Jurnal & Auto-Sync ESP32:** nilai bawaan mengikuti acuan jurnal & DB (`tanah 40–60%`, `suhu 25–27 °C`, `fertigasi 7 detik`). Setiap kali ESP32 mengirim telemetri sensor ke `ingest.php`, server ikut membalas objek JSON `config` dari tabel `configs` agar perubahan ambang dari Pengaturan Web langsung diterapkan ESP32 tanpa flash ulang.
+- **SQL VIEW & JOIN (`sql/views.sql`, `sql/demo-join.sql`):** dilengkapi VIEW `v_riwayat_sensor` / `v_riwayat_aktuator` dan demo query `INNER`, `LEFT`, serta `RIGHT JOIN` yang kompatibel dengan database 3 kondisi.
 - **Dashboard & Navigasi:** sidebar vertikal dengan jam `LIVE` aktif di semua halaman (`Dashboard`, `Riwayat`, `Galeri`, `Pengaturan`), font `Archivo`, logo baru (`logo-sistomate.png`), serta dukungan multi-perangkat (`?id_device=`).
 - **Galeri Kondisi Tanaman (`dashboard/gallery.php`):** unggah, filter status, pratinjau di dashboard, dan hapus foto dokumentasi per perangkat.
 - **Manajemen Perangkat (`dashboard/settings.php`):** tambah, ubah, dan hapus perangkat ESP32 beserta pengaturan ambang histeresis (`configs`) yang kompatibel dengan **MySQL 8** dan **MariaDB**.
@@ -58,12 +60,14 @@ Jalankan ketiga file SQL secara berurutan (**wajib urut:** `schema.sql` -> `seed
   mysql -u root -p < sql/schema.sql
   mysql -u root -p < sql/seed.sql
   mysql -u root -p sistomate < sql/configs.sql
+  mysql -u root -p sistomate < sql/views.sql     # opsional: VIEW riwayat
   ```
 - **PowerShell (Windows, contoh Laragon):**
   ```powershell
   Get-Content sql/schema.sql  -Raw | & mysql -u root
   Get-Content sql/seed.sql    -Raw | & mysql -u root
   Get-Content sql/configs.sql -Raw | & mysql -u root sistomate
+  Get-Content sql/views.sql   -Raw | & mysql -u root sistomate
   ```
 - **phpMyAdmin:** impor berurutan lewat tab **SQL / Import** -> `sql/schema.sql` -> `sql/seed.sql` -> pilih database `sistomate` -> impor `sql/configs.sql`.
 

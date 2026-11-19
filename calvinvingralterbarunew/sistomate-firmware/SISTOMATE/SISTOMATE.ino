@@ -11,13 +11,13 @@
 //   Relay B CH1 Kipas      : GPIO 27  (active-LOW)
 //   Relay B CH2 cadangan   : (belum dipakai)
 //
-// Logika:
-//   soil < 40%      -> pompa air ON ; soil >= 55% -> OFF  (histeresis)
-//   suhu > 32 C     -> kipas ON ; suhu <= 31 C -> kipas OFF (histeresis)
-//   jadwal 1x/minggu jam 07:00 (NTP) + soil >= 40% -> pompa pupuk ON 7 detik
-//     (Sari 2024/JITET: jadwal RTC mingguan, durasi 7 detik; interlock tanah gak kering)
+// Logika (nilai default jurnal; otomatis ikut configs web lewat respons ingest.php):
+//   soil < 40%      -> pompa air ON ; soil >= 60% -> OFF  (histeresis)
+//   suhu > 27 C     -> kipas ON ; suhu <= 25 C -> kipas OFF (histeresis)
+//   jadwal 1x/minggu jam 07:00 (NTP) + soil >= soilOnPct -> pompa pupuk ON 7 detik
+//     (Sari 2024/JITET: jadwal RTC mingguan, durasi default 7 detik; interlock tanah gak kering)
 //   Tiap transisi relay -> POST actuator_logs
-//   Tiap 2 detik        -> POST sensor_logs
+//   Tiap 2 detik        -> POST sensor_logs + sync threshold configs dari web
 
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -25,6 +25,8 @@
 #include <DHT.h>
 #include <Adafruit_TCS34725.h>
 #include <Preferences.h> // persist counter dosis pupuk anti dobel pas reboot
+#include <math.h>
+#include <stdlib.h>
 
 // ====== ISI SEBELUM DEMO ======
 // Jangan commit kredensial asli. Isi nilai berikut sesuai jaringan dan server
@@ -44,16 +46,22 @@ const int   DEVICE_ID   = 1; // sesuaikan dengan id_device di tabel devices
 #define RELAY_ON        LOW   // modul relay 2-ch umumnya aktif-LOW
 #define RELAY_OFF       HIGH
 
-#define SOIL_ON_PCT     40.0  // pompa nyala di bawah ini
-#define SOIL_OFF_PCT    55.0  // pompa mati di atas ini
-#define TEMP_ON_C       32.0  // kipas nyala di atas ini
-#define TEMP_OFF_C      31.0  // kipas mati di bawah ini
+#define DEFAULT_SOIL_ON_PCT     40.0f  // pompa nyala di bawah ini (%)
+#define DEFAULT_SOIL_OFF_PCT    60.0f  // pompa mati di atas ini (%)
+#define DEFAULT_TEMP_ON_C       27.0f  // kipas nyala di atas ini (C)
+#define DEFAULT_TEMP_OFF_C      25.0f  // kipas mati di bawah ini (C)
+#define DEFAULT_FERT_DURATION_S 7      // detik dosis per semprot
 
-// fertigasi (Sari 2024: 1x/minggu, durasi 7 detik; interlock Bab 5)
+// selesai init dengan nilai default jurnal; diperbarui otomatis dari configs web
+float soilOnPct     = DEFAULT_SOIL_ON_PCT;
+float soilOffPct    = DEFAULT_SOIL_OFF_PCT;
+float tempOnC       = DEFAULT_TEMP_ON_C;
+float tempOffC      = DEFAULT_TEMP_OFF_C;
+int   fertDurationS = DEFAULT_FERT_DURATION_S;
+
+// fertigasi (Sari 2024: 1x/minggu, durasi default 7 detik; interlock Bab 5)
 #define FERT_HOUR        7     // jam lokal WIB (NTP GMT+7)
 #define FERT_MIN         0
-#define FERT_DURATION_S  7     // detik dosis per semprot
-#define FERT_MIN_SOIL    40.0  // syarat aman: tanah gak boleh kering
 #define FERT_WDAY        1     // hari jadwal: 1 = Senin (0=Minggu .. 6=Sabtu) — 1x/minggu
 
 #define SENSOR_INTERVAL_MS 2000UL  // POST sensor_logs tiap 2 detik
@@ -119,7 +127,7 @@ void setup() {
   configTime(7 * 3600, 0, "pool.ntp.org", "time.nist.gov"); // NTP WIB — SNTP nyala sendiri begitu WiFi connected
 }
 
-bool postJson(const String& body) {
+bool postJson(const String& body, String* respOut) {
   if (WiFi.status() != WL_CONNECTED) return false;
   HTTPClient http;
   http.begin(SERVER_URL);
@@ -127,9 +135,73 @@ bool postJson(const String& body) {
   http.addHeader("X-API-Key", API_KEY);
   http.setTimeout(4000);
   int code = http.POST(body);
+  if (code >= 200 && code < 300 && respOut != nullptr) {
+    *respOut = http.getString();
+  }
   http.end();
   Serial.printf("POST %d\n", code);
   return code >= 200 && code < 300;
+}
+
+bool postJson(const String& body) {
+  return postJson(body, nullptr);
+}
+
+bool extractJsonFloatFrom(const String& json, int fromIdx, const char* key, float& outVal) {
+  String pat = String("\"") + key + "\"";
+  int keyIdx = json.indexOf(pat, fromIdx);
+  if (keyIdx < 0) return false;
+  int colon = json.indexOf(':', keyIdx + pat.length());
+  if (colon < 0) return false;
+  int pos = colon + 1;
+  int len = json.length();
+  while (pos < len && (json[pos] == ' ' || json[pos] == '\t' || json[pos] == '\r' || json[pos] == '\n')) {
+    pos++;
+  }
+  if (pos >= len) return false;
+  const char* startPtr = json.c_str() + pos;
+  char* endPtr = nullptr;
+  float parsed = strtof(startPtr, &endPtr);
+  if (endPtr == startPtr || isnan(parsed) || isinf(parsed)) return false;
+  outVal = parsed;
+  return true;
+}
+
+void syncConfigFromJson(const String& json) {
+  int cfgIdx = json.indexOf("\"config\"");
+  if (cfgIdx < 0) return;
+
+  float sOn = 0, sOff = 0, tOn = 0, tOff = 0, fDur = 0;
+  if (!extractJsonFloatFrom(json, cfgIdx, "soil_on", sOn) ||
+      !extractJsonFloatFrom(json, cfgIdx, "soil_off", sOff) ||
+      !extractJsonFloatFrom(json, cfgIdx, "temp_on", tOn) ||
+      !extractJsonFloatFrom(json, cfgIdx, "temp_off", tOff) ||
+      !extractJsonFloatFrom(json, cfgIdx, "fert_duration_s", fDur)) {
+    return;
+  }
+
+  int fertS = (int)(fDur + 0.5f);
+  // Validasi sama dengan settings.php agar histeresis selalu aman
+  if (sOn < 0.0f || sOn > 100.0f || sOff < 0.0f || sOff > 100.0f || sOn >= sOff) return;
+  if (tOn < 10.0f || tOn > 50.0f || tOff < 10.0f || tOff > 50.0f || tOff >= tOn) return;
+  if (fertS < 1 || fertS > 60) return;
+
+  bool changed = fabsf(sOn - soilOnPct) > 0.05f ||
+                 fabsf(sOff - soilOffPct) > 0.05f ||
+                 fabsf(tOn - tempOnC) > 0.05f ||
+                 fabsf(tOff - tempOffC) > 0.05f ||
+                 fertS != fertDurationS;
+
+  soilOnPct     = sOn;
+  soilOffPct    = sOff;
+  tempOnC       = tOn;
+  tempOffC      = tOff;
+  fertDurationS = fertS;
+
+  if (changed) {
+    Serial.printf("CONFIG SYNC soil=%.1f..%.1f%% temp=%.1f..%.1fC fert=%ds\n",
+                  soilOnPct, soilOffPct, tempOffC, tempOnC, fertDurationS);
+  }
 }
 
 // event aktuator ditunda (per-slot) sampai POST sukses — retry di loop(),
@@ -184,11 +256,11 @@ void setFan(bool on) {
   markActuator(ACT_KIPAS, "Kipas Exhaust", on);
 }
 
-// fertigasi: dosis 7 detik tiap minggu jam 07:00 (Sari 2024), batal kalo tanah kering
+// fertigasi: dosis terkonfigurasi (default 7 detik) tiap minggu jam 07:00 (Sari 2024), batal kalo tanah kering
 void fertigasi() {
   if (fertOn) {
-    if (millis() - fertStartMs >= (unsigned long)FERT_DURATION_S * 1000UL) setFert(false);
-    else if (soilPct < FERT_MIN_SOIL) setFert(false); // interlock juga di tengah dosis
+    if (millis() - fertStartMs >= (unsigned long)fertDurationS * 1000UL) setFert(false);
+    else if (soilPct < soilOnPct) setFert(false); // interlock juga di tengah dosis
     return;
   }
   struct tm t;
@@ -197,7 +269,7 @@ void fertigasi() {
   if (t.tm_wday != FERT_WDAY) return;           // hanya hari Senin -> jadwal 1x/minggu (bukan tiap hari)
   int key = (t.tm_year + 1900) * 1000 + t.tm_yday;
   if (key == lastFertKey) return;           // hari ini udah dapat dosis
-  if (soilPct < FERT_MIN_SOIL) return;      // tanah kering -> lewati minggu ini (retry selama menit jadwal)
+  if (soilPct < soilOnPct) return;          // tanah kering -> lewati minggu ini (retry selama menit jadwal)
   lastFertKey = key;
   prefs.putInt("fertkey", key);
   setFert(true);
@@ -206,7 +278,7 @@ void fertigasi() {
 // heuristik status tanaman dari kondisi sensor (3 kondisi)
 // layu (tanah kering atau suhu panas/fanOn) > sakit (daun tidak hijau) > sehat
 const char* plantStatus() {
-  if (soilPct < SOIL_ON_PCT || fanOn) return "layu"; // kurang air (soil < 40%) atau stres panas (histeresis kipas 32/31)
+  if (soilPct < soilOnPct || fanOn) return "layu"; // kurang air (< soilOnPct) atau stres panas (kipas aktif)
   if (tcsOk) {
     // kalibrasi 21 Okt malam (data 4468 baris, bimodal jelas):
     //   hijau asli (ambient): G/R = 0.94–1.10  (R kadang >G, syarat g>r bikin salah sakit)
@@ -253,9 +325,9 @@ void loop() {
     lastRead = now;
     readSensors();
 
-    // logika aktuator + histeresis
-    setPump(soilPct < SOIL_ON_PCT ? true : (soilPct >= SOIL_OFF_PCT ? false : pumpOn));
-    setFan(airTemp > TEMP_ON_C ? true : (airTemp <= TEMP_OFF_C ? false : fanOn));
+    // logika aktuator + histeresis (otomatis ikut ambang configs web)
+    setPump(soilPct < soilOnPct ? true : (soilPct >= soilOffPct ? false : pumpOn));
+    setFan(airTemp > tempOnC ? true : (airTemp <= tempOffC ? false : fanOn));
   }
 
   if (now - lastPost >= SENSOR_INTERVAL_MS) {
@@ -268,7 +340,10 @@ void loop() {
                   ",\"rgb_green\":" + g +
                   ",\"rgb_blue\":" + b +
                   ",\"plant_status\":\"" + plantStatus() + "\"}";
-    postJson(body);
+    String resp;
+    if (postJson(body, &resp)) {
+      syncConfigFromJson(resp);
+    }
     Serial.printf("SENSOR suhu=%.1fC rh=%.0f%% soil=%.0f%% raw=%ld rgb=%u,%u,%u %s\n",
                   airTemp, airHumi, soilPct, soilRaw, r, g, b, plantStatus());
   }

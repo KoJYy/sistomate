@@ -14,7 +14,7 @@ if ($deviceId <= 0) {
     $deviceId = (int) (db()->query('SELECT MIN(id_device) FROM devices')->fetchColumn() ?: 0);
 }
 
-$cfg = ['soil_on' => 40, 'soil_off' => 55, 'temp_on' => 32, 'temp_off' => 31, 'fert_duration_s' => 7];
+$cfg = ['soil_on' => 40, 'soil_off' => 60, 'temp_on' => 27, 'temp_off' => 25, 'fert_duration_s' => 7];
 if ($deviceId > 0) {
     $stmt = db()->prepare('SELECT * FROM configs WHERE id_device = ?');
     $stmt->execute([$deviceId]);
@@ -1018,7 +1018,7 @@ $cfgJs = [
 <script>
   const $ = id => document.getElementById(id);
   const DEVICE_ID = <?= (int) $deviceId ?>;
-  // ambang histeresis dari tabel configs (di-encode PHP, fallback firmware 40/55/32/31/7)
+  // ambang histeresis dari tabel configs (di-encode PHP, fallback firmware 40/60/27/25/7)
   const CFG = <?= json_encode($cfgJs, JSON_UNESCAPED_UNICODE) ?>;
   const STATUS_COLOR = {
     sehat: '#1B9E5A', layu: '#D08700', sakit: '#D64545'

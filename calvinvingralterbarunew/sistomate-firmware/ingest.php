@@ -9,7 +9,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$env = parse_ini_file('/etc/sistomate-ingest.env');
+$envPath = file_exists('/etc/sistomate-ingest.env')
+    ? '/etc/sistomate-ingest.env'
+    : (getenv('SISTOMATE_ENV') ?: (file_exists(__DIR__ . '/../.env') ? __DIR__ . '/../.env' : '/etc/sistomate-ingest.env'));
+$env = parse_ini_file($envPath);
 if ($env === false) {
     error_log('ingest: env file tidak terbaca');
     http_response_code(500);
@@ -48,6 +51,7 @@ try {
             echo json_encode(['error' => 'Invalid plant_status']);
             exit;
         }
+        $deviceId = (int)($in['device_id'] ?? 1);
         $stmt = $pdo->prepare(
             'INSERT INTO sensor_logs
              (recorded_at, air_temperature, air_humidity, soil_moisture,
@@ -62,7 +66,7 @@ try {
             (int)($in['rgb_green'] ?? 0),
             (int)($in['rgb_blue'] ?? 0),
             $status,
-            (int)($in['device_id'] ?? 1),
+            $deviceId,
         ]);
     } elseif ($type === 'actuator') {
         $st = $in['status'] ?? '';
@@ -87,7 +91,30 @@ try {
         exit;
     }
 
-    echo json_encode(['status' => 'ok']);
+    $response = ['status' => 'ok'];
+    if ($type === 'sensor') {
+        try {
+            $stCfg = $pdo->prepare(
+                'SELECT soil_on, soil_off, temp_on, temp_off, fert_duration_s
+                 FROM configs WHERE id_device = ? LIMIT 1'
+            );
+            $stCfg->execute([$deviceId]);
+            $cfgRow = $stCfg->fetch();
+            if ($cfgRow) {
+                $response['config'] = [
+                    'soil_on'         => (float) $cfgRow['soil_on'],
+                    'soil_off'        => (float) $cfgRow['soil_off'],
+                    'temp_on'         => (float) $cfgRow['temp_on'],
+                    'temp_off'        => (float) $cfgRow['temp_off'],
+                    'fert_duration_s' => (int)   $cfgRow['fert_duration_s'],
+                ];
+            }
+        } catch (Exception $cfgErr) {
+            // Abaikan bila tabel configs belum ada; ESP32 pakai nilai default/terakhir.
+        }
+    }
+
+    echo json_encode($response);
 } catch (Exception $e) {
     error_log('ingest: ' . $e->getMessage());
     http_response_code(500);
