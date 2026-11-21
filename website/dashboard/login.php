@@ -1,5 +1,5 @@
 <?php
-// login.php - autentikasi dashboard SISTOMATE (email + password -> tabel users).
+// login.php - autentikasi dashboard SISTOMATE (username/email + password -> tabel users).
 require_once __DIR__ . '/db.php';
 
 session_start();
@@ -11,11 +11,11 @@ if (!empty($_SESSION['user_id'])) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim((string) ($_POST['email'] ?? ''));
-    $pass  = (string) ($_POST['password'] ?? '');
+    $username = trim((string) ($_POST['username'] ?? $_POST['email'] ?? ''));
+    $pass     = (string) ($_POST['password'] ?? '');
 
     $stmt = db()->prepare('SELECT id_user, name, password_hash FROM users WHERE email = ? LIMIT 1');
-    $stmt->execute([$email]);
+    $stmt->execute([$username]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($pass, $user['password_hash'])) {
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: app.php');
         exit;
     }
-    $error = 'Email atau password salah.';
+    $error = 'Username atau password salah.';
 }
 ?>
 <!doctype html>
@@ -57,27 +57,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     fill: none; stroke: currentColor;
     stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
   }
+  .login-brand-img {
+    width: 230px;
+    max-width: 90%;
+    height: auto;
+    margin: 0 auto 12px auto;
+    display: block;
+  }
 </style>
 </head>
 <body>
 <div class="login-wrap">
   <div class="panel login-card">
     <div class="center">
-      <!-- The Botanical Crest (Opsi A) -->
-      <div class="mark"><svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 25.5c9.8 0 17.8 6.7 17.8 16 0 6.2-3.2 11.7-8.2 14.9-2.9 1.8-6.1 2.8-9.6 2.8-3.5 0-6.7-1-9.6-2.8-5-3.2-8.2-8.7-8.2-14.9 0-9.3 8-16 17.8-16z" fill="#167D47"/><path d="M18.6 43.5c-.8-6.7 1.6-13 6.6-17.4-3.3 4.3-4.7 9.5-3.9 14.6.6 4.1 2.5 7.8 5.3 10.5-3.5-1.4-6.5-3.9-8-7.7z" fill="#22A55F" opacity=".55"/><g fill="#E8F4EC" stroke="#0E4E2C" stroke-width="1.5" stroke-linejoin="round"><path d="M32 21.6C28.4 18.2 27.9 12 32 7 36.1 12 35.6 18.2 32 21.6Z"/><path d="M32 21.6C28.4 18.2 27.9 12 32 7 36.1 12 35.6 18.2 32 21.6Z" transform="rotate(72 32 19.5)"/><path d="M32 21.6C28.4 18.2 27.9 12 32 7 36.1 12 35.6 18.2 32 21.6Z" transform="rotate(-72 32 19.5)"/><path d="M32 21.6C28.4 18.2 27.9 12 32 7 36.1 12 35.6 18.2 32 21.6Z" transform="rotate(144 32 19.5)"/><path d="M32 21.6C28.4 18.2 27.9 12 32 7 36.1 12 35.6 18.2 32 21.6Z" transform="rotate(-144 32 19.5)"/></g><path d="M29.7 20.4L30.3 9.6Q32 8.2 33.7 9.8L34.3 20.5Z" fill="#0E4E2C"/><circle cx="32" cy="19.5" r="2.2" fill="#16241B"/></svg></div>
-      <h1>SISTOMATE</h1>
+      <img src="../assets/figma/logo-navbar.png" alt="SISTOMATE" class="login-brand-img" width="200" height="50">
       <p class="muted small">Monitoring &amp; Otomasi Tanaman Tomat</p>
     </div>
     <?php if ($error !== ''): ?>
       <div class="alert err mt-block" role="alert"><?= e($error) ?></div>
     <?php endif; ?>
     <form method="post" action="login.php">
-      <label class="f mt-block" for="email">Email</label>
-      <input type="email" id="email" name="email"
-             required autofocus value="<?= e($_POST['email'] ?? '') ?>">
+      <label class="f mt-block" for="username">Username</label>
+      <input type="text" id="username" name="username"
+             autocomplete="username" spellcheck="false"
+             autocorrect="off" autocapitalize="none" enterkeyhint="next"
+             required autofocus placeholder="contoh: sistomate"
+             value="<?= e($_POST['username'] ?? $_POST['email'] ?? '') ?>">
       <label class="f" for="password">Password</label>
       <div class="pw-wrap">
-        <input type="password" id="password" name="password" required>
+        <input type="password" id="password" name="password"
+               autocomplete="current-password" enterkeyhint="done" required>
         <button type="button" class="pw-eye" id="pwEye" aria-label="Tampilkan password"
                 onclick="pwToggle()">
           <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true">
@@ -97,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </form>
     <div class="center mt-block">
-      <a class="link" href="index.html">&larr; Kembali ke beranda</a>
+      <a class="link" href="../index.html">&larr; Kembali ke beranda</a>
     </div>
   </div>
 </div>

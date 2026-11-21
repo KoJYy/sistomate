@@ -26,3 +26,7 @@ dist/
 
 # Gate & catatan lokal
 tools/
+
+# Foto unggahan galeri pengguna
+website/dashboard/uploads/gallery/*
+!website/dashboard/uploads/gallery/.htaccess

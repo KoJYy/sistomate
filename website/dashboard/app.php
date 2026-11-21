@@ -8,13 +8,13 @@ if (session_status() === PHP_SESSION_NONE) {
 require_login();
 $user = current_user();
 
-// Ambang histeresis per-device dari tabel configs (fallback = nilai firmware).
-// Device mengikuti bacaan sensor terakhir (urut waktu, bukan id insert).
+// Device aktif mengikuti bacaan sensor terakhir (urut waktu, bukan id insert); kalau belum ada log, pakai device pertama.
 $deviceId = (int) (db()->query('SELECT id_device FROM sensor_logs ORDER BY recorded_at DESC, id_log DESC LIMIT 1')->fetchColumn() ?: 0);
 if ($deviceId <= 0) {
     $deviceId = (int) (db()->query('SELECT MIN(id_device) FROM devices')->fetchColumn() ?: 0);
 }
-$cfg = ['soil_on' => 40, 'soil_off' => 55, 'temp_on' => 32, 'temp_off' => 31, 'fert_duration_s' => 7];
+
+$cfg = ['soil_on' => 40, 'soil_off' => 60, 'temp_on' => 27, 'temp_off' => 25, 'fert_duration_s' => 7];
 if ($deviceId > 0) {
     $stmt = db()->prepare('SELECT * FROM configs WHERE id_device = ?');
     $stmt->execute([$deviceId]);
@@ -22,6 +22,22 @@ if ($deviceId > 0) {
     if ($row) {
         $cfg = $row + $cfg;
     }
+}
+
+$fmtNum = static fn($v): string => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
+
+$recentPhotos = [];
+if ($deviceId > 0) {
+    $stGal = db()->prepare(
+        'SELECT g.id_gallery, g.image_url, g.caption, g.upload_date, u.name AS user_name
+         FROM gallery g
+         LEFT JOIN users u ON u.id_user = g.id_user
+         WHERE g.id_device = ?
+         ORDER BY g.upload_date DESC, g.id_gallery DESC
+         LIMIT 3'
+    );
+    $stGal->execute([$deviceId]);
+    $recentPhotos = $stGal->fetchAll();
 }
 
 $cfgJs = [
@@ -53,12 +69,11 @@ $cfgJs = [
     --sehat: #167D47;
     --layu: #D08700;
     --sakit: #D64545;
-    --kering: #9A6A3C;
     --on: #0B7285;
     --soilc: #2563EB;
     --suhuc: #EA580C;
     --sans: "Archivo", system-ui, -apple-system, sans-serif;
-    --serif: "Fraunces", Georgia, serif;
+    --serif: var(--sans);
   }
   * { box-sizing: border-box; margin: 0; }
   html { background: var(--bg); scrollbar-gutter: stable; overflow-y: scroll; }
@@ -75,7 +90,7 @@ $cfgJs = [
   }
   :focus-visible { outline: 2px solid var(--sehat); outline-offset: 2px; }
 
-  /* sidebar vertikal (pengganti top navbar) */
+  /* sidebar vertikal (pengganti top sblmnya top cicici navbar) */
   .sidebar {
     position: fixed;
     top: 0;
@@ -94,15 +109,22 @@ $cfgJs = [
   }
 
   .sidebar-brand {
-    margin-bottom: 28px;
+    margin-bottom: 24px;
     padding: 0 4px;
   }
   .sidebar-brand .brand {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
     text-decoration: none;
     color: var(--ink);
+  }
+  .sidebar-brand .brand-logo-img {
+    width: 172px;
+    max-width: 100%;
+    height: auto;
+    display: block;
   }
   .sidebar-brand .brand-logo {
     width: 32px;
@@ -118,8 +140,10 @@ $cfgJs = [
   .sidebar-brand .brand-sub {
     color: var(--muted);
     font-weight: 500;
-    font-size: 12.5px;
+    font-size: 12px;
+    letter-spacing: .02em;
     display: block;
+    padding-left: 2px;
   }
 
   .sidebar-nav {
@@ -278,24 +302,24 @@ $cfgJs = [
   .status-card {
     background: rgba(27, 158, 90, .1);
     border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 26px 30px 28px;
+    border-radius: 16px;
+    padding: 20px 26px;
     transition: background .5s;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
-    gap: 24px;
+    gap: 20px;
   }
-  .status-why { text-align: right; max-width: 270px; margin-bottom: 10px; }
-  .status-why span { font-size: 15px; color: var(--muted); }
-  .status-why p { font-size: 17px; line-height: 1.45; margin-top: 4px; }
-  .status-kicker { font-size: 16px; color: var(--muted); margin-bottom: 6px; }
+  .status-why { text-align: right; max-width: 340px; }
+  .status-why span { font-size: 13.5px; color: var(--muted); }
+  .status-why p { font-size: 15.5px; line-height: 1.4; margin-top: 2px; }
+  .status-kicker { font-size: 14.5px; color: var(--muted); margin-bottom: 4px; }
   .status-word {
     font-family: var(--sans);
     font-weight: 700;
-    font-size: clamp(5rem, 12vw, 8rem);
-    line-height: 1;
-    letter-spacing: -.03em;
+    font-size: clamp(2.4rem, 4vw, 3.4rem);
+    line-height: 1.1;
+    letter-spacing: -.02em;
     color: var(--sehat);
     transition: color .5s;
   }
@@ -307,24 +331,63 @@ $cfgJs = [
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 16px;
-    padding: 16px 20px 20px;
+    padding: 16px 20px 18px;
     box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
+    transition: border-color .3s ease;
   }
-  .metric .top {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 10px;
+  .metric.is-warn { border-color: rgba(208, 135, 0, .48); }
+  .metric .m-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
   }
-  .metric .label { font-size: 15px; color: var(--muted); }
+  .metric .label {
+    font-size: 13.5px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .m-badge {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    line-height: 1.45;
+  }
+  .m-badge.ok   { background: rgba(22, 125, 71, .11); color: var(--sehat); }
+  .m-badge.warn { background: rgba(208, 135, 0, .14); color: #9A5B00; }
+  .m-badge.idle { background: var(--line-soft); color: var(--muted); }
   .metric .value {
-    font-size: clamp(3rem, 4vw, 3.5rem);
+    font-size: clamp(1.65rem, 2.2vw, 2.15rem);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     letter-spacing: -.02em;
-    line-height: 1;
+    line-height: 1.1;
+    margin: 2px 0 10px;
+    white-space: nowrap;
   }
-  .metric .value small { font-size: .48em; font-weight: 600; color: var(--muted); margin-left: 2px; }
+  .metric .value small { font-size: .56em; font-weight: 600; color: var(--muted); margin-left: 3px; }
 
-  .amb { font-size: 15px; color: var(--muted); margin-top: auto; padding-top: 8px; font-variant-numeric: tabular-nums; }
+  /* gauge ambang histeresis */
+  .track { position: relative; height: 12px; background: var(--line-soft); border-radius: 4px; overflow: visible; margin-top: 4px; }
+  .zone { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+  .needle {
+    position: absolute; top: -4px; bottom: -4px; width: 4px;
+    background: var(--ink);
+    border-radius: 2px;
+    transition: left .8s cubic-bezier(.2, .7, .3, 1);
+  }
+  .tick { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .55; }
+  .amb {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--line-soft);
+    font-variant-numeric: tabular-nums;
+  }
 
   /* dua kolom: aktuator + riwayat */
   .pair {
@@ -337,15 +400,15 @@ $cfgJs = [
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 16px;
-    padding: 18px 22px 20px;
+    padding: 20px 22px 22px;
     box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
   }
   /* panel dalam .pair ikut tinggi baris grid */
   .pair .panel { display: flex; flex-direction: column; }
   .pair .panel .tiles { flex: 1; }
-  h2 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
+  h2 { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .04em; }
 
-  /* aktuator: baris horizontal dengan ikon + chip status */
+  /* daftar aktuator: baris horizontal yang lapang, proporsional, dan rapi */
   .tiles { display: flex; flex-direction: column; gap: 10px; }
   .tile {
     display: flex;
@@ -356,6 +419,11 @@ $cfgJs = [
     border: 1px solid var(--line);
     border-radius: 12px;
     padding: 12px 16px;
+    transition: all .25s ease;
+  }
+  .tile.is-on {
+    background: rgba(11, 114, 131, .06);
+    border-color: rgba(11, 114, 131, .35);
   }
   .act-icon {
     width: 38px;
@@ -370,6 +438,7 @@ $cfgJs = [
   .act-pompa { color: #2563EB; background: rgba(37, 99, 235, .08); border-color: rgba(37, 99, 235, .2); }
   .act-pupuk { color: var(--sehat); background: rgba(22, 125, 71, .08); border-color: rgba(22, 125, 71, .2); }
   .act-kipas { color: #EA580C; background: rgba(234, 88, 12, .08); border-color: rgba(234, 88, 12, .2); }
+
   .act-body {
     flex: 1;
     min-width: 0;
@@ -400,56 +469,83 @@ $cfgJs = [
     min-width: 48px;
     text-align: center;
     border-radius: 999px;
-    background: var(--line-soft);
+    background: var(--surface);
     color: var(--muted);
     border: 1px solid var(--line);
     flex-shrink: 0;
     transition: background .25s, color .25s, border-color .25s;
   }
-  .chip.on { background: var(--on); color: #FFFFFF; border-color: var(--on); }
+  .chip.on {
+    background: rgba(11, 114, 131, .15);
+    color: var(--on);
+    border-color: rgba(11, 114, 131, .35);
+  }
 
-  table { width: 100%; border-collapse: collapse; font-size: 15px; }
-  td { padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 9px 4px; border-bottom: 1px solid var(--line-soft); }
   tr:last-child td { border-bottom: 0; }
-  td.t { color: var(--muted); font-variant-numeric: tabular-nums; width: 92px; }
+  td.t { color: var(--muted); font-variant-numeric: tabular-nums; width: 85px; }
   td.st { text-align: right; width: 68px; font-weight: 700; font-size: 12px; }
-  .st-on, .st-off {
+  .st-on {
     display: inline-block;
     padding: 3px 10px;
     min-width: 44px;
     text-align: center;
     border-radius: 999px;
+    background: rgba(11, 114, 131, .15);
+    color: var(--on);
   }
-  .st-on { background: var(--on); color: #FFFFFF; }
-  .st-off { background: var(--line-soft); color: var(--muted); }
+  .st-off {
+    display: inline-block;
+    padding: 3px 10px;
+    min-width: 44px;
+    text-align: center;
+    border-radius: 999px;
+    background: var(--line-soft);
+    color: var(--muted);
+  }
 
   /* tren: area chart */
   .trend { padding: 4px 0; }
   .sparks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .spark-head {
     display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
-  .spark-head .name { font-size: 15px; color: var(--muted); }
+  .spark-head .name { font-size: 15px; font-weight: 600; color: var(--muted); }
   .spark-head .now {
-    font-size: clamp(1.25rem, 2.2vw, 1.6rem); font-weight: 700;
+    font-size: clamp(1.35rem, 2.4vw, 1.75rem); font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    letter-spacing: -.02em;
+  }
+  .spark-head .now small { font-size: .52em; color: var(--muted); font-weight: 600; margin-left: 2px; }
+  svg.spark {
+    display: block; width: 100%; height: 130px;
+    background: #F8FAF7;
+    border: 1px solid rgba(215, 224, 212, .75);
+    border-radius: 12px;
+  }
+  .axis {
+    display: flex; justify-content: space-between;
+    font-size: 12.5px; font-weight: 500; color: var(--muted);
+    margin-top: 8px; padding: 0 4px;
     font-variant-numeric: tabular-nums;
   }
-  .spark-head .now small { font-size: .55em; color: var(--muted); font-weight: 600; }
-  svg.spark { display: block; width: 100%; height: 130px; background: #F8FAF7; border: 1px solid rgba(215, 224, 212, .75); border-radius: 12px; }
-  .axis { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .axis span:last-child { font-weight: 600; color: var(--ink); }
   /* sumbu: label Y HTML di kiri presisi sejajar garis grid */
   .chart { display: flex; gap: 8px; }
   .yax {
     display: flex; flex-direction: column; justify-content: space-between;
     align-items: flex-end; flex: none;
-    width: 46px; height: 130px; padding: 3px 0 9px;
-    font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums;
+    width: 44px; height: 130px; padding: 10px 0 12px;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    font-variant-numeric: tabular-nums;
   }
-  .plot { flex: 1; min-width: 0; }
+  .plot { position: relative; flex: 1; min-width: 0; }
   .spark-wrap { position: relative; }
 
-  /* pin live: bulat sempurna, tidak ikut distorsi skala SVG */
+  /* Pin live pulse HTML: bulat sempurna tanpa distorsi skala SVG */
   .chart-pin {
     position: absolute;
     width: 9px;
@@ -506,6 +602,103 @@ $cfgJs = [
     box-shadow: 0 1px 2px rgba(22, 36, 27, .05);
   }
 
+  /* ringkasan dokumentasi foto terbaru */
+  .recent-gal { margin-top: 20px; }
+  .recent-gal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .recent-gal-head h2 { margin: 0; }
+  .recent-gal-link {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--sehat);
+    text-decoration: none;
+  }
+  .recent-gal-link:hover { text-decoration: underline; }
+  .recent-gal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .rg-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color .15s ease;
+  }
+  .rg-card:hover { border-color: var(--sehat); }
+  .rg-thumb {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    background: var(--line-soft);
+  }
+  .rg-placeholder {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--line-soft);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 12.5px;
+    text-align: center;
+    padding: 12px;
+  }
+  .rg-placeholder svg { width: 24px; height: 24px; opacity: .65; }
+  .rg-body {
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+  .rg-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .rg-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: #FFFFFF;
+  }
+  .rg-pill.sehat  { background: var(--sehat); }
+  .rg-pill.layu   { background: #D97706; }
+  .rg-pill.sakit  { background: #DC2626; }
+  .rg-pill.off    { background: var(--line-soft); color: var(--muted); border: 1px solid var(--line); }
+  .rg-caption {
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .rg-empty {
+    font-size: 14px;
+    color: var(--muted);
+    padding: 10px 0 4px;
+  }
+
   footer {
     margin-top: 18px;
     padding-top: 16px;
@@ -533,6 +726,18 @@ $cfgJs = [
       gap: 10px;
     }
     .sidebar-brand { margin-bottom: 0; }
+    .sidebar-brand .brand {
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-brand .brand-logo-img {
+      width: 125px;
+    }
+    .sidebar-brand .brand-sub {
+      font-size: 11px;
+      padding-left: 0;
+    }
     .sidebar-nav {
       flex-direction: row;
       overflow-x: auto;
@@ -564,17 +769,17 @@ $cfgJs = [
     body:has(.sidebar) > main {
       padding: 16px 0 48px;
     }
-    .metrics, .sparks, .rgb-grid { grid-template-columns: 1fr; }
+    .metrics, .sparks, .rgb-grid, .tiles, .recent-gal-grid { grid-template-columns: 1fr; }
     .pair { grid-template-columns: 1fr; gap: 14px; }
     .status-card { padding: 22px 22px 24px; flex-direction: column; align-items: flex-start; gap: 14px; }
     .status-why { text-align: left; margin-bottom: 0; max-width: none; }
-    .status-word { font-size: clamp(4rem, 14vw, 6rem); }
+    .status-word { font-size: clamp(2.2rem, 7vw, 2.8rem); }
   }
   @media (prefers-reduced-motion: reduce) {
     .dot { animation: none; }
     .flash { animation: none; }
     .chart-pin { animation: none; }
-    .bar div, .status-word, .chip, .status-card { transition: none; }
+    .needle, .bar div, .status-word, .chip, .tile .big, .status-card { transition: none; }
   }
 </style>
 </head>
@@ -583,6 +788,7 @@ $cfgJs = [
 <?= navbar('app', $user['name'], true) ?>
 
 <main class="main-content">
+
 <section class="hero">
   <div class="status-card" id="statusCard">
     <div class="status-main">
@@ -595,25 +801,29 @@ $cfgJs = [
     </div>
   </div>
   <div class="metrics">
-    <div class="metric">
-      <div class="top">
+    <div class="metric" id="card-suhu">
+      <div class="m-head">
         <span class="label">suhu udara</span>
-        <span class="value" id="suhu">-<small>°C</small></span>
+        <span class="m-badge idle" id="badge-suhu">-</span>
       </div>
-      <div class="amb">kipas: ON di atas <?= e((string)$cfg['temp_on']) ?>&deg;C, OFF di bawah <?= e((string)$cfg['temp_off']) ?>&deg;C</div>
+      <div class="value" id="suhu">-<small>°C</small></div>
+      <div class="amb">kipas: ON &gt; <?= e($fmtNum($cfg['temp_on'])) ?>&deg;C &middot; OFF &lt; <?= e($fmtNum($cfg['temp_off'])) ?>&deg;C</div>
     </div>
-    <div class="metric">
-      <div class="top">
+    <div class="metric" id="card-rh">
+      <div class="m-head">
         <span class="label">kelembapan udara</span>
-        <span class="value" id="rh">-<small>%</small></span>
+        <span class="m-badge idle" id="badge-rh">-</span>
       </div>
+      <div class="value" id="rh">-<small>%</small></div>
+      <div class="amb">rentang ideal: 60% &ndash; 80%</div>
     </div>
-    <div class="metric">
-      <div class="top">
+    <div class="metric" id="card-soil">
+      <div class="m-head">
         <span class="label">kelembapan tanah</span>
-        <span class="value" id="soil">-<small>%</small></span>
+        <span class="m-badge idle" id="badge-soil">-</span>
       </div>
-      <div class="amb">pompa: ON di bawah <?= e((string)$cfg['soil_on']) ?>%, OFF di atas <?= e((string)$cfg['soil_off']) ?>%</div>
+      <div class="value" id="soil">-<small>%</small></div>
+      <div class="amb">pompa: ON &lt; <?= e($fmtNum($cfg['soil_on'])) ?>% &middot; OFF &gt; <?= e($fmtNum($cfg['soil_off'])) ?>%</div>
     </div>
   </div>
 </section>
@@ -631,6 +841,7 @@ $cfgJs = [
           <div class="act-last" id="pompa-last">-</div>
         </div>
         <span class="chip" id="pompa-state">-</span>
+        <span class="big" id="pompa-big" style="display:none">-</span>
       </div>
       <div class="tile" id="act-row-pupuk">
         <div class="act-icon act-pupuk">
@@ -641,6 +852,7 @@ $cfgJs = [
           <div class="act-last" id="pupuk-last">-</div>
         </div>
         <span class="chip" id="pupuk-state">-</span>
+        <span class="big" id="pupuk-big" style="display:none">-</span>
       </div>
       <div class="tile" id="act-row-kipas">
         <div class="act-icon act-kipas">
@@ -651,6 +863,7 @@ $cfgJs = [
           <div class="act-last" id="kipas-last">-</div>
         </div>
         <span class="chip" id="kipas-state">-</span>
+        <span class="big" id="kipas-big" style="display:none">-</span>
       </div>
     </div>
   </div>
@@ -674,18 +887,18 @@ $cfgJs = [
         <div class="plot">
           <div class="spark-wrap">
             <svg class="spark" id="sp-soil" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="grad-soil" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#2563EB" stop-opacity="0.22"/>
-                  <stop offset="60%" stop-color="#2563EB" stop-opacity="0.06"/>
-                  <stop offset="100%" stop-color="#2563EB" stop-opacity="0.0"/>
-                </linearGradient>
-              </defs>
-              <g stroke="rgba(200, 212, 198, .75)" stroke-width="1" stroke-dasharray="4,4" vector-effect="non-scaling-stroke">
-                <line x1="0" y1="10" x2="600" y2="10"/><line x1="0" y1="37" x2="600" y2="37"/><line x1="0" y1="64" x2="600" y2="64"/>
-              </g>
-              <path id="fill-soil" fill="url(#grad-soil)" d=""/>
-              <path id="line-soil" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d=""/>
+            <defs>
+              <linearGradient id="grad-soil" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#2563EB" stop-opacity="0.22"/>
+                <stop offset="60%" stop-color="#2563EB" stop-opacity="0.06"/>
+                <stop offset="100%" stop-color="#2563EB" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <g stroke="rgba(200, 212, 198, .75)" stroke-width="1" stroke-dasharray="4,4" vector-effect="non-scaling-stroke">
+              <line x1="0" y1="10" x2="600" y2="10"/><line x1="0" y1="37" x2="600" y2="37"/><line x1="0" y1="64" x2="600" y2="64"/>
+            </g>
+            <path id="fill-soil" fill="url(#grad-soil)" d=""/>
+            <path id="line-soil" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d=""/>
             </svg>
             <div class="chart-pin pin-soil" id="pin-soil" aria-hidden="true"></div>
           </div>
@@ -705,18 +918,18 @@ $cfgJs = [
         <div class="plot">
           <div class="spark-wrap">
             <svg class="spark" id="sp-suhu" viewBox="0 0 600 74" preserveAspectRatio="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="grad-suhu" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#EA580C" stop-opacity="0.22"/>
-                  <stop offset="60%" stop-color="#EA580C" stop-opacity="0.06"/>
-                  <stop offset="100%" stop-color="#EA580C" stop-opacity="0.0"/>
-                </linearGradient>
-              </defs>
-              <g stroke="rgba(200, 212, 198, .75)" stroke-width="1" stroke-dasharray="4,4" vector-effect="non-scaling-stroke">
-                <line x1="0" y1="10" x2="600" y2="10"/><line x1="0" y1="37" x2="600" y2="37"/><line x1="0" y1="64" x2="600" y2="64"/>
-              </g>
-              <path id="fill-suhu" fill="url(#grad-suhu)" d=""/>
-              <path id="line-suhu" fill="none" stroke="#EA580C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d=""/>
+            <defs>
+              <linearGradient id="grad-suhu" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#EA580C" stop-opacity="0.22"/>
+                <stop offset="60%" stop-color="#EA580C" stop-opacity="0.06"/>
+                <stop offset="100%" stop-color="#EA580C" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <g stroke="rgba(200, 212, 198, .75)" stroke-width="1" stroke-dasharray="4,4" vector-effect="non-scaling-stroke">
+              <line x1="0" y1="10" x2="600" y2="10"/><line x1="0" y1="37" x2="600" y2="37"/><line x1="0" y1="64" x2="600" y2="64"/>
+            </g>
+            <path id="fill-suhu" fill="url(#grad-suhu)" d=""/>
+            <path id="line-suhu" fill="none" stroke="#EA580C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d=""/>
             </svg>
             <div class="chart-pin pin-suhu" id="pin-suhu" aria-hidden="true"></div>
           </div>
@@ -746,20 +959,69 @@ $cfgJs = [
   <div class="verdict" id="verdict">-</div>
 </section>
 
+<section class="panel recent-gal" aria-labelledby="recent-gal-title">
+  <div class="recent-gal-head">
+    <h2 id="recent-gal-title">dokumentasi terbaru</h2>
+    <a class="recent-gal-link" href="gallery.php">kelola galeri &rarr;</a>
+  </div>
+  <?php if (!$recentPhotos): ?>
+    <p class="rg-empty">Belum ada foto kondisi tanaman untuk perangkat ini. <a class="recent-gal-link" href="gallery.php">Unggah foto pertama</a>.</p>
+  <?php else: ?>
+    <?php $rgPill = ['sehat' => 'sehat', 'layu' => 'layu', 'sakit' => 'sakit']; ?>
+    <div class="recent-gal-grid">
+      <?php foreach ($recentPhotos as $rp): ?>
+        <?php
+          $rpParsed = parse_gallery_caption($rp['caption']);
+          $rpStatus = $rpParsed['status'];
+          $rpText = $rpParsed['text'] !== '' ? $rpParsed['text'] : 'Tanpa keterangan';
+          $rpImg = resolve_gallery_image((string) $rp['image_url']);
+          $rpTs = strtotime((string) $rp['upload_date']);
+          $rpDate = $rpTs ? date('d M H:i', $rpTs) : (string) $rp['upload_date'];
+        ?>
+        <a class="rg-card" href="gallery.php">
+          <?php if ($rpImg !== null): ?>
+            <img class="rg-thumb" src="<?= e($rpImg) ?>" alt="<?= e($rpText) ?>" width="320" height="240" loading="lazy">
+          <?php else: ?>
+            <div class="rg-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+              <span>Berkas belum tersedia</span>
+            </div>
+          <?php endif; ?>
+          <div class="rg-body">
+            <div class="rg-meta">
+              <?php if ($rpStatus !== '' && isset($rgPill[$rpStatus])): ?>
+                <span class="rg-pill <?= e($rgPill[$rpStatus]) ?>"><?= e($rpStatus) ?></span>
+              <?php else: ?>
+                <span class="rg-pill off">umum</span>
+              <?php endif; ?>
+              <span><?= e($rpDate) ?></span>
+            </div>
+            <div class="rg-caption"><?= e($rpText) ?></div>
+          </div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</section>
+
 <footer>
   <span id="dev">-</span>
   <span id="today">-</span>
   <span>update tiap 5 detik</span>
 </footer>
+
 </main>
 
 <script>
   const $ = id => document.getElementById(id);
-  // ambang histeresis dari tabel configs (di-encode PHP, fallback firmware 40/55/32/31/7)
+  const DEVICE_ID = <?= (int) $deviceId ?>;
+  // ambang histeresis dari tabel configs (di-encode PHP, fallback firmware 40/60/27/25/7)
   const CFG = <?= json_encode($cfgJs, JSON_UNESCAPED_UNICODE) ?>;
   const STATUS_COLOR = {
-    sehat: '#1B9E5A', layu: '#D08700',
-    sakit: '#D64545', kering: '#9A6A3C'
+    sehat: '#1B9E5A', layu: '#D08700', sakit: '#D64545'
   };
   let lastPollOk = Date.now();
 
@@ -782,6 +1044,22 @@ $cfgJs = [
       el.innerHTML = txt + '<small>' + unit + '</small>';
       flash(el);
     }
+  }
+
+  function setBadge(cardId, badgeId, state, text) {
+    const card = $(cardId), badge = $(badgeId);
+    if (card) card.classList.toggle('is-warn', state === 'warn');
+    if (badge) {
+      badge.className = 'm-badge ' + state;
+      if (badge.textContent !== text) badge.textContent = text;
+    }
+  }
+
+  function gauge(id, pct) {
+    const el = $(id);
+    if (!el) return;
+    const v = Math.max(0, Math.min(100, pct));
+    el.style.left = v + '%';
   }
 
   // area chart: monotone cubic spline + gradient fill + live circular pin
@@ -873,9 +1151,74 @@ $cfgJs = [
     set('x1-' + prefix, timeOnly(times[n >> 1]).slice(0, 5));
   }
 
+  function renderActuators(actList) {
+    const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const byName = {};
+    actList.forEach(a => {
+      const k = norm(a.actuator_name);
+      if (!byName[k]) byName[k] = a;
+    });
+    [['Pompa Air', 'pompa'], ['Pompa Pupuk', 'pupuk'], ['Kipas Exhaust', 'kipas']].forEach(([name, key]) => {
+      const a = byName[norm(name)];
+      const st = a ? a.status : '-';
+      const big = $(key + '-big');
+      const chip = $(key + '-state');
+      if (big.textContent !== st) flash(big);
+      big.textContent = st;
+      big.className = 'big' + (st === 'ON' ? ' on' : '');
+      if (chip.textContent !== st) flash(chip);
+      chip.textContent = st;
+      chip.className = 'chip' + (st === 'ON' ? ' on' : '');
+      setText(key + '-last', a ? 'terakhir ' + timeOnly(a.executed_at) : 'belum ada event');
+    });
+
+    const rows = actList.map(a =>
+      '<tr><td class="t">' + timeOnly(a.executed_at) + '</td>' +
+      '<td>' + a.actuator_name + '</td>' +
+      '<td class="st"><span class="' + (a.status === 'ON' ? 'st-on' : 'st-off') + '">' + a.status + '</span></td></tr>'
+    ).join('');
+    $('history-act').innerHTML = rows || '<tr><td class="t">-</td><td>belum ada event</td><td class="st"></td></tr>';
+  }
+
+  function renderFooter(d) {
+    if (d.device) $('dev').textContent = d.device.device_name + ', ' + d.device.location;
+    if (d.today) $('today').textContent =
+      Number(d.today.sensor_rows).toLocaleString('id-ID') + ' bacaan, ' +
+      Number(d.today.actuator_events).toLocaleString('id-ID') + ' event hari ini';
+  }
+
   function render(d) {
     const L = d.latest;
-    if (!L) return;
+    const acts = d.actuators || [];
+    const hist = d.history || [];
+
+    if (!L) {
+      const sw = $('status');
+      sw.textContent = 'menunggu data';
+      sw.style.color = 'var(--muted)';
+      $('statusCard').style.background = 'rgba(70, 91, 78, .08)';
+      $('why').textContent = 'belum ada bacaan sensor tersimpan untuk perangkat ini';
+      setVal('suhu', '-', '°C');
+      setVal('rh', '-', '%');
+      setVal('soil', '-', '%');
+      setBadge('card-suhu', 'badge-suhu', 'idle', 'menunggu');
+      setBadge('card-rh', 'badge-rh', 'idle', 'menunggu');
+      setBadge('card-soil', 'badge-soil', 'idle', 'menunggu');
+      renderActuators(acts);
+      spark('line-soil', 'fill-soil', 'pin-soil', []);
+      spark('line-suhu', 'fill-suhu', 'pin-suhu', []);
+      axes('soil', [], [], v => v);
+      axes('suhu', [], [], v => v);
+      $('now-soil').innerHTML = '-<small>%</small>';
+      $('now-suhu').innerHTML = '-<small>°C</small>';
+      setText('v-r', '0'); setText('v-g', '0'); setText('v-b', '0');
+      $('b-r').style.width = '0%'; $('b-g').style.width = '0%'; $('b-b').style.width = '0%';
+      $('verdict').textContent = '-';
+      $('verdict').dataset.t = '';
+      renderFooter(d);
+      lastPollOk = Date.now();
+      return;
+    }
 
     // status hero: warna kata + tint latar kartu (hex 8-digit, alpha 10%)
     const sw = $('status');
@@ -885,54 +1228,60 @@ $cfgJs = [
       sw.style.color = c;
       $('statusCard').style.background = c + '1A';
     }
-    // keterangan status: diturunkan dari data yang sama dengan heuristik firmware
-    const soilR = Math.round(L.soil_moisture), tempR = L.air_temperature.toFixed(1);
-    const why = L.plant_status === 'kering' ? 'kelembapan tanah ' + soilR + '% - di bawah ' + CFG.soil_on + '%'
-      : L.plant_status === 'layu' ? 'suhu ' + tempR + '°C - di atas ' + CFG.temp_on + '°C'
-      : L.plant_status === 'sakit' ? 'spektrum daun tidak lagi hijau dominan'
-      : 'tanah ' + soilR + '% dan suhu ' + tempR + '°C - semuanya dalam batas';
+
+    // indikator ambang per kartu + sinkronisasi alasan dengan configs aktif
+    const tempVal = +L.air_temperature;
+    const rhVal = +L.air_humidity;
+    const soilVal = +L.soil_moisture;
+    const tempHigh = tempVal > CFG.temp_on;
+    const soilLow = soilVal < CFG.soil_on;
+    const rhOut = rhVal < 60 || rhVal > 80;
+
+    setBadge('card-suhu', 'badge-suhu', tempHigh ? 'warn' : 'ok', tempHigh ? 'di atas ambang' : 'normal');
+    setBadge('card-rh', 'badge-rh', rhOut ? 'warn' : 'ok', rhOut ? 'di luar ideal' : 'optimal');
+    setBadge('card-soil', 'badge-soil', soilLow ? 'warn' : 'ok', soilLow ? 'di bawah ambang' : 'normal');
+
+    const soilR = Math.round(soilVal), tempR = tempVal.toFixed(1);
+    let why;
+    if (L.plant_status === 'layu') {
+      if (soilLow && tempHigh) {
+        why = 'tanah ' + soilR + '% (< ' + CFG.soil_on + '%) dan suhu ' + tempR + '°C (> ' + CFG.temp_on + '°C)';
+      } else if (soilLow) {
+        why = 'kelembapan tanah ' + soilR + '% - di bawah ' + CFG.soil_on + '%';
+      } else if (tempHigh) {
+        why = 'suhu ' + tempR + '°C - di atas ' + CFG.temp_on + '°C';
+      } else {
+        why = 'stres air/panas - tanah ' + soilR + '% dan suhu ' + tempR + '°C';
+      }
+    } else if (L.plant_status === 'sakit') {
+      why = 'spektrum daun tidak lagi hijau dominan';
+    } else if (tempHigh || soilLow) {
+      const alerts = [];
+      if (tempHigh) alerts.push('suhu ' + tempR + '°C di atas ambang ' + CFG.temp_on + '°C');
+      if (soilLow) alerts.push('tanah ' + soilR + '% di bawah ambang ' + CFG.soil_on + '%');
+      why = 'log terakhir sehat, namun ' + alerts.join(' dan ');
+    } else {
+      why = 'tanah ' + soilR + '% dan suhu ' + tempR + '°C - semuanya dalam batas';
+    }
     if ($('why').textContent !== why) $('why').textContent = why;
 
     // metrik nilai
-    setVal('suhu', L.air_temperature.toFixed(1), '°C');
-    setVal('rh', String(Math.round(L.air_humidity)), '%');
-    setVal('soil', String(Math.round(L.soil_moisture)), '%');
+    setVal('suhu', tempVal.toFixed(1), '°C');
+    setVal('rh', String(Math.round(rhVal)), '%');
+    setVal('soil', String(Math.round(soilVal)), '%');
 
-    // aktuator: state terakhir per nama (normalisasi: 'pompa_air' == 'Pompa Air')
-    const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '');
-    const byName = {};
-    (d.actuators || []).forEach(a => {
-      const k = norm(a.actuator_name);
-      if (!byName[k]) byName[k] = a;
-    });
-    [['Pompa Air', 'pompa'], ['Pompa Pupuk', 'pupuk'], ['Kipas Exhaust', 'kipas']].forEach(([name, key]) => {
-      const a = byName[norm(name)];
-      const st = a ? a.status : '-';
-      const chip = $(key + '-state');
-      if (chip.textContent !== st) flash(chip);
-      chip.textContent = st;
-      chip.className = 'chip' + (st === 'ON' ? ' on' : '');
-      setText(key + '-last', a ? 'terakhir ' + timeOnly(a.executed_at) : 'belum ada event');
-    });
+    // aktuator & tabel riwayat
+    renderActuators(acts);
 
-    // riwayat tabel
-    const rows = (d.actuators || []).map(a =>
-      '<tr><td class="t">' + timeOnly(a.executed_at) + '</td>' +
-      '<td>' + a.actuator_name + '</td>' +
-      '<td class="st"><span class="' + (a.status === 'ON' ? 'st-on' : 'st-off') + '">' + a.status + '</span></td></tr>'
-    ).join('');
-    $('history-act').innerHTML = rows || '<tr><td class="t">-</td><td>belum ada event</td><td class="st"></td></tr>';
-
-    // sparkline (area)
-    const hist = d.history || [];
+    // sparkline (area halus dengan live circular pin)
     const soilArr = hist.map(h => +h.soil_moisture);
     const suhuArr = hist.map(h => +h.air_temperature);
     spark('line-soil', 'fill-soil', 'pin-soil', soilArr);
     spark('line-suhu', 'fill-suhu', 'pin-suhu', suhuArr);
     axes('soil', soilArr, hist.map(h => h.recorded_at), v => Math.round(v) + '%');
     axes('suhu', suhuArr, hist.map(h => h.recorded_at), v => v.toFixed(1) + '°C');
-    $('now-soil').innerHTML = Math.round(L.soil_moisture) + '<small>%</small>';
-    $('now-suhu').innerHTML = L.air_temperature.toFixed(1) + '<small>°C</small>';
+    $('now-soil').innerHTML = Math.round(soilVal) + '<small>%</small>';
+    $('now-suhu').innerHTML = tempVal.toFixed(1) + '<small>°C</small>';
 
     // rgb
     const r = +L.rgb_red, g = +L.rgb_green, b = +L.rgb_blue;
@@ -959,18 +1308,14 @@ $cfgJs = [
         '">' + vtxt + '</b>';
     }
 
-    // footer
-    if (d.device) $('dev').textContent = d.device.device_name + ', ' + d.device.location;
-    if (d.today) $('today').textContent =
-      Number(d.today.sensor_rows).toLocaleString('id-ID') + ' bacaan, ' +
-      Number(d.today.actuator_events).toLocaleString('id-ID') + ' event hari ini';
-
+    renderFooter(d);
     lastPollOk = Date.now();
   }
 
   async function poll() {
     try {
-      const res = await fetch('live.php', { cache: 'no-store' });
+      const url = 'live.php' + (DEVICE_ID > 0 ? '?id_device=' + DEVICE_ID : '');
+      const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(res.status);
       const d = await res.json();
       if (d.ok) render(d);
@@ -980,10 +1325,13 @@ $cfgJs = [
 
   // jam + indikator koneksi
   setInterval(() => {
-    $('clock').textContent = new Date().toLocaleTimeString('id-ID', { hour12: false });
+    const elClock = $('clock');
+    if (elClock) elClock.textContent = new Date().toLocaleTimeString('id-ID', { hour12: false });
     const stale = Date.now() - lastPollOk > 12000;
-    $('dot').classList.toggle('stale', stale);
-    $('livetxt').textContent = stale ? 'TERPUTUS' : 'LIVE';
+    const elDot = $('dot');
+    if (elDot) elDot.classList.toggle('stale', stale);
+    const elLive = $('livetxt');
+    if (elLive) elLive.textContent = stale ? 'TERPUTUS' : 'LIVE';
   }, 1000);
 
   poll();
