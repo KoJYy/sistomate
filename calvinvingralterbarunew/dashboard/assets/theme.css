@@ -2,6 +2,12 @@
    Restorasi pola desain asli commit 58c26fa: font Archivo + Fraunces,
    palet sage green. Dashboard (app.php) memakai gaya serupa inline. */
 
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
 :root {
   --bg: #EFF3EC;
   --surface: #FFFFFF;

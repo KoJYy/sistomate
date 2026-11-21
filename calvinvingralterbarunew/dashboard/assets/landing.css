@@ -1,5 +1,11 @@
 /* landing.css — Implementasi landing page SISTOMATE sesuai desain Figma Frame 26:23 (Home) */
 
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
 :root {
   --bg: #EFF3EC;
   --surface: #FFFFFF;
@@ -474,13 +480,25 @@ img {
   box-shadow: 0 5px 5px rgba(0, 0, 0, 0.25);
 }
 
-/* Laptop Hero Mockup (proporsional terhadap Figma 655 x 341.886) */
+/* Laptop Hero Mockup & Centered View More Overlay (proporsional terhadap Figma 655 x 341.886) */
 .laptop-stage {
   position: relative;
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
   width: min(655px, 46.5vw);
   aspect-ratio: 655 / 341.886;
   flex: none;
   margin-left: auto;
+  border-radius: 14px;
+  translate: 0px 0px;
+  scale: 1;
+}
+
+.laptop-stage:focus-visible {
+  outline: 3px solid #FFFFFF;
+  outline-offset: 8px;
+  box-shadow: 0 0 0 6px rgba(4, 60, 31, 0.55);
 }
 
 .laptop-frame {
@@ -490,6 +508,116 @@ img {
   height: 100%;
   object-fit: cover;
   pointer-events: none;
+}
+
+.laptop-overlay {
+  position: absolute;
+  left: 14.046%;
+  top: 7.312%;
+  width: 71.705%;
+  height: 79.951%;
+  border-radius: 2px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: rgba(12, 30, 20, 0.34);
+  backdrop-filter: blur(2.5px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease-out;
+}
+
+.laptop-stage:hover .laptop-overlay,
+.laptop-stage:focus-visible .laptop-overlay {
+  opacity: 1;
+}
+
+.laptop-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: #14261C;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #FFFFFF;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 26px rgba(4, 24, 14, 0.42);
+  scale: 1;
+  transition: background-color 0.18s ease-out, color 0.18s ease-out;
+}
+
+.laptop-stage:hover .laptop-cta,
+.laptop-stage:focus-visible .laptop-cta {
+  background: #14261C;
+  color: #FFFFFF;
+}
+
+.laptop-stage:active .laptop-cta {
+  background: var(--green-bright);
+  color: var(--green-ink);
+}
+
+.laptop-cta svg {
+  flex: none;
+  translate: 0px 0px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .laptop-stage {
+    transition: translate 0.32s ease-out, scale 0.32s ease-out;
+  }
+
+  .laptop-stage:hover,
+  .laptop-stage:focus-visible {
+    translate: 0px -5px;
+    scale: 1.015;
+  }
+
+  .laptop-stage:active {
+    translate: 0px -1px;
+    scale: 0.99;
+  }
+
+  .laptop-cta {
+    scale: 0.92;
+    transition: background-color 0.18s ease-out, color 0.18s ease-out, scale 0.35s ease-out;
+    transition-timing-function:
+      ease-out,
+      ease-out,
+      linear(0, 0.4 16%, 0.92 36%, 1.06 58%, 0.99 80%, 1);
+  }
+
+  .laptop-stage:hover .laptop-cta,
+  .laptop-stage:focus-visible .laptop-cta {
+    scale: 1;
+  }
+
+  .laptop-cta svg {
+    transition: translate 0.22s ease-out;
+  }
+
+  .laptop-stage:hover .laptop-cta svg,
+  .laptop-stage:focus-visible .laptop-cta svg {
+    translate: 2px -2px;
+  }
+}
+
+@media (hover: none) {
+  .laptop-overlay {
+    opacity: 1;
+    background: rgba(12, 30, 20, 0.16);
+    backdrop-filter: none;
+  }
+
+  .laptop-cta {
+    padding: 7px 14px;
+    font-size: 12px;
+    scale: 1;
+  }
 }
 
 .laptop-screen {
