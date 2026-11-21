@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="login-wrap">
   <div class="panel login-card">
     <div class="center">
-      <img src="assets/logo-sistomate.png" alt="SISTOMATE" class="login-brand-img">
+      <img src="assets/figma/logo-navbar.png" alt="SISTOMATE" class="login-brand-img" width="200" height="50">
       <p class="muted small">Monitoring &amp; Otomasi Tanaman Tomat</p>
     </div>
     <?php if ($error !== ''): ?>

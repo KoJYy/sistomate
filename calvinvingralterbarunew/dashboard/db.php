@@ -112,7 +112,7 @@ function navbar(string $active, string $userName, bool $live = true): string
     return '<aside class="sidebar">'
         . '<div class="sidebar-brand">'
         .   '<a href="app.php" class="brand">'
-        .     '<img src="assets/logo-sistomate.png" alt="SISTOMATE" class="brand-logo-img">'
+        .     '<img src="assets/figma/logo-navbar.png" alt="SISTOMATE" class="brand-logo-img" width="200" height="50">'
         .     '<span class="brand-sub">tanaman tomat</span>'
         .   '</a>'
         . '</div>'
