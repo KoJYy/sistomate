@@ -51,6 +51,7 @@ const int   DEVICE_ID   = 1; // sesuaikan dengan id_device di tabel devices
 #define DEFAULT_TEMP_ON_C       27.0f  // kipas nyala di atas ini (C)
 #define DEFAULT_TEMP_OFF_C      25.0f  // kipas mati di bawah ini (C)
 #define DEFAULT_FERT_DURATION_S 7      // detik dosis per semprot
+#define TEMP_OFFSET_C           -7.0f  // offset suhu DHT11 (C): idle 30-32C -> 23-25C (ambang 25-27C); set 0.0f untuk mentah
 
 // selesai init dengan nilai default jurnal; diperbarui otomatis dari configs web
 float soilOnPct     = DEFAULT_SOIL_ON_PCT;
@@ -298,7 +299,10 @@ void readSensors() {
 
   float t = dht.readTemperature();
   float h = dht.readHumidity();
-  if (!isnan(t)) airTemp = t;
+  if (!isnan(t)) {
+    float adj = t + TEMP_OFFSET_C;
+    airTemp = adj < 0.0f ? 0.0f : adj;
+  }
   if (!isnan(h)) airHumi = h;
 
   if (tcsOk) {

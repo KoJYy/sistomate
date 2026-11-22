@@ -4,16 +4,18 @@ Purwarupa smart greenhouse: ESP32 + 3 sensor (soil moisture, DHT11, TCS34725) + 
 
 **Angka resmi dari firmware (jangan sebut angka lain):**
 
-| Ambang | Nilai |
+| Ambang | Nilai (default jurnal; ikut `configs` web) |
 |--------|-------|
 | Pompa ON | soil < 40% |
-| Pompa OFF | soil >= 55% (histeresis) |
-| Kipas ON | suhu > 32.0 C |
-| Kipas OFF | suhu <= 31.0 C (histeresis) |
-| Kirim data sensor | tiap 10 detik |
+| Pompa OFF | soil >= 60% (histeresis) |
+| Kipas ON | suhu > 27.0 C |
+| Kipas OFF | suhu <= 25.0 C (histeresis) |
+| Kirim data sensor | tiap 2 detik |
 | Baca sensor | tiap 2 detik |
 
-Status tanaman (`plant_status`): `kering` (soil<40) > `layu` (>32C) > `sakit` (daun tidak dominan hijau) > `sehat`.
+Status tanaman (`plant_status`): `layu` (soil<40 atau suhu >27C) > `sakit` (daun tidak dominan hijau) > `sehat`.
+
+> Nilai ambang di firmware otomatis mengikuti pengaturan web (`configs`) melalui respons JSON `ingest.php` setiap kirim telemetri sensor; bila server/tabel belum merespons, ESP32 memakai nilai default jurnal di atas.
 
 ---
 
@@ -39,7 +41,7 @@ Status tanaman (`plant_status`): `kering` (soil<40) > `layu` (>32C) > `sakit` (d
 5. **Test penuh 1x tanpa penonton** — buka `http://<IP_LAPTOP>/phpMyAdmin`, database `sistomate`:
    - tab `sensor_logs` → row baru tiap ~10 detik, `id_device` 1
    - celup-taruh sensor tanah → `actuator_logs` dapat `Pompa Air ON/OFF`
-   - tiup/hangatkan DHT11 sampai >32C → `Kipas Exhaust ON`
+   - tiup/hangatkan DHT11 sampai >27C → `Kipas Exhaust ON`
 6. **Rekam video 1x full run pakai HP** (layar laptop + alat). Ini jaring pengaman kalau WiFi/alat rewel pas hari-H.
 
 Catatan: sebelum test, 2 row `sensor_logs` + 1 row `actuator_logs` ber-tanggal 21 Okt itu data test endpoint — boleh dihapus biar angka demo fresh, boleh dibiarkan (keangkat sendiri row baru).
@@ -73,20 +75,20 @@ Angkat sensor dari air, lap permukaannya.
 
 > "Relay langsung menyalakan pompa penyiraman. Keputusan dibuat ESP32 sendiri dari bacaan sensor, tanpa campur tangan manusia."
 
-**Bukti:** buka tab `actuator_logs`, refresh → `Pompa Air / ON`. Lalu celupkan sensor balik ke air (>=55%) → pompa mati → row `OFF` muncul.
+**Bukti:** buka tab `actuator_logs`, refresh → `Pompa Air / ON`. Lalu celupkan sensor balik ke air (>=60%) → pompa mati → row `OFF` muncul.
 
-> "Histeresis 40 ke 55 persen mencegah pompa ON-OFF-OFF-ON berulang-ulang — ini detail biar alat gak rusak karena ngelakuin kerjaan sia-sia."
+> "Histeresis 40 ke 60 persen mencegah pompa ON-OFF-OFF-ON berulang-ulang — ini detail biar alat gak rusak karena ngelakuin kerjaan sia-sia."
 
 ### Babak 3 — Suhu panas → kipas otomatis (1–1,5 menit)
 Panaskan DHT11: hair dryer kecil paling cepat (~10–20 detik), atau genggam erat/napas hangat (~30–60 detik).
 
 > "DHT11 saya panaskan. Sensor ini punya inersia termal — butuh 20 sampai 60 detik sebelum angkanya naik, mohon ditunggu."
 
-Begitu layar `sensor_logs` menunjukkan suhu lewat 32 derajat:
+Begitu layar `sensor_logs` menunjukkan suhu lewat 27 derajat:
 
 **Reaksi:** relay CH2 "ceklek", kipas exhaust berputar.
 
-> "Efek rumah kaca berbahaya buat tanaman. Di atas 32 derajat, sistem otomatis nyalakan exhaust fan buat buang udara panas; turun lagi di bawah 31 derajat, fan mati sendiri."
+> "Efek rumah kaca berbahaya buat tanaman. Di atas 27 derajat, sistem otomatis nyalakan exhaust fan buat buang udara panas; turun lagi di bawah 25 derajat, fan mati sendiri."
 
 **Bukti:** `actuator_logs` → `Kipas Exhaust / ON`. Hentikan pemanasan, tunggu suhu turun → row `OFF`.
 
@@ -95,7 +97,7 @@ Tempelkan daun hijau menutupi mata TCS34725 (2–3 detik), lalu ganti daun kunin
 
 > "Sensor terakhir: TCS34725, sensor warna presisi komunikasi I2C. Dia membaca spektrum RGB daun. Daun sehat mendominasi hijau; daun kuning/stres memerah. Angkanya terus masuk ke database, jadi riwayat kesehatan tanaman bisa dianalisis nanti."
 
-**Bukti:** refresh `sensor_logs` → kolom `rgb_green` melonjak untuk daun hijau, `rgb_red` naik untuk daun kuning. Kalau kondisi kering/panas belum sempat pulih, `plant_status` bisa berubah `kering`/`layu` — justru bukti logika prioritasnya jalan.
+**Bukti:** refresh `sensor_logs` → kolom `rgb_green` melonjak untuk daun hijau, `rgb_red` naik untuk daun kuning. Kalau kondisi kering/panas belum sempat pulih, `plant_status` bisa berubah `layu` — justru bukti logika prioritasnya jalan.
 
 ### Penutup (30 detik)
 Buka `actuator_logs` penuh, tunjukkan seluruh riwayat.
