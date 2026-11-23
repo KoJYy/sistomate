@@ -84,15 +84,29 @@ const int   DEVICE_ID   = 1; // sesuaikan dengan id_device di tabel devices
 // raw >34C. Set 0.0f kalau mau data mentah.
 #define TEMP_OFFSET_C           -7.0f
 
-// Pengaman pompa air: probe di udara (soil 0%) bikin pompa nyala terus -> dry-run.
-// Setelah PUMP_MAX_ON_MS nyala terus, pompa dimatikan paksa lalu dikunci
-// PUMP_COOLDOWN_MS supaya tidak chatter ON/OFF.
-#define PUMP_MAX_ON_MS          60000UL    // 60 detik maksimal nyala terus
-#define PUMP_COOLDOWN_MS        300000UL   // 5 menit jeda setelah kena batas
+// Pompa air: model DOSIS, bukan nyala-terus. Pot prototipe kecil, pompa celup
+// ~25 ml/dtk -> 8 dtk (~200 ml) sudah meluber, jadi 60 dtk (~1,5 L) jauh
+// berbahaya. Tiap trigger = tepat 3 dtk (~75 ml), lalu jeda serap supaya air
+// meresap dulu (mencegah banjir + short-cycling yang merusak dinamo).
+#define PUMP_DOSE_MS            3000UL     // dosis siram: tepat 3 detik (~75 ml)
+#define PUMP_SOAK_MS            20000UL    // jeda serap antar dosis (20 detik)
+// Fail-safe probe tercabut: tanah selalu 0% -> dosis 75 ml tiap 20 dtk
+// (= 225 ml/menit, tetap bisa membanjiri pot). Setelah 3 dosis beruntun tanpa
+// kemajuan, berhenti 2 menit dulu.
+#define PUMP_MAX_DOSES          3
+#define PUMP_LONG_SOAK_MS       120000UL   // jeda panjang 2 menit
 
 // Validasi sensor: probe lepas bikin ADC mentok 0 -> map() jadi 100% "basah"
 // palsu; DHT11 lepas balik NaN. Tanpa cek ini firmware melaporkan "sehat".
 #define SOIL_RAW_MIN            200        // raw di bawah ini = pin floating/probe lepas (air penuh ~1500)
+// Pin ADC yang tidak terhubung ke sensor menghasilkan lonjakan liar (spread > 1500
+// antar 11 sampel). Sensor FC-28 sehat spreadnya puluhan, jadi 500 aman sebagai batas.
+#define SOIL_SAMPLES            11
+#define SOIL_SAMPLE_GAP_MS      5
+#define SOIL_MAX_SPREAD         500
+// TCS34725 dideteksi sekali saat boot; kalau gagal (brownout/kabel sesaat)
+// sensor tidak akan pernah dicoba lagi sampai reboot. Coba ulang tiap 10 dtk.
+#define TCS_RETRY_MS            10000UL
 
 // selesai init dengan nilai default jurnal; diperbarui otomatis dari configs web
 float soilOnPct     = DEFAULT_SOIL_ON_PCT;
@@ -117,19 +131,22 @@ bool fanOn  = false;
 bool tcsOk  = false;
 bool fertOn = false;
 unsigned long fertStartMs = 0;
-unsigned long pumpStartMs = 0;        // mulai nyala (pengaman max-runtime)
-unsigned long pumpCooldownUntil = 0;  // pompa dikunci sampai waktu ini
+unsigned long pumpStartMs = 0;        // mulai nyala (dasar hitung durasi dosis)
+unsigned long pumpSoakUntil = 0;      // dosis berikutnya baru boleh setelah waktu ini
+int pumpDoseCount = 0;                // dosis beruntun sejak tanah terakhir membaik
 bool soilOk = false;                  // ADC tanah masuk rentang fisik (bukan 0/floating)
 bool dhtOk = false;                   // DHT11 menjawab (bukan NaN)
 Preferences prefs;
 int lastFertKey = 0; // (tahun*1000 + yday) dosis terakhir — cegah dobel dalam sehari
 
 unsigned long lastRead  = 0;
+unsigned long lastTcsTry = 0; // percobaan begin() TCS terakhir (retry berkala)
 unsigned long lastPost  = 0;
 
 // pembacaan terakhir
 float soilPct = 0, airTemp = 0, airHumi = 0;
 long soilRaw = 0; // nilai mentah ADC buat kalibrasi
+long soilSpread = 0; // selisih max-min 11 sampel: besar = pin floating/kabel lepas
 uint16_t r = 0, g = 0, b = 0;
 
 #if USE_MQTT
@@ -469,11 +486,31 @@ const char* plantStatus() {
   return "sehat";
 }
 
+// Sampling median 11x @5ms: buang spike noise ADC, sekaligus ukur spread.
+// Pin yang tidak terhubung ke sensor menghasilkan spread >1500 (lihat tools adc-diag),
+// sensor sehat <100 — jadi spread adalah bukti objektif "kabel lepas".
+long readSoilMedian() {
+  long v[SOIL_SAMPLES];
+  for (int i = 0; i < SOIL_SAMPLES; i++) {
+    v[i] = analogRead(PIN_SOIL);
+    delay(SOIL_SAMPLE_GAP_MS);
+  }
+  for (int i = 1; i < SOIL_SAMPLES; i++) { // insertion sort (n kecil)
+    long k = v[i];
+    int j = i - 1;
+    while (j >= 0 && v[j] > k) { v[j + 1] = v[j]; j--; }
+    v[j + 1] = k;
+  }
+  soilSpread = v[SOIL_SAMPLES - 1] - v[0];
+  return v[SOIL_SAMPLES / 2];
+}
+
 void readSensors() {
-  long raw = analogRead(PIN_SOIL);            // 0..4095, kering = tinggi
+  long raw = readSoilMedian();
   soilRaw = raw;
-  // raw ~0 = probe lepas/pin floating. Jangan dipetakan, nanti terbaca 100% basah.
-  soilOk = (raw >= SOIL_RAW_MIN);
+  // raw ~0 atau sampel liar = probe lepas/kabel tidak nyambung. Jangan dipetakan,
+  // nanti terbaca 100% basah dan tampil "sehat".
+  soilOk = (raw >= SOIL_RAW_MIN) && (soilSpread <= SOIL_MAX_SPREAD);
   if (soilOk) {
     soilPct = constrain(map(raw, 4095, 1500, 0, 100), 0, 100); // kalibrasi 21 Okt: udara=4095, air penuh=1500
   }
@@ -507,32 +544,64 @@ void loop() {
     }
   }
 
+  // TCS dideteksi lewat I2C; kalau gagal sekali saat boot (brownout/kabel),
+  // coba ulang supaya tidak terkunci "lepas" sampai reboot.
+  if (!tcsOk && now - lastTcsTry >= TCS_RETRY_MS) {
+    lastTcsTry = now;
+    tcsOk = tcs.begin();
+    if (tcsOk) Serial.println("TCS34725 terdeteksi (retry)");
+  }
+
+  // Dosis pompa air dipantau TIAP loop (delay 50 ms), bukan di dalam blok
+  // READ_INTERVAL_MS 2 dtk: kalau dipantau per 2 dtk, dosis 3 dtk bisa jadi
+  // 4-5 dtk (~125 ml) dan pot mini kebanjiran.
+  if (pumpOn && now - pumpStartMs >= PUMP_DOSE_MS) {
+    setPump(false);
+    pumpSoakUntil = now + PUMP_SOAK_MS;
+    Serial.printf("POMPA OFF (dosis %lu detik selesai, jeda serap %lu detik)\n",
+                  PUMP_DOSE_MS / 1000UL, PUMP_SOAK_MS / 1000UL);
+  }
+
   if (now - lastRead >= READ_INTERVAL_MS) {
     lastRead = now;
     readSensors();
 
-    // pengaman dry-run: pompa tidak boleh nyala terus (probe di udara = soil 0%)
-    if (pumpOn && millis() - pumpStartMs >= PUMP_MAX_ON_MS) {
-      Serial.println("POMPA OFF (batas waktu aman)");
-      setPump(false);
-      pumpCooldownUntil = millis() + PUMP_COOLDOWN_MS;
-    }
-    bool pumpCooldown = (long)(millis() - pumpCooldownUntil) < 0;
+    // Model dosis: pompa TIDAK ditahan nyala oleh histeresis. Tiap trigger
+    // memberi tepat PUMP_DOSE_MS, lalu jeda serap PUMP_SOAK_MS.
+    bool pumpSoak = (long)(now - pumpSoakUntil) < 0;
 
     if (!soilOk || !dhtOk) {
       // Sensor lepas/rusak: jangan kirim angka palsu, aktuator ke posisi aman.
       static unsigned long lastWarn = 0;
       if (now - lastWarn >= 5000) {
         lastWarn = now;
-        Serial.printf("SENSOR INVALID soil=%s dht=%s -> data tidak dikirim, aktuator OFF\n",
-                      soilOk ? "ok" : "LEPAS", dhtOk ? "ok" : "LEPAS");
+        Serial.printf("SENSOR INVALID soil=%s dht=%s tcs=%s (raw=%ld spread=%ld) -> data tidak dikirim, aktuator OFF\n",
+                      soilOk ? "ok" : "LEPAS", dhtOk ? "ok" : "LEPAS", tcsOk ? "ok" : "LEPAS",
+                      soilRaw, soilSpread);
       }
       setPump(false);
+      // Jangan langsung dosis lagi begitu sensor pulih (sensor bisa flapping).
+      pumpSoakUntil = now + PUMP_SOAK_MS;
       setFan(false);
     } else {
-      // logika aktuator + histeresis (otomatis ikut ambang configs web)
-      if (!pumpCooldown) {
-        setPump(soilPct < soilOnPct ? true : (soilPct >= soilOffPct ? false : pumpOn));
+      // Tanah sudah cukup basah -> tidak perlu dosis; batalkan jeda supaya
+      // kalau mengering lagi pompa tidak menunggu sia-sia.
+      if (soilPct >= soilOffPct) pumpSoakUntil = 0;
+      // Ada kemajuan (tanah naik ke ambang ON) -> jatah dosis beruntun pulih.
+      if (soilPct >= soilOnPct) pumpDoseCount = 0;
+      pumpSoak = (long)(now - pumpSoakUntil) < 0;
+
+      if (!pumpOn && !pumpSoak && soilPct < soilOnPct) {
+        if (pumpDoseCount >= PUMP_MAX_DOSES) {
+          // Fail-safe: probe tercabut / tanah tidak merespons dosis -> berhenti.
+          pumpSoakUntil = now + PUMP_LONG_SOAK_MS;
+          pumpDoseCount = 0; // setelah jeda panjang, jatah pulih
+          Serial.printf("POMPA JEDA PANJANG (%lu detik) — %d dosis tanpa kemajuan tanah\n",
+                        PUMP_LONG_SOAK_MS / 1000UL, PUMP_MAX_DOSES);
+        } else {
+          pumpDoseCount++;
+          setPump(true);
+        }
       }
       setFan(airTemp > tempOnC ? true : (airTemp <= tempOffC ? false : fanOn));
     }
@@ -571,6 +640,16 @@ void loop() {
 #endif
     Serial.printf("SENSOR suhu=%.1fC rh=%.0f%% soil=%.0f%% raw=%ld rgb=%u,%u,%u %s\n",
                   airTemp, airHumi, soilPct, soilRaw, r, g, b, plantStatus());
+
+    // RGB opsional: kalau TCS lepas, data tetap dikirim (rgb=0) tapi beri tahu
+    // di serial supaya tidak terlihat seperti "sensor normal" begitu saja.
+    if (!tcsOk) {
+      static unsigned long lastRgbWarn = 0;
+      if (now - lastRgbWarn >= 30000) {
+        lastRgbWarn = now;
+        Serial.println("RGB LEPAS (TCS34725 tidak terdeteksi) — data tetap dikirim dengan rgb=0");
+      }
+    }
   }
 
   flushActuator(); // kirim/retry event aktuator yang belum sukses ter-post

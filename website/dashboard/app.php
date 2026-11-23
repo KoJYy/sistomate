@@ -1328,7 +1328,7 @@ $cfgJs = [
       const d = await res.json();
       if (d.ok) render(d);
     } catch (e) { /* biarkan; dot stale di bawah */ }
-    finally { setTimeout(poll, 5000); }
+    finally { setTimeout(poll, 1000); } // 1 dtk: dosis pompa 3 dtk harus tertangkap layar
   }
 
   // jam + indikator koneksi
