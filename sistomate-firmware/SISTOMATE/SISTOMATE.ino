@@ -1,23 +1,28 @@
 // SISTOMATE — purwarupa smart greenhouse
 // ESP32 + soil moisture + DHT11 + TCS34725 + relay 2×2-ch (pompa air, pompa pupuk, kipas)
-// Data sensor & aktuator dikirim via HTTP POST ke ingest.php -> MySQL sistomate
+// Data sensor & aktuator: publish MQTT QoS1 (jalur utama) atau HTTP POST ke
+// ingest.php (fallback) -> MySQL sistomate. Satu jalur per siklus 2 detik.
 //
-// Pinout (hindari strapping pin 0/2/12/15):
+// Pinout (hindari strapping pin 0/2/12/15, dan GPIO14 yang memancarkan PWM saat boot):
 //   Soil moisture (analog) : GPIO 34
 //   DHT11 (digital)        : GPIO 13
 //   TCS34725 I2C SDA/SCL   : GPIO 21 / GPIO 22
 //   Relay A CH1 Pompa Air  : GPIO 26  (active-LOW)
-//   Relay A CH2 Pompa Pupuk: GPIO 14  (active-LOW)
+//   Relay A CH2 Pompa Pupuk: GPIO 25  (active-LOW)  <- pindah dari GPIO14 (PWM saat boot)
 //   Relay B CH1 Kipas      : GPIO 27  (active-LOW)
-//   Relay B CH2 cadangan   : (belum dipakai)
+//   Relay B CH2 cadangan   : (belum dipakai; GPIO14 dibebaskan)
 //
-// Logika (nilai default jurnal; otomatis ikut configs web lewat respons ingest.php):
+// Logika (nilai default jurnal; otomatis ikut configs web lewat MQTT retained
+// atau respons ingest.php):
 //   soil < 40%      -> pompa air ON ; soil >= 60% -> OFF  (histeresis)
 //   suhu > 27 C     -> kipas ON ; suhu <= 25 C -> kipas OFF (histeresis)
 //   jadwal 1x/minggu jam 07:00 (NTP) + soil >= soilOnPct -> pompa pupuk ON 7 detik
 //     (Sari 2024/JITET: jadwal RTC mingguan, durasi default 7 detik; interlock tanah gak kering)
-//   Tiap transisi relay -> POST actuator_logs
-//   Tiap 2 detik        -> POST sensor_logs + sync threshold configs dari web
+//   Tiap transisi relay -> catat actuator_logs (MQTT QoS1, fallback HTTP POST)
+//   Tiap 2 detik        -> catat sensor_logs; config dari MQTT retained atau respons HTTP
+//
+// Kalibrasi suhu: data DHT11 dikirim MENTAH (TEMP_OFFSET_C 0.0f). Kalau sensor
+// terbukti bias terhadap termometer acuan, isi offset HASIL UKUR (bukan -7C).
 
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -27,6 +32,28 @@
 #include <Preferences.h> // persist counter dosis pupuk anti dobel pas reboot
 #include <math.h>
 #include <stdlib.h>
+
+// ====== Protokol ganda (TIKET-MQTT-01) ======
+// Tiap siklus 2 detik memakai SATU jalur:
+//   USE_MQTT=1 & broker terhubung -> publish QoS1 sensor/aktuator/status;
+//                                    config datang dari topik config retained.
+//   broker putus / USE_MQTT=0     -> HTTP POST seperti sediakala (USE_HTTP),
+//                                    config dari respons ingest.php tetap dipakai.
+// Kombinasi 0/0 tidak berguna; 1/0 = MQTT tanpa fallback; 0/1 = paksa HTTP.
+#define USE_HTTP 1
+#define USE_MQTT 1
+
+#if USE_MQTT
+#include <mqtt_client.h>
+
+// Broker MQTT lokal (TLS tidak perlu di LAN). Jangan commit kredensial asli.
+static const char* MQTT_HOST      = "YOUR_MQTT_HOST"; // IP laptop/broker
+static const int   MQTT_PORT      = 1884;
+static const char* MQTT_USER      = "esp32-1";
+static const char* MQTT_PASS      = "YOUR_MQTT_PASSWORD";
+static const char* MQTT_CLIENT_ID = "sistomate-esp32-1";
+static const char* MQTT_STATUS_OFFLINE = "{\"status\":\"offline\"}"; // isi LWT
+#endif
 
 // ====== ISI SEBELUM DEMO ======
 // Jangan commit kredensial asli. Isi nilai berikut sesuai jaringan dan server
@@ -41,7 +68,7 @@ const int   DEVICE_ID   = 1; // sesuaikan dengan id_device di tabel devices
 #define PIN_SOIL        34
 #define PIN_DHT         13
 #define PIN_RELAY_POMPA 26
-#define RELAY_PUPUK     14
+#define RELAY_PUPUK     25   // GPIO14 memancarkan PWM saat boot -> relay chatter (gate: tools/test-firmware-pins.sh)
 #define PIN_RELAY_KIPAS 27
 #define RELAY_ON        LOW   // modul relay 2-ch umumnya aktif-LOW
 #define RELAY_OFF       HIGH
@@ -51,7 +78,11 @@ const int   DEVICE_ID   = 1; // sesuaikan dengan id_device di tabel devices
 #define DEFAULT_TEMP_ON_C       27.0f  // kipas nyala di atas ini (C)
 #define DEFAULT_TEMP_OFF_C      25.0f  // kipas mati di bawah ini (C)
 #define DEFAULT_FERT_DURATION_S 7      // detik dosis per semprot
-#define TEMP_OFFSET_C           -7.0f  // offset suhu DHT11 (C): idle 30-32C -> 23-25C (ambang 25-27C); set 0.0f untuk mentah
+// Offset suhu DHT11 (C): keputusan Owner 23 Nov — data yang dikirim ke DB
+// memakai nilai terkoreksi -7C (raw 30-32C -> 23-25C, ambang 25-27C).
+// Catatan: kontrol kipas ikut nilai terkoreksi, jadi kipas baru nyala saat
+// raw >34C. Set 0.0f kalau mau data mentah.
+#define TEMP_OFFSET_C           -7.0f
 
 // selesai init dengan nilai default jurnal; diperbarui otomatis dari configs web
 float soilOnPct     = DEFAULT_SOIL_ON_PCT;
@@ -65,7 +96,7 @@ int   fertDurationS = DEFAULT_FERT_DURATION_S;
 #define FERT_MIN         0
 #define FERT_WDAY        1     // hari jadwal: 1 = Senin (0=Minggu .. 6=Sabtu) — 1x/minggu
 
-#define SENSOR_INTERVAL_MS 2000UL  // POST sensor_logs tiap 2 detik
+#define SENSOR_INTERVAL_MS 2000UL  // kirim sensor_logs tiap 2 detik
 #define READ_INTERVAL_MS    2000UL  // baca sensor tiap 2 detik (DHT11 minimal 1 dtk)
 
 DHT dht(PIN_DHT, DHT11);
@@ -86,6 +117,11 @@ unsigned long lastPost  = 0;
 float soilPct = 0, airTemp = 0, airHumi = 0;
 long soilRaw = 0; // nilai mentah ADC buat kalibrasi
 uint16_t r = 0, g = 0, b = 0;
+
+#if USE_MQTT
+static void mqttBegin();
+#endif
+void reportInitialActuatorStates(); // state awal saat boot (definisi setelah markActuator)
 
 void setup() {
   Serial.begin(115200);
@@ -126,9 +162,18 @@ void setup() {
   }
 
   configTime(7 * 3600, 0, "pool.ntp.org", "time.nist.gov"); // NTP WIB — SNTP nyala sendiri begitu WiFi connected
+
+#if USE_MQTT
+  // Auto-reconnect esp-mqtt menangani WiFi/broker yang menyusul menyala.
+  mqttBegin();
+#endif
+
+  // Laporkan state awal 3 aktuator SEKALI saat boot. Tanpa ini DB nyangkut di
+  // event terakhir sebelum reboot (mis. "Kipas ON" kemarin padahal sekarang OFF).
+  reportInitialActuatorStates();
 }
 
-bool postJson(const String& body, String* respOut) {
+bool postJson(const String& body, String* resp = nullptr) {
   if (WiFi.status() != WL_CONNECTED) return false;
   HTTPClient http;
   http.begin(SERVER_URL);
@@ -136,16 +181,10 @@ bool postJson(const String& body, String* respOut) {
   http.addHeader("X-API-Key", API_KEY);
   http.setTimeout(4000);
   int code = http.POST(body);
-  if (code >= 200 && code < 300 && respOut != nullptr) {
-    *respOut = http.getString();
-  }
+  if (resp && code >= 200 && code < 300) *resp = http.getString();
   http.end();
   Serial.printf("POST %d\n", code);
   return code >= 200 && code < 300;
-}
-
-bool postJson(const String& body) {
-  return postJson(body, nullptr);
 }
 
 bool extractJsonFloatFrom(const String& json, int fromIdx, const char* key, float& outVal) {
@@ -168,16 +207,19 @@ bool extractJsonFloatFrom(const String& json, int fromIdx, const char* key, floa
   return true;
 }
 
+// Menerima dua bentuk payload:
+//   - MQTT retained publisher : {"soil_on":40,...}            (flat)
+//   - respons ingest.php      : {"status":"ok","config":{...}} (terbungkus)
 void syncConfigFromJson(const String& json) {
   int cfgIdx = json.indexOf("\"config\"");
-  if (cfgIdx < 0) return;
+  int from = cfgIdx >= 0 ? cfgIdx : 0;
 
   float sOn = 0, sOff = 0, tOn = 0, tOff = 0, fDur = 0;
-  if (!extractJsonFloatFrom(json, cfgIdx, "soil_on", sOn) ||
-      !extractJsonFloatFrom(json, cfgIdx, "soil_off", sOff) ||
-      !extractJsonFloatFrom(json, cfgIdx, "temp_on", tOn) ||
-      !extractJsonFloatFrom(json, cfgIdx, "temp_off", tOff) ||
-      !extractJsonFloatFrom(json, cfgIdx, "fert_duration_s", fDur)) {
+  if (!extractJsonFloatFrom(json, from, "soil_on", sOn) ||
+      !extractJsonFloatFrom(json, from, "soil_off", sOff) ||
+      !extractJsonFloatFrom(json, from, "temp_on", tOn) ||
+      !extractJsonFloatFrom(json, from, "temp_off", tOff) ||
+      !extractJsonFloatFrom(json, from, "fert_duration_s", fDur)) {
     return;
   }
 
@@ -205,9 +247,109 @@ void syncConfigFromJson(const String& json) {
   }
 }
 
-// event aktuator ditunda (per-slot) sampai POST sukses — retry di loop(),
+// ====== Jalur MQTT (esp_mqtt_client) ======
+#if USE_MQTT
+static esp_mqtt_client_handle_t mqttClient = nullptr;
+static volatile bool mqttUp = false;       // true selama sesi MQTT hidup (event task)
+static uint32_t mqttBootId = 0;            // acak per boot -> msg_id unik lintas reboot
+static uint32_t mqttSeq = 0;
+static char topicSensor[40], topicActuator[40], topicStatus[40], topicConfig[40];
+
+// msg_id unik per pesan (buat dedup subscriber): device-bootid-urut
+static String nextMsgId() {
+  mqttSeq++;
+  char buf[48];
+  snprintf(buf, sizeof(buf), "%u-%08lx-%lu",
+           (unsigned)DEVICE_ID, (unsigned long)mqttBootId, (unsigned long)mqttSeq);
+  return String(buf);
+}
+
+// Siap kirim: sesi MQTT hidup DAN WiFi tersambung (putus WiFi = langsung fallback).
+static bool mqttReady() {
+  return mqttClient != nullptr && mqttUp && WiFi.status() == WL_CONNECTED;
+}
+
+// Publish QoS1; true = diterima esp-mqtt (diteruskan ke broker).
+static bool mqttPublish(const char* topic, const String& payload, bool retain = false) {
+  if (!mqttReady()) return false;
+  int mid = esp_mqtt_client_publish(mqttClient, topic, payload.c_str(),
+                                    payload.length(), 1, retain ? 1 : 0);
+  if (mid < 0) {
+    Serial.println("MQTT publish gagal -> pakai jalur HTTP");
+    return false;
+  }
+  return true;
+}
+
+// Event broker: connect -> status retained + subscribe config retained;
+// putus -> mqttUp=false supaya siklus berikutnya jatuh ke HTTP (<= 2 detik).
+static void mqttEvent(void* arg, esp_event_base_t base, int32_t id, void* data) {
+  (void)arg;
+  (void)base;
+  esp_mqtt_event_handle_t e = (esp_mqtt_event_handle_t)data;
+  switch ((esp_mqtt_event_id_t)id) {
+    case MQTT_EVENT_CONNECTED:
+      mqttUp = true;
+      esp_mqtt_client_publish(mqttClient, topicStatus, "{\"status\":\"online\"}",
+                              0, 1, 1); // pasangan LWT offline
+      esp_mqtt_client_subscribe(mqttClient, topicConfig, 1); // retained langsung dikirim broker
+      Serial.println("MQTT terhubung: status=online retained + subscribe config retained");
+      break;
+    case MQTT_EVENT_DISCONNECTED:
+      if (mqttUp) Serial.println("MQTT putus -> jalur HTTP fallback");
+      mqttUp = false;
+      break;
+    case MQTT_EVENT_DATA:
+      if (e->topic_len == (int)strlen(topicConfig) &&
+          strncmp(e->topic, topicConfig, e->topic_len) == 0) {
+        if (e->current_data_offset != 0 || e->total_data_len > e->data_len) {
+          Serial.println("config MQTT terpotong -> diabaikan");
+          break;
+        }
+        syncConfigFromJson(String(e->data, e->data_len));
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+static void mqttBegin() {
+  snprintf(topicSensor,   sizeof(topicSensor),   "sistomate/%d/sensor",   DEVICE_ID);
+  snprintf(topicActuator, sizeof(topicActuator), "sistomate/%d/actuator", DEVICE_ID);
+  snprintf(topicStatus,   sizeof(topicStatus),   "sistomate/%d/status",   DEVICE_ID);
+  snprintf(topicConfig,   sizeof(topicConfig),   "sistomate/%d/config",   DEVICE_ID);
+  mqttBootId = esp_random();
+
+  esp_mqtt_client_config_t cfg = {};
+  cfg.host              = MQTT_HOST;
+  cfg.port              = MQTT_PORT;
+  cfg.client_id         = MQTT_CLIENT_ID;
+  cfg.username          = MQTT_USER;
+  cfg.password          = MQTT_PASS;
+  cfg.keepalive         = 15; // deteksi putus cepat (uji: stop broker -> <= 2 dtk HTTP)
+  cfg.disable_auto_reconnect = false; // auto reconnect + backoff internal esp-mqtt
+  cfg.reconnect_timeout_ms   = 3000;
+  cfg.lwt_topic         = topicStatus;
+  cfg.lwt_msg           = MQTT_STATUS_OFFLINE; // broker publish saat koneksi mati paksa
+  cfg.lwt_qos           = 1;
+  cfg.lwt_retain        = 1;
+
+  mqttClient = esp_mqtt_client_init(&cfg);
+  if (!mqttClient) {
+    Serial.println("MQTT init gagal -> jalur HTTP saja");
+    return;
+  }
+  esp_mqtt_client_register_event(mqttClient, MQTT_EVENT_ANY, mqttEvent, NULL);
+  esp_mqtt_client_start(mqttClient);
+  Serial.printf("MQTT start: %s:%d user=%s client_id=%s (auto-reconnect ON)\n",
+                MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_CLIENT_ID);
+}
+#endif // USE_MQTT
+
+// event aktuator ditunda (per-slot) sampai terkirim sukses (MQTT/HTTP), retry di loop(),
 // biar row actuator_logs gak hilang kalau WiFi/network lagi mati.
-// 3 slot terpisah: satu event gak nimpem event lain kalo POST lagi pending
+// 3 slot terpisah: satu event gak nimpem event lain kalo kirim lagi pending
 #define ACT_POMPA 0
 #define ACT_KIPAS 1
 #define ACT_PUPUK 2
@@ -228,7 +370,18 @@ void flushActuator() {
     String body = String("{\"type\":\"actuator\",\"device_id\":") + DEVICE_ID +
                   ",\"actuator_name\":\"" + actName[i] +
                   "\",\"status\":\"" + (actOn[i] ? "ON" : "OFF") + "\"}";
-    if (postJson(body)) actDirty[i] = false; // sukses saja di-clear, gagal retry nanti
+    bool sent = false;
+#if USE_MQTT
+    // MQTT terhubung -> publish saja (tanpa duplikat ke HTTP)
+    if (mqttReady()) {
+      String mbody = String("{\"msg_id\":\"") + nextMsgId() + "\"," + body.substring(1);
+      sent = mqttPublish(topicActuator, mbody);
+    }
+#endif
+#if USE_HTTP
+    if (!sent) sent = postJson(body); // broker putus -> mekanisme lama (retry tiap loop)
+#endif
+    if (sent) actDirty[i] = false; // sukses saja di-clear, gagal retry nanti
   }
 }
 
@@ -255,6 +408,14 @@ void setFan(bool on) {
   digitalWrite(PIN_RELAY_KIPAS, on ? RELAY_ON : RELAY_OFF);
   Serial.printf("KIPAS %s\n", on ? "ON" : "OFF");
   markActuator(ACT_KIPAS, "Kipas Exhaust", on);
+}
+
+// State awal saat boot: relay sudah OFF (lihat setup), jadi laporkan OFF untuk
+// ketiganya supaya dashboard tidak menampilkan status basi dari sesi sebelumnya.
+void reportInitialActuatorStates() {
+  markActuator(ACT_POMPA, "Pompa Air", pumpOn);
+  markActuator(ACT_KIPAS, "Kipas Exhaust", fanOn);
+  markActuator(ACT_PUPUK, "Pompa Pupuk", fertOn);
 }
 
 // fertigasi: dosis terkonfigurasi (default 7 detik) tiap minggu jam 07:00 (Sari 2024), batal kalo tanah kering
@@ -344,10 +505,27 @@ void loop() {
                   ",\"rgb_green\":" + g +
                   ",\"rgb_blue\":" + b +
                   ",\"plant_status\":\"" + plantStatus() + "\"}";
-    String resp;
-    if (postJson(body, &resp)) {
-      syncConfigFromJson(resp);
+
+    bool viaMqtt = false;
+#if USE_MQTT
+    // MQTT terhubung -> publish sensor + status QoS1, TIDAK POST HTTP
+    if (mqttReady()) {
+      String mbody = String("{\"msg_id\":\"") + nextMsgId() + "\"," + body.substring(1);
+      viaMqtt = mqttPublish(topicSensor, mbody);
+      if (viaMqtt) {
+        mqttPublish(topicStatus,
+                    String("{\"status\":\"online\",\"device_id\":") + DEVICE_ID +
+                        ",\"msg_id\":\"" + nextMsgId() + "\"}", true);
+      }
     }
+#endif
+#if USE_HTTP
+    if (!viaMqtt) {
+      // MQTT putus -> POST seperti sediakala; config dari respons tetap dipakai
+      String resp;
+      if (postJson(body, &resp)) syncConfigFromJson(resp);
+    }
+#endif
     Serial.printf("SENSOR suhu=%.1fC rh=%.0f%% soil=%.0f%% raw=%ld rgb=%u,%u,%u %s\n",
                   airTemp, airHumi, soilPct, soilRaw, r, g, b, plantStatus());
   }

@@ -23,7 +23,8 @@ Dokumen internal (CAD, ERD, spesifikasi) disimpan di luar repo dan tidak dipubli
 - Firmware: `sistomate-firmware/SISTOMATE/SISTOMATE.ino`.
 - Sistem final memakai 5 tabel inti (`users`, `devices`, `sensor_logs`,
   `actuator_logs`, `gallery`) + `configs`; tanpa AI/Gemini dan tanpa ESP32-CAM.
-- Acuan pin firmware: relay aktif-LOW GPIO 26/14/27, soil GPIO 34, DHT11 GPIO 13,
+- Acuan pin firmware: relay aktif-LOW GPIO 26/**25**/27 (GPIO14 JANGAN dipakai — PWM saat boot),
+  soil GPIO 34, DHT11 GPIO 13,
   TCS34725 I2C (SDA 21, SCL 22). Hindari GPIO strapping 0/2/12/15; GPIO 34/35 input-only.
 
 ## Aturan web

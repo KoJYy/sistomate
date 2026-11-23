@@ -46,6 +46,7 @@ try {
 
     if ($type === 'sensor') {
         $status = $in['plant_status'] ?? '';
+        if ($status === 'kering') $status = 'layu'; // legacy firmware pra-flash 21 Nov
         if (!in_array($status, $VALID_STATUS, true)) {
             http_response_code(400);
             echo json_encode(['error' => 'Invalid plant_status']);
@@ -100,6 +101,15 @@ try {
             );
             $stCfg->execute([$deviceId]);
             $cfgRow = $stCfg->fetch();
+            // Fallback = default firmware, supaya device tanpa baris configs
+            // tidak memakai ambang berbeda dari .ino.
+            $response['config'] = [
+                'soil_on'         => 40.0,
+                'soil_off'        => 60.0,
+                'temp_on'         => 27.0,
+                'temp_off'        => 25.0,
+                'fert_duration_s' => 7,
+            ];
             if ($cfgRow) {
                 $response['config'] = [
                     'soil_on'         => (float) $cfgRow['soil_on'],

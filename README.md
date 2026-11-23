@@ -79,9 +79,9 @@ gambar/              diagram arsitektur, skematik, flowchart, render 3D
 * **Catu Daya Terpisah & Common Ground:** Beban dinamis (pompa air, pompa pupuk, dan kipas) dialiri adaptor 5V eksternal terpisah (bukan dari pin 5V ESP32) untuk mencegah drop tegangan (*brownout/restart*), dengan seluruh rail ground (GND ESP32, GND adaptor, GND relay, dan GND sensor) tersambung pada satu jalur **Common Ground**.
 * **Driver Relay Aktif-LOW:**
   * Modul Relay A (CH1): Pompa Air $\to$ GPIO 26
-  * Modul Relay A (CH2): Pompa Pupuk Fertigasi $\to$ GPIO 14
+  * Modul Relay A (CH2): Pompa Pupuk Fertigasi $\to$ GPIO 25 (pindah dari GPIO 14 — GPIO 14 memancarkan PWM saat boot)
   * Modul Relay B (CH1): Kipas Exhaust $\to$ GPIO 27
-  * Modul Relay B (CH2): Cadangan $\to$ GPIO 25
+  * Modul Relay B (CH2): Cadangan (belum dipakai; GPIO 14 dibebaskan)
 * **Sensor Bus:**
   * Sensor Kelembapan Tanah (Analog Input) $\to$ GPIO 34
   * Sensor Suhu & Kelembapan DHT11 $\to$ GPIO 13
@@ -134,7 +134,9 @@ Tabel pendukung **`configs`** menyimpan ambang histeresis **per perangkat** (rel
    mysql -u root -p < sql/seed.sql     # opsional, mengisi devices + akun demo
    mysql -u root -p < sql/configs.sql  # setelah devices ada
    ```
-   Akun admin default: `admin@sistomate.id` / `admin123@` — **ganti setelah login pertama**.
+   Akun tim default (dibuat `configs.sql`): `sistomate`, `yudha`, `calvin`, `tio`,
+   `ibror`, `nabil` — password awal dipegang Owner (bukan username) dan **wajib
+   diganti setelah login pertama**.
    Akun demo (jika `seed.sql` dijalankan): `budi@polije.ac.id`, `ayu@polije.ac.id`,
    `candra@polije.ac.id` — password `Demo123!`.
 2. **Kredensial** — isi `/etc/sistomate-ingest.env` (`API_KEY`, `DB_HOST`,

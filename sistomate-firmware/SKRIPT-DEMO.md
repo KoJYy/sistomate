@@ -1,6 +1,6 @@
 # SISTOMATE — Skrip Demo & Persiapan
 
-Purwarupa smart greenhouse: ESP32 + 3 sensor (soil moisture, DHT11, TCS34725) + relay 2-ch (pompa, kipas) → MySQL `sistomate` (5 tabel) → phpMyAdmin.
+Purwarupa smart greenhouse: ESP32 + 3 sensor (soil moisture, DHT11, TCS34725) + relay 2-ch (pompa, kipas) → MQTT QoS1 (utama) / HTTP `ingest.php` (fallback) → MySQL `sistomate` (5 tabel) → phpMyAdmin.
 
 **Angka resmi dari firmware (jangan sebut angka lain):**
 
@@ -13,9 +13,11 @@ Purwarupa smart greenhouse: ESP32 + 3 sensor (soil moisture, DHT11, TCS34725) + 
 | Kirim data sensor | tiap 2 detik |
 | Baca sensor | tiap 2 detik |
 
-Status tanaman (`plant_status`): `layu` (soil<40 atau suhu >27C) > `sakit` (daun tidak dominan hijau) > `sehat`.
+> DHT11 dikoreksi `-7.0°C` (keputusan Owner 23 Nov): nilai di tabel & database adalah nilai **setelah koreksi**; fan nyala saat nilai terkoreksi >27°C (raw >34°C).
 
-> Nilai ambang di firmware otomatis mengikuti pengaturan web (`configs`) melalui respons JSON `ingest.php` setiap kirim telemetri sensor; bila server/tabel belum merespons, ESP32 memakai nilai default jurnal di atas.
+Status tanaman (`plant_status`): `layu` (soil<40 atau kipas aktif / suhu >27C) > `sakit` (daun tidak dominan hijau) > `sehat`.
+
+> Nilai ambang di firmware otomatis mengikuti pengaturan web (`configs`): saat MQTT hidup lewat retained `sistomate/<id>/config` (publisher daemon), saat broker putus lewat respons JSON `ingest.php`. Bila keduanya belum merespons, ESP32 memakai nilai default jurnal di atas.
 
 ---
 
@@ -27,9 +29,11 @@ Status tanaman (`plant_status`): `layu` (soil<40 atau suhu >27C) > `sakit` (daun
    ip -4 addr show wlp2s0
    ```
    Catat IP-nya (misal `192.168.43.57`).
-3. **Edit 5 baris config paling atas** `sistomate-firmware/SISTOMATE/SISTOMATE.ino`:
+3. **Edit config paling atas** `sistomate-firmware/SISTOMATE/SISTOMATE.ino`:
    - `WIFI_SSID` / `WIFI_PASS` = nama & password hotspot HP
-   - `SERVER_URL` = `http://<IP_LAPTOP>/ingest.php` (IP dari langkah 2)
+   - `MQTT_HOST` = IP laptop (broker 1884), `MQTT_USER` = `esp32-1`,
+     `MQTT_PASS` = dari `/etc/mosquitto/sistomate-creds.env`
+   - `SERVER_URL` = `http://<IP_LAPTOP>/ingest.php` (fallback HTTP)
    - `API_KEY` = samakan dengan `API_KEY` di `/etc/sistomate-ingest.env`
      (di repo masih placeholder `sm_YOUR_SECRET_API_KEY`)
    - `DEVICE_ID` = sesuaikan dengan `id_device` di tabel `devices`
@@ -38,8 +42,13 @@ Status tanaman (`plant_status`): `layu` (soil<40 atau suhu >27C) > `sakit` (daun
    arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 sistomate-firmware/SISTOMATE
    ```
    (Kalau port gak kelihatan: `sudo modprobe ch341` untuk kabel CH340.)
+   Setelah upload, pastikan jalur MQTT hidup:
+   ```bash
+   systemctl is-active mosquitto-sistomate sistomate-mqtt-sub sistomate-config-pub
+   journalctl -u sistomate-mqtt-sub -n 5 --no-pager
+   ```
 5. **Test penuh 1x tanpa penonton** — buka `http://<IP_LAPTOP>/phpMyAdmin`, database `sistomate`:
-   - tab `sensor_logs` → row baru tiap ~10 detik, `id_device` 1
+   - tab `sensor_logs` → row baru tiap ~2 detik, `id_device` 1
    - celup-taruh sensor tanah → `actuator_logs` dapat `Pompa Air ON/OFF`
    - tiup/hangatkan DHT11 sampai >27C → `Kipas Exhaust ON`
 6. **Rekam video 1x full run pakai HP** (layar laptop + alat). Ini jaring pengaman kalau WiFi/alat rewel pas hari-H.
@@ -64,7 +73,7 @@ Celupkan sensor tanah ke air. DHT11 biarkan di udara ruangan.
 
 > "Ini kondisi stabil: tanah basah, suhu ruangan normal. Sistem diam saja — tidak ada aktuator yang menyala, karena tidak ada masalah yang harus diselesaikan."
 
-**Bukti:** refresh `sensor_logs` → row baru muncul tiap 10 detik, `soil_moisture` tinggi, `plant_status` `sehat`. (Tunjukkan timestamp-nya — data live, bukan rekaman.)
+**Bukti:** refresh `sensor_logs` → row baru muncul tiap ~2 detik, `soil_moisture` tinggi, `plant_status` `sehat`. (Tunjukkan timestamp-nya — data live, bukan rekaman.)
 
 ### Babak 2 — Kekeringan → pompa otomatis (1–1,5 menit)
 Angkat sensor dari air, lap permukaannya.
@@ -114,8 +123,10 @@ Buka `actuator_logs` penuh, tunjukkan seluruh riwayat.
 | ESP32 connect tapi row gak masuk | IP laptop berubah / salah | cek `ip -4 addr show wlp2s0`, update `SERVER_URL`, recompile, upload ulang |
 | Port serial gak kelihatan | driver kabel | `sudo modprobe ch341` |
 | RGB gak berubah-ubah | TCS34725 gak ke-detek / kurang cahaya | cek kabel SDA/SCL (21/22), deketin daun, tutup dari cahaya ruangan |
-| DHT11 lambat naik | sifat sensor (normal!) | jelasin inersia termal, pakai hair dryer |
+| DHT11 lambat naik | sifat sensor + offset -7C | fan nyala saat log >27C (raw >34C); jelasin inersia termal, pakai hair dryer |
 | phpMyAdmin gak kebuka | httpd/nginx mati | `sudo systemctl restart nginx php-fpm` |
 | Row gak muncul padahal POST 200 | salah tab/urutan | cek tab `sensor_logs` → urutkan `id_log` DESC |
+| Row gak masuk, broker aktif | subscriber/publisher mati | `systemctl status sistomate-mqtt-sub sistomate-config-pub`, cek `journalctl -u sistomate-mqtt-sub -n 20` |
+| Config web gak sampai ke alat | publisher mati / DB beda | `systemctl status sistomate-config-pub`; `mosquitto_sub -p 1884 -u publisher -P ... -t 'sistomate/1/config' -C 1 -v` |
 
 **Aturan emas:** gak ada yang namanya "panel hijau = berhasil" — buka `actuator_logs`, tunjukkan row-nya. Row masuk = sistem bekerja.
