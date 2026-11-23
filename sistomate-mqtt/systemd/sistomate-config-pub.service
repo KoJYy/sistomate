@@ -1,0 +1,21 @@
+[Unit]
+Description=SISTOMATE config publisher (MySQL configs -> MQTT retained)
+Documentation=file:///home/koj/Semester_3/WBD/sistomate-mqtt/README.md
+After=network-online.target mosquitto-sistomate.service mysqld.service
+Wants=network-online.target
+# Opsi B: halaman Pengaturan menulis tabel configs; unit ini menerbitkan
+# retained sistomate/<id>/config supaya firmware langsung memakai ambang baru.
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/koj/Semester_3/WBD/sistomate-mqtt/config_publisher.py
+# Kredensial broker (MQTT_HOST/PORT/USER_PUB/PASS_PUB): file root-only.
+EnvironmentFile=/etc/mosquitto/sistomate-creds.env
+# Target DB (MQTT_DB_*): juga root-only, di luar repo.
+EnvironmentFile=/etc/sistomate-mqtt-sub.env
+Restart=on-failure
+RestartSec=5
+# Log ke stdout -> journald: journalctl -u sistomate-config-pub -f
+
+[Install]
+WantedBy=multi-user.target

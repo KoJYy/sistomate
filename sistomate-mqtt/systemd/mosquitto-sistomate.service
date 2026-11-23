@@ -1,0 +1,22 @@
+[Unit]
+Description=Mosquitto broker SISTOMATE (1884 TCP auth + 9002 WebSocket read-only)
+Documentation=man:mosquitto.conf(5) man:mosquitto(8)
+After=network-online.target
+Wants=network-online.target
+# Instance INDEPENDEN: sengaja TIDAK bergantung pada mosquitto.service (PingPong).
+
+[Service]
+User=mosquitto
+Group=mosquitto
+Type=notify
+WatchdogSec=3min
+NotifyAccess=main
+ExecStart=/usr/sbin/mosquitto -c /etc/mosquitto/sistomate.conf
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=2
+RuntimeDirectory=mosquitto-sistomate
+LogsDirectory=mosquitto-sistomate
+
+[Install]
+WantedBy=multi-user.target

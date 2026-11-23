@@ -1,0 +1,22 @@
+# /etc/mosquitto/sistomate.acl - ACL listener 1884 (TCP, auth wajib)
+#
+# Peran per user (lihat tiket TIKET-MQTT-01 bagian 6):
+#   esp32-1   : device 1 - hanya tulis topiknya sendiri, baca config-nya
+#   subscriber: subscriber.py - baca data sensor/aktuator semua device
+#   publisher : config_publisher.py - tulis config retained
+#
+# Topik device lain (mis. sistomate/2/*) TIDAK diberikan ke esp32-1 sehingga
+# publish ke sana ditolak broker.
+
+user esp32-1
+topic write sistomate/1/sensor
+topic write sistomate/1/actuator
+topic write sistomate/1/status
+topic read sistomate/1/config
+
+user subscriber
+topic read sistomate/+/sensor
+topic read sistomate/+/actuator
+
+user publisher
+topic write sistomate/+/config

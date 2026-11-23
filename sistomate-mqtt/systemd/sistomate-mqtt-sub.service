@@ -1,0 +1,20 @@
+[Unit]
+Description=SISTOMATE MQTT subscriber (paho QoS1 manual_ack -> MySQL)
+Documentation=file:///home/koj/Semester_3/WBD/sistomate-mqtt/README.md
+After=network-online.target mosquitto-sistomate.service mysqld.service
+Wants=network-online.target
+# Instance broker SISTOMATE saja; TIDAK bergantung pada mosquitto.service (PingPong).
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/koj/Semester_3/WBD/sistomate-mqtt/subscriber.py
+# Kredensial broker (MQTT_HOST/PORT/USER_SUB/PASS_SUB): file root-only.
+EnvironmentFile=/etc/mosquitto/sistomate-creds.env
+# Konfigurasi DB target (MQTT_DB_*): juga root-only, di luar repo.
+EnvironmentFile=/etc/sistomate-mqtt-sub.env
+Restart=on-failure
+RestartSec=5
+# Log ke stdout -> journald: journalctl -u sistomate-mqtt-sub -f
+
+[Install]
+WantedBy=multi-user.target

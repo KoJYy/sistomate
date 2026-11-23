@@ -1,0 +1,7 @@
+# /etc/mosquitto/sistomate-ws.acl - ACL listener 9002 (WebSocket dashboard)
+#
+# Read-only: hanya aturan "read" yang ada. Mosquitto menolak operasi yang tidak
+# diizinkan ACL, sehingga PUBLISH dari browser otomatis ditolak.
+# Berlaku untuk semua klien di port ini termasuk anonymous (allow_anonymous true).
+
+topic read sistomate/#

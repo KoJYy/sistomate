@@ -1,0 +1,46 @@
+# /etc/mosquitto/sistomate.conf - Broker MQTT SISTOMATE (instance TERPISAH dari PingPong)
+#
+# Instance ini HANYA untuk SISTOMATE:
+#   - listener 1884/tcp : ESP32 publish + subscriber/publisher (auth wajib)
+#   - listener 9002/tcp : WebSocket utk dashboard browser (anonymous READ-ONLY)
+# Broker milik proyek PingPong (1883, /etc/mosquitto/mosquitto.conf) TIDAK
+# disentuh oleh file ini - jangan pernah digabung atau di-restart bareng.
+#
+# Install: salin ke /etc/mosquitto/sistomate.conf (root:mosquitto 640).
+# Password: /etc/mosquitto/sistomate.passwd (dibuat mosquitto_passwd -c).
+
+# Setelan per-listener (password_file/acl_file berlaku per port).
+# Catatan mosquitto 2.1.2: opsi allow_anonymous per-port sudah berganti nama
+# menjadi listener_allow_anonymous; per_listener_settings sendiri sudah
+# terdeprecate (rencana dihapus di 3.0) karena belum ada varian listener_
+# untuk password_file/acl_file - catatan migrasi di README.
+per_listener_settings true
+
+# Persistence terpisah supaya state broker SISTOMATE tidak menimpa PingPong.
+persistence true
+persistence_location /var/lib/mosquitto-sistomate/
+autosave_interval 30
+
+# Build Fedora TIDAK punya dukungan systemd journal; pakai stdout (diteruskan
+# systemd ke journal): journalctl -u mosquitto-sistomate -f
+log_dest stdout
+log_type error
+log_type warning
+log_type notice
+log_type information
+
+message_size_limit 65535
+
+# --- Listener 1884: device + subscriber/publisher (TCP, auth wajib) ---
+listener 1884 0.0.0.0
+listener_allow_anonymous false
+password_file /etc/mosquitto/sistomate.passwd
+acl_file /etc/mosquitto/sistomate.acl
+
+# --- Listener 9002: WebSocket dashboard browser (read-only, hanya LAN) ---
+# Anonymous diizinkan HANYA untuk baca; aturan tulis tidak ada di acl sehingga
+# publish dari browser otomatis ditolak broker.
+listener 9002 0.0.0.0
+protocol websockets
+listener_allow_anonymous true
+acl_file /etc/mosquitto/sistomate-ws.acl
