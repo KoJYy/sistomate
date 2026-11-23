@@ -28,7 +28,7 @@ CREATE TABLE sensor_logs (
   rgb_red INT NOT NULL,
   rgb_green INT NOT NULL,
   rgb_blue INT NOT NULL,
-  plant_status ENUM('sehat','kering','layu','sakit') NOT NULL,
+  plant_status ENUM('sehat','layu','sakit') NOT NULL,
   id_device INT NOT NULL,
   CONSTRAINT fk_sensor_device FOREIGN KEY (id_device)
     REFERENCES devices (id_device) ON DELETE CASCADE,

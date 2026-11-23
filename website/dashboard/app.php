@@ -1156,10 +1156,12 @@ $cfgJs = [
     set('x1-' + prefix, timeOnly(times[n >> 1]).slice(0, 5));
   }
 
-  function renderActuators(actList) {
+  function renderActuators(actList, stateList) {
     const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '');
     const byName = {};
-    actList.forEach(a => {
+    // Kartu status pakai state terkini per aktuator (stateList); tabel riwayat
+    // tetap pakai 5 event terakhir (actList) supaya chatter tidak menutupi state.
+    (stateList && stateList.length ? stateList : actList).forEach(a => {
       const k = norm(a.actuator_name);
       if (!byName[k]) byName[k] = a;
     });
@@ -1195,6 +1197,7 @@ $cfgJs = [
   function render(d) {
     const L = d.latest;
     const acts = d.actuators || [];
+    const actStates = d.actuator_states || [];
     const hist = d.history || [];
 
     if (!L) {
@@ -1209,7 +1212,7 @@ $cfgJs = [
       setBadge('card-suhu', 'badge-suhu', 'idle', 'menunggu');
       setBadge('card-rh', 'badge-rh', 'idle', 'menunggu');
       setBadge('card-soil', 'badge-soil', 'idle', 'menunggu');
-      renderActuators(acts);
+      renderActuators(acts, actStates);
       spark('line-soil', 'fill-soil', 'pin-soil', []);
       spark('line-suhu', 'fill-suhu', 'pin-suhu', []);
       axes('soil', [], [], v => v);
@@ -1276,7 +1279,7 @@ $cfgJs = [
     setVal('soil', String(Math.round(soilVal)), '%');
 
     // aktuator & tabel riwayat
-    renderActuators(acts);
+    renderActuators(acts, actStates);
 
     // sparkline (area halus dengan live circular pin)
     const soilArr = hist.map(h => +h.soil_moisture);

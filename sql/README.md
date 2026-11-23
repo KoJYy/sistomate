@@ -5,7 +5,7 @@ Urutan eksekusi untuk instalasi baru (MySQL 8.x):
 ```bash
 mysql -u root -p < sql/schema.sql    # 5 tabel inti
 mysql -u root -p < sql/seed.sql      # opsional: data demo (mengisi devices)
-mysql -u root -p < sql/configs.sql   # tabel pendukung configs + akun admin default
+mysql -u root -p < sql/configs.sql   # tabel pendukung configs + 6 akun tim default
 ```
 
 Catatan:
@@ -13,10 +13,13 @@ Catatan:
 - `schema.sql` membuat database `sistomate` + 5 tabel inti:
   `users`, `devices`, `sensor_logs`, `actuator_logs`, `gallery`.
 - `configs.sql` menambah tabel pendukung `configs` dengan relasi **per-device**
-  (`id_device` → `devices.id_device`, `ON DELETE CASCADE`) dan akun admin
-  `admin@sistomate.id`. Satu baris konfigurasi untuk setiap device. File ini
-  idempotent untuk `CREATE TABLE`; baris config dibuat untuk device yang sudah
-  ada saat file dijalankan.
+  (`id_device` → `devices.id_device`, `ON DELETE CASCADE`) dan **6 akun tim**
+  (`sistomate`, `yudha`, `calvin`, `tio`, `ibror`, `nabil`). Default ambang:
+  tanah `40–60%`, suhu `25–27°C`, fertigasi `7 dtk` (sesuai jurnal). Satu baris
+  konfigurasi untuk setiap device. File ini idempotent untuk `CREATE TABLE`;
+  baris config dibuat untuk device yang sudah ada saat file dijalankan.
+  Password akun tim **tidak ditulis di repo** (hanya hash bcrypt); password awal
+  dipegang Owner dan wajib diganti setelah login pertama.
 - Urutan praktis: jalankan `configs.sql` **setelah** `devices` terisi (misalnya
   setelah `seed.sql`). Kalau terlanjur dijalankan sebelum seed, jalankan ulang
   sekali lagi setelah seed (aman, `WHERE NOT EXISTS`) atau cukup simpan halaman

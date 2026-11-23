@@ -88,6 +88,18 @@ try {
         $stAct->execute([$did]);
         $actuators = $stAct->fetchAll();
 
+        // State TERKINI per aktuator (bukan 5 event terakhir): chatter satu aktuator
+        // tidak boleh menyembunyikan aktuator lain dari kartu dashboard.
+        $stState = $pdo->prepare(
+            'SELECT a.actuator_name, a.status, a.executed_at
+             FROM actuator_logs a
+             JOIN (SELECT actuator_name, MAX(id_action) AS mx
+                   FROM actuator_logs WHERE id_device = ? GROUP BY actuator_name) m
+               ON m.mx = a.id_action'
+        );
+        $stState->execute([$did]);
+        $actuatorStates = $stState->fetchAll();
+
         $stToday = $pdo->prepare(
             'SELECT
                 (SELECT COUNT(*) FROM sensor_logs WHERE id_device = ? AND recorded_at >= CURDATE()) AS sensor_rows,
@@ -118,6 +130,7 @@ try {
     } else {
         $history = [];
         $actuators = [];
+        $actuatorStates = [];
         $today = ['sensor_rows' => 0, 'actuator_events' => 0];
     }
 
@@ -126,6 +139,7 @@ try {
         'latest' => $latest ?: null,
         'history' => $history,
         'actuators' => $actuators,
+        'actuator_states' => $actuatorStates,
         'today' => $today,
         'device' => $device,
         'config' => $cfg,
