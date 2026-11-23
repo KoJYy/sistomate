@@ -84,6 +84,16 @@ const int   DEVICE_ID   = 1; // sesuaikan dengan id_device di tabel devices
 // raw >34C. Set 0.0f kalau mau data mentah.
 #define TEMP_OFFSET_C           -7.0f
 
+// Pengaman pompa air: probe di udara (soil 0%) bikin pompa nyala terus -> dry-run.
+// Setelah PUMP_MAX_ON_MS nyala terus, pompa dimatikan paksa lalu dikunci
+// PUMP_COOLDOWN_MS supaya tidak chatter ON/OFF.
+#define PUMP_MAX_ON_MS          60000UL    // 60 detik maksimal nyala terus
+#define PUMP_COOLDOWN_MS        300000UL   // 5 menit jeda setelah kena batas
+
+// Validasi sensor: probe lepas bikin ADC mentok 0 -> map() jadi 100% "basah"
+// palsu; DHT11 lepas balik NaN. Tanpa cek ini firmware melaporkan "sehat".
+#define SOIL_RAW_MIN            200        // raw di bawah ini = pin floating/probe lepas (air penuh ~1500)
+
 // selesai init dengan nilai default jurnal; diperbarui otomatis dari configs web
 float soilOnPct     = DEFAULT_SOIL_ON_PCT;
 float soilOffPct    = DEFAULT_SOIL_OFF_PCT;
@@ -107,6 +117,10 @@ bool fanOn  = false;
 bool tcsOk  = false;
 bool fertOn = false;
 unsigned long fertStartMs = 0;
+unsigned long pumpStartMs = 0;        // mulai nyala (pengaman max-runtime)
+unsigned long pumpCooldownUntil = 0;  // pompa dikunci sampai waktu ini
+bool soilOk = false;                  // ADC tanah masuk rentang fisik (bukan 0/floating)
+bool dhtOk = false;                   // DHT11 menjawab (bukan NaN)
 Preferences prefs;
 int lastFertKey = 0; // (tahun*1000 + yday) dosis terakhir — cegah dobel dalam sehari
 
@@ -388,6 +402,7 @@ void flushActuator() {
 void setPump(bool on) {
   if (on == pumpOn) return;
   pumpOn = on;
+  if (on) pumpStartMs = millis();
   digitalWrite(PIN_RELAY_POMPA, on ? RELAY_ON : RELAY_OFF);
   Serial.printf("POMPA %s\n", on ? "ON" : "OFF");
   markActuator(ACT_POMPA, "Pompa Air", on);
@@ -420,6 +435,7 @@ void reportInitialActuatorStates() {
 
 // fertigasi: dosis terkonfigurasi (default 7 detik) tiap minggu jam 07:00 (Sari 2024), batal kalo tanah kering
 void fertigasi() {
+  if (!soilOk) return; // probe lepas -> jangan dosis (interlock tidak bisa dipercaya)
   if (fertOn) {
     if (millis() - fertStartMs >= (unsigned long)fertDurationS * 1000UL) setFert(false);
     else if (soilPct < soilOnPct) setFert(false); // interlock juga di tengah dosis
@@ -456,15 +472,20 @@ const char* plantStatus() {
 void readSensors() {
   long raw = analogRead(PIN_SOIL);            // 0..4095, kering = tinggi
   soilRaw = raw;
-  soilPct = constrain(map(raw, 4095, 1500, 0, 100), 0, 100); // kalibrasi 21 Okt: udara=4095, air penuh=1500
+  // raw ~0 = probe lepas/pin floating. Jangan dipetakan, nanti terbaca 100% basah.
+  soilOk = (raw >= SOIL_RAW_MIN);
+  if (soilOk) {
+    soilPct = constrain(map(raw, 4095, 1500, 0, 100), 0, 100); // kalibrasi 21 Okt: udara=4095, air penuh=1500
+  }
 
   float t = dht.readTemperature();
   float h = dht.readHumidity();
-  if (!isnan(t)) {
+  dhtOk = !isnan(t) && !isnan(h) && h > 0.0f; // NaN/0% = DHT11 tidak menjawab
+  if (dhtOk) {
     float adj = t + TEMP_OFFSET_C;
     airTemp = adj < 0.0f ? 0.0f : adj;
+    airHumi = h;
   }
-  if (!isnan(h)) airHumi = h;
 
   if (tcsOk) {
     uint16_t clear = 0;
@@ -490,12 +511,34 @@ void loop() {
     lastRead = now;
     readSensors();
 
-    // logika aktuator + histeresis (otomatis ikut ambang configs web)
-    setPump(soilPct < soilOnPct ? true : (soilPct >= soilOffPct ? false : pumpOn));
-    setFan(airTemp > tempOnC ? true : (airTemp <= tempOffC ? false : fanOn));
+    // pengaman dry-run: pompa tidak boleh nyala terus (probe di udara = soil 0%)
+    if (pumpOn && millis() - pumpStartMs >= PUMP_MAX_ON_MS) {
+      Serial.println("POMPA OFF (batas waktu aman)");
+      setPump(false);
+      pumpCooldownUntil = millis() + PUMP_COOLDOWN_MS;
+    }
+    bool pumpCooldown = (long)(millis() - pumpCooldownUntil) < 0;
+
+    if (!soilOk || !dhtOk) {
+      // Sensor lepas/rusak: jangan kirim angka palsu, aktuator ke posisi aman.
+      static unsigned long lastWarn = 0;
+      if (now - lastWarn >= 5000) {
+        lastWarn = now;
+        Serial.printf("SENSOR INVALID soil=%s dht=%s -> data tidak dikirim, aktuator OFF\n",
+                      soilOk ? "ok" : "LEPAS", dhtOk ? "ok" : "LEPAS");
+      }
+      setPump(false);
+      setFan(false);
+    } else {
+      // logika aktuator + histeresis (otomatis ikut ambang configs web)
+      if (!pumpCooldown) {
+        setPump(soilPct < soilOnPct ? true : (soilPct >= soilOffPct ? false : pumpOn));
+      }
+      setFan(airTemp > tempOnC ? true : (airTemp <= tempOffC ? false : fanOn));
+    }
   }
 
-  if (now - lastPost >= SENSOR_INTERVAL_MS) {
+  if ((now - lastPost >= SENSOR_INTERVAL_MS) && soilOk && dhtOk) {
     lastPost = now;
     String body = String("{\"type\":\"sensor\",\"device_id\":") + DEVICE_ID +
                   ",\"air_temperature\":" + String(airTemp, 1) +
