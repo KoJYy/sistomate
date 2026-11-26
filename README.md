@@ -143,10 +143,14 @@ Tabel pendukung **`configs`** menyimpan ambang histeresis **per perangkat** (rel
    `DB_NAME`, `DB_USER`, `DB_PASS`). Lihat `sql/README.md` untuk grant user aplikasi.
 3. **Web** — arahkan document root ke `website/` dan jalankan PHP-FPM +
    Nginx/Apache. Buka `index.html`, lalu masuk lewat `dashboard/login.php`.
-4. **Firmware** — sesuaikan `WIFI_SSID`, `WIFI_PASS`, `SERVER_URL`, dan
-   `API_KEY` di `sistomate-firmware/SISTOMATE/SISTOMATE.ino`, lalu upload ke
-   ESP32 (`arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32
-   sistomate-firmware/SISTOMATE`).
+4. **Firmware** — buka folder `sistomate-firmware/SISTOMATE` di Arduino IDE
+   (board **ESP32 Dev Module**, core **esp32 2.0.17**). Isi blok **KONFIGURASI**
+   di baris paling atas sketch: `WIFI_SSID`, `WIFI_PASS`, `SERVER_URL`,
+   `API_KEY`, `MQTT_HOST`, dan `MQTT_PASS`. Library yang perlu dipasang lewat
+   Library Manager: **DHT sensor library**, **Adafruit Unified Sensor**, dan
+   **Adafruit TCS34725**. Setelah itu klik **Upload**. Nilai asli diisi
+   langsung di blok **KONFIGURASI**; jangan commit file sketch dalam keadaan
+   berisi kredensial.
 
 ---
 

@@ -1,3 +1,34 @@
+// ============================================================================
+//  KONFIGURASI — EDIT HANYA BAGIAN INI
+// ============================================================================
+//  Cara pakai:
+//    1. Nilai WiFi/server/MQTT ada langsung di bagian "1" di bawah.
+//    2. Klik Upload di Arduino IDE.
+//    3. Jangan commit nilai asli (WiFi/API key/password MQTT) ke GitHub.
+// ----------------------------------------------------------------------------
+
+// --- 1. WiFi, server, dan akun MQTT ---
+// Isi nilai asli hanya di salinan lokal. Jangan commit kredensial.
+const char* WIFI_SSID  = "YOUR_WIFI_SSID";
+const char* WIFI_PASS  = "YOUR_WIFI_PASSWORD";
+const char* SERVER_URL = "http://192.168.1.100/ingest.php";
+const char* API_KEY    = "sm_YOUR_SECRET_API_KEY";
+static const char* MQTT_HOST = "YOUR_MQTT_HOST";
+static const char* MQTT_PASS = "YOUR_MQTT_PASSWORD";
+
+const int DEVICE_ID = 1;  // id_device di tabel devices
+
+// --- 2. MQTT (jalur utama, port 1884) ---
+#define USE_MQTT 1          // 1 = pakai MQTT, 0 = HTTP saja
+#define USE_HTTP 1          // 1 = HTTP dipakai sebagai cadangan
+static const int   MQTT_PORT      = 1884;
+static const char* MQTT_USER      = "esp32-1";
+static const char* MQTT_CLIENT_ID = "sistomate-esp32-1";
+
+// ============================================================================
+//  SELESAI KONFIGURASI — bagian di bawah tidak perlu diubah
+// ============================================================================
+
 // SISTOMATE — purwarupa smart greenhouse
 // ESP32 + soil moisture + DHT11 + TCS34725 + relay 2×2-ch (pompa air, pompa pupuk, kipas)
 // Data sensor & aktuator: publish MQTT QoS1 (jalur utama) atau HTTP POST ke
@@ -40,30 +71,11 @@
 //   broker putus / USE_MQTT=0     -> HTTP POST seperti sediakala (USE_HTTP),
 //                                    config dari respons ingest.php tetap dipakai.
 // Kombinasi 0/0 tidak berguna; 1/0 = MQTT tanpa fallback; 0/1 = paksa HTTP.
-#define USE_HTTP 1
-#define USE_MQTT 1
+// (Nilai USE_MQTT dan USE_HTTP diatur di bagian KONFIGURASI paling atas.)
 
 #if USE_MQTT
 #include <mqtt_client.h>
-
-// Broker MQTT lokal (TLS tidak perlu di LAN). Jangan commit kredensial asli.
-static const char* MQTT_HOST      = "YOUR_MQTT_HOST"; // IP laptop/broker
-static const int   MQTT_PORT      = 1884;
-static const char* MQTT_USER      = "esp32-1";
-static const char* MQTT_PASS      = "YOUR_MQTT_PASSWORD";
-static const char* MQTT_CLIENT_ID = "sistomate-esp32-1";
-static const char* MQTT_STATUS_OFFLINE = "{\"status\":\"offline\"}"; // isi LWT
 #endif
-
-// ====== ISI SEBELUM DEMO ======
-// Jangan commit kredensial asli. Isi nilai berikut sesuai jaringan dan server
-// yang dipakai (API_KEY diambil dari /etc/sistomate-ingest.env).
-const char* WIFI_SSID   = "YOUR_WIFI_SSID";
-const char* WIFI_PASS   = "YOUR_WIFI_PASSWORD";
-const char* SERVER_URL  = "http://192.168.1.100/ingest.php"; // IP komputer server
-const char* API_KEY     = "sm_YOUR_SECRET_API_KEY";
-const int   DEVICE_ID   = 1; // sesuaikan dengan id_device di tabel devices
-// ==============================
 
 #define PIN_SOIL        34
 #define PIN_DHT         13
@@ -285,6 +297,9 @@ static volatile bool mqttUp = false;       // true selama sesi MQTT hidup (event
 static uint32_t mqttBootId = 0;            // acak per boot -> msg_id unik lintas reboot
 static uint32_t mqttSeq = 0;
 static char topicSensor[40], topicActuator[40], topicStatus[40], topicConfig[40];
+
+// Isi LWT (last will): pesan yang dipublikasikan broker kalau board mati paksa.
+static const char* MQTT_STATUS_OFFLINE = "{\"status\":\"offline\"}";
 
 // msg_id unik per pesan (buat dedup subscriber): device-bootid-urut
 static String nextMsgId() {

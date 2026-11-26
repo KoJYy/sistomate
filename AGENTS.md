@@ -48,13 +48,24 @@ Dokumen internal (CAD, ERD, spesifikasi) disimpan di luar repo dan tidak dipubli
 
 ## Firmware
 
-- `API_KEY`, `WIFI_SSID`, dan `WIFI_PASS` di sketch wajib placeholder di repo.
-  Isi nilai asli secara lokal dari `/etc/sistomate-ingest.env` sebelum flash.
-  **Jangan pernah commit kredensial asli.**
-- Upload:
-  ```bash
-  arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 sistomate-firmware/SISTOMATE
-  ```
+- Satu sketch utama: `sistomate-firmware/SISTOMATE/SISTOMATE.ino`. Buka folder
+  `sistomate-firmware/SISTOMATE` di Arduino IDE, edit blok **KONFIGURASI** di
+  baris paling atas, lalu klik Upload. Tidak ada skrip render/flash perantara.
+- Nilai yang diisi manual di blok konfigurasi: `WIFI_SSID`, `WIFI_PASS`,
+  `SERVER_URL` (IP LAN laptop + `/ingest.php`), `API_KEY`, dan `MQTT_HOST` /
+  `MQTT_PASS`. `MQTT_HOST` memakai IP yang sama dengan `SERVER_URL`.
+- Di repo, blok **KONFIGURASI** wajib berisi placeholder (`YOUR_...`).
+  Isi nilai asli hanya di salinan lokal sebelum upload, dan **jangan pernah
+  commit kredensial asli**. Salinan lokal berisi kredensial boleh disimpan di
+  `tools/backup/` (gitignored).
+- Sebelum commit, jalankan `tools/test-firmware-mqtt.sh`; gate itu menolak
+  placeholder yang hilang dan API key asli, jadi hasilnya harus 90/90 GREEN.
+- Board: **ESP32 Dev Module**; core **esp32 by Espressif 2.0.17** (sketch memakai
+  `mqtt_client.h` dari core, bukan library tambahan).
+- Library lewat Library Manager: **DHT sensor library** (Adafruit),
+  **Adafruit Unified Sensor**, **Adafruit TCS34725**.
+- `arduino-cli compile --fqbn esp32:esp32:esp32 sistomate-firmware/SISTOMATE`
+  hanya dipakai untuk verifikasi otomatis, bukan alur utama pengguna.
 
 ## Git
 
