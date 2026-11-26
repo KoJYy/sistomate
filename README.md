@@ -131,14 +131,12 @@ Tabel pendukung **`configs`** menyimpan ambang histeresis **per perangkat** (rel
 1. **Database** — impor skema, data demo, lalu konfigurasi (urutan penting: `devices` harus terisi sebelum `configs.sql`):
    ```bash
    mysql -u root -p < sql/schema.sql
-   mysql -u root -p < sql/seed.sql     # opsional, mengisi devices + akun demo
+   mysql -u root -p < sql/seed.sql     # opsional: 1 device + log contoh
    mysql -u root -p < sql/configs.sql  # setelah devices ada
    ```
    Akun tim default (dibuat `configs.sql`): `sistomate`, `yudha`, `calvin`, `tio`,
    `ibror`, `nabil` — password awal dipegang Owner (bukan username) dan **wajib
-   diganti setelah login pertama**.
-   Akun demo (jika `seed.sql` dijalankan): `budi@polije.ac.id`, `ayu@polije.ac.id`,
-   `candra@polije.ac.id` — password `Demo123!`.
+   diganti setelah login pertama**. `seed.sql` tidak membuat akun demo tambahan.
 2. **Kredensial** — isi `/etc/sistomate-ingest.env` (`API_KEY`, `DB_HOST`,
    `DB_NAME`, `DB_USER`, `DB_PASS`). Lihat `sql/README.md` untuk grant user aplikasi.
 3. **Web** — arahkan document root ke `website/` dan jalankan PHP-FPM +

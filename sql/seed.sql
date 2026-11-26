@@ -1,28 +1,61 @@
--- SISTOMATE seed data demo (presentasi minggu-5).
--- Password akun demo: Demo123!  (hanya untuk demo lokal, jangan dipakai publik)
+-- SISTOMATE seed data demo untuk instalasi baru.
+-- Isi: 1 akun admin bersama (`sistomate`) + 1 device + contoh log.
+-- TIDAK membuat akun demo Budi/Ayu/Candra (dihapus 26 Nov 2026).
+-- Password akun `sistomate` memakai hash yang sama dengan sql/configs.sql;
+-- password asli dipegang Owner (lihat README).
 USE sistomate;
 
-INSERT INTO users (name, email, password_hash) VALUES
-  ('Budi Santoso', 'budi@polije.ac.id', '$2y$12$n/bU9Wwy9T6DHW/IyTIf0uqWvQdk8t8/EerxHJKP0TTdWZf8lNVdW'),
-  ('Ayu Lestari', 'ayu@polije.ac.id', '$2y$12$x87uoVdhh1a93KFSxy0YquRGUCzXFNHn/JxkSJdmG3HtN8Dba1N9K')
-ON DUPLICATE KEY UPDATE name = VALUES(name), password_hash = VALUES(password_hash);
+-- 1) Akun admin bersama (idempotent; configs.sql juga membuat akun ini).
+INSERT INTO users (name, email, password_hash)
+SELECT 'Administrator', 'sistomate',
+       '$2y$12$zv.C9w3twO5GB82xGteTZe5jJlg6wnESIOEXdxEbeMrYwW6n.cv4y'
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'sistomate');
 
-INSERT INTO devices (device_name, location, id_user) VALUES
-  ('ESP32-Greenhouse-1', 'Bed-1-Baris-2', 1),
-  ('ESP32-Greenhouse-2', 'Bed-2-Baris-1', 2);
+-- 2) Satu device demo.
+INSERT INTO devices (device_name, location, id_user)
+SELECT 'ESP32-Greenhouse-1', 'Bed Kanan', u.id_user
+FROM users u
+WHERE u.email = 'sistomate'
+  AND NOT EXISTS (
+    SELECT 1 FROM devices d WHERE d.device_name = 'ESP32-Greenhouse-1'
+  );
 
+SET @id_device := (
+  SELECT id_device FROM devices
+  WHERE device_name = 'ESP32-Greenhouse-1'
+  LIMIT 1
+);
+
+-- 3) Log sensor contoh (hanya jika device belum punya log).
 INSERT INTO sensor_logs
   (recorded_at, air_temperature, air_humidity, soil_moisture,
-   rgb_red, rgb_green, rgb_blue, plant_status, id_device) VALUES
-  ('2026-09-18 08:00:00', 28.50, 70.00, 45.50, 120, 180, 90, 'sehat', 1),
-  ('2026-09-18 09:00:00', 30.20, 65.00, 32.00, 130, 175, 95, 'layu', 1),
-  ('2026-09-18 10:00:00', 32.10, 58.00, 22.50, 140, 150, 100, 'layu', 1),
-  ('2026-09-18 08:00:00', 27.80, 72.00, 48.00, 150, 110, 95, 'sakit', 2);
+   rgb_red, rgb_green, rgb_blue, plant_status, id_device)
+SELECT * FROM (
+  SELECT '2026-09-18 08:00:00' AS recorded_at, 28.50 AS air_temperature,
+         70.00 AS air_humidity, 45.50 AS soil_moisture,
+         120 AS rgb_red, 180 AS rgb_green, 90 AS rgb_blue,
+         'sehat' AS plant_status, @id_device AS id_device
+  UNION ALL
+  SELECT '2026-09-18 09:00:00', 30.20, 65.00, 32.00, 130, 175, 95, 'layu', @id_device
+  UNION ALL
+  SELECT '2026-09-18 10:00:00', 32.10, 58.00, 22.50, 140, 150, 100, 'layu', @id_device
+) AS demo
+WHERE @id_device IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM sensor_logs s WHERE s.id_device = @id_device
+  );
 
-INSERT INTO actuator_logs (actuator_name, status, executed_at, id_device) VALUES
-  ('pompa air', 'ON', '2026-09-18 10:05:00', 1),
-  ('pompa air', 'OFF', '2026-09-18 10:10:00', 1);
+-- 4) Log aktuator contoh (hanya jika device belum punya log).
+INSERT INTO actuator_logs (actuator_name, status, executed_at, id_device)
+SELECT * FROM (
+  SELECT 'pompa air' AS actuator_name, 'ON' AS status,
+         '2026-09-18 10:05:00' AS executed_at, @id_device AS id_device
+  UNION ALL
+  SELECT 'pompa air', 'OFF', '2026-09-18 10:10:00', @id_device
+) AS demo
+WHERE @id_device IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM actuator_logs a WHERE a.id_device = @id_device
+  );
 
-INSERT INTO gallery (image_url, caption, upload_date, id_user, id_device) VALUES
-  ('/img/tomat-a01-001.jpg', 'Daun tomat Bed-1 pagi hari', '2026-09-18 08:05:00', 2, 1),
-  ('/img/tomat-b02-001.jpg', 'Gejala klorosis Bed-2', '2026-09-18 08:06:00', 2, 2);
+-- Galeri sengaja dibiarkan kosong; gambar diunggah lewat dashboard.

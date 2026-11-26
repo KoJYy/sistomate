@@ -4,7 +4,7 @@ Urutan eksekusi untuk instalasi baru (MySQL 8.x):
 
 ```bash
 mysql -u root -p < sql/schema.sql    # 5 tabel inti
-mysql -u root -p < sql/seed.sql      # opsional: data demo (mengisi devices)
+mysql -u root -p < sql/seed.sql      # opsional: 1 device + log contoh
 mysql -u root -p < sql/configs.sql   # tabel pendukung configs + 6 akun tim default
 ```
 
@@ -24,7 +24,9 @@ Catatan:
   setelah `seed.sql`). Kalau terlanjur dijalankan sebelum seed, jalankan ulang
   sekali lagi setelah seed (aman, `WHERE NOT EXISTS`) atau cukup simpan halaman
   Pengaturan — `settings.php` melakukan upsert per device.
-- `seed.sql` mengisi data demo. Password akun demo: `Demo123!`.
+- `seed.sql` mengisi 1 device demo (`ESP32-Greenhouse-1`) + contoh log sensor
+  dan aktuator. Tidak ada akun demo tambahan; akun admin bersama `sistomate`
+  dibuat oleh `seed.sql` dan/atau `configs.sql` (idempotent).
 - Untuk DB uji: `schema.sql` dan `seed.sql` memuat `USE sistomate`, jadi ganti nama
   database di berkas (misalnya `sed 's/sistomate/sistomate_webtest/g'`) atau sediakan
   salinan. `configs.sql` tidak memakai `USE`, sehingga bisa diarahkan lewat argumen

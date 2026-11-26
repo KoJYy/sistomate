@@ -1015,7 +1015,7 @@ $cfgJs = [
 <footer>
   <span id="dev">-</span>
   <span id="today">-</span>
-  <span>update tiap 5 detik</span>
+  <span>update tiap 1 detik</span>
 </footer>
 
 </main>
